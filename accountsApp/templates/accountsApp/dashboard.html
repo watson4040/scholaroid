@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* Fixed Sidebar */
+  .admin-sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 280px;
+    background: linear-gradient(180deg, #1e2a3a 0%, #0f1724 100%);
+    color: #e2e8f0;
+    z-index: 1000;
+    transition: transform 0.3s ease;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .admin-sidebar::-webkit-scrollbar { width: 5px; }
+  .admin-sidebar::-webkit-scrollbar-track { background: #2d3e50; }
+  .admin-sidebar::-webkit-scrollbar-thumb { background: #1abc9c; border-radius: 10px; }
+
+  .sidebar-header {
+    padding: 1.5rem 1.25rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 0.5rem;
+  }
+  .sidebar-header h4 { font-weight: 600; font-size: 1.3rem; margin: 0; }
+  .sidebar-header p { font-size: 0.7rem; opacity: 0.7; margin-top: 0.25rem; }
+
+  .nav-divider {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 0.75rem 1.5rem 0.5rem;
+    color: #94a3b8;
+    font-weight: 500;
+  }
+
+  .admin-sidebar .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.7rem 1.5rem;
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+  }
+  .admin-sidebar .nav-link i { width: 24px; font-size: 1.1rem; text-align: center; }
+  .admin-sidebar .nav-link:hover {
+    background: rgba(26, 188, 156, 0.12);
+    color: white;
+    border-left-color: #1abc9c;
+    padding-left: 1.7rem;
+  }
+  .admin-sidebar .nav-link.active {
+    background: rgba(26, 188, 156, 0.2);
+    color: white;
+    border-left-color: #1abc9c;
+    font-weight: 600;
+  }
+
+  .admin-main-content {
+    margin-left: 280px;
+    padding: 1.5rem;
+    transition: margin-left 0.3s;
+    min-height: 100vh;
+  }
+
+  /* Sticky dashboard title area (below the top navbar) */
+  .sticky-dashboard-header {
+    position: sticky;
+    top: 70px;  /* assumes navbar height ~70px */
+    background: #f8f9fc;
+    z-index: 990;
+    padding: 0.5rem 0 1rem 0;
+    margin-top: -0.5rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+  @media (max-width: 768px) {
+    .sticky-dashboard-header { top: 60px; }
+  }
+
+  .mobile-sidebar-toggle {
+    display: none;
+    position: fixed;
+    top: 1rem;
+    left: 1rem;
+    z-index: 1100;
+    background: #1e2a3a;
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 40px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 20px;
+    padding: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid #1abc9c;
+    margin-bottom: 1rem;
+  }
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 20px -12px rgba(0,0,0,0.1);
+  }
+  .stat-number { font-size: 2rem; font-weight: 700; margin: 0; color: #1e2a3a; }
+  .stat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
+
+  @media (max-width: 768px) {
+    .admin-sidebar {
+      transform: translateX(-100%);
+      width: 260px;
+    }
+    .admin-sidebar.mobile-open { transform: translateX(0); }
+    .admin-main-content { margin-left: 0 !important; padding-top: 4rem; }
+    .mobile-sidebar-toggle { display: block; }
+    .stat-number { font-size: 1.5rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+  <i class="fas fa-bars"></i> Menu
+</button>
+
+<div class="admin-sidebar" id="adminSidebar">
+  <div class="sidebar-header text-center">
+    <i class="fas fa-school fa-2x text-white mb-2"></i>
+    <h4>Scholaroid</h4>
+    <p>School Management System</p>
+  </div>
+  <nav>
+    <div class="nav-divider">Main Menu</div>
+    <a class="nav-link" href="{% url 'dashboard_admin' %}">
+      <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+    <!-- Dynamic admin changelist URLs – these resolve to correct admin paths -->
+    <a class="nav-link" href="{% url 'admin:studentsApp_student_changelist' %}">
+      <i class="fas fa-user-graduate"></i> Students
+    </a>
+    <a class="nav-link" href="{% url 'admin:teachersApp_teacher_changelist' %}">
+      <i class="fas fa-chalkboard-user"></i> Teachers
+    </a>
+    <a class="nav-link" href="{% url 'admin:classesApp_classroom_changelist' %}">
+      <i class="fas fa-building"></i> Classes
+    </a>
+    <a class="nav-link" href="{% url 'admin:accountsApp_user_changelist' %}">
+      <i class="fas fa-users"></i> Users
+    </a>
+    <a class="nav-link" href="{% url 'admin:accountsApp_user_add' %}">
+      <i class="fas fa-user-plus"></i> Add User
+    </a>
+
+    <div class="nav-divider">Management</div>
+    <a class="nav-link" href="{% url 'admin:examsApp_exam_changelist' %}">
+      <i class="fas fa-file-alt"></i> Exams
+    </a>
+    <a class="nav-link" href="{% url 'admin:classesApp_subjects_changelist' %}">
+      <i class="fas fa-book"></i> Subjects
+    </a>
+    <a class="nav-link" href="{% url 'admin:attendanceApp_attendance_changelist' %}">
+      <i class="fas fa-calendar-check"></i> Attendance
+    </a>
+    <a class="nav-link" href="{% url 'admin:messagingApp_message_changelist' %}">
+      <i class="fas fa-envelope"></i> Messages
+    </a>
+    <a class="nav-link" href="{% url 'admin:parentsApp_parent_changelist' %}">
+      <i class="fas fa-users"></i> Parents
+    </a>
+    <a class="nav-link" href="{% url 'admin:resourcesApp_resource_changelist' %}">
+      <i class="fas fa-download"></i> Resources
+    </a>
+    <a class="nav-link" href="{% url 'notice_list' %}">
+      <i class="fas fa-bell"></i> Notices
+    </a>
+  </nav>
+</div>
+
+<div class="admin-main-content">
+  <!-- Sticky Dashboard Header -->
+  <div class="sticky-dashboard-header">
+    <div class="d-flex justify-content-between align-items-center flex-wrap">
+      <h2 class="fw-semibold mb-0">Admin Dashboard</h2>
+      <div class="mt-2 mt-sm-0">
+        <span class="badge bg-success fs-6 px-3 py-2 rounded-pill">
+          {{ user.get_full_name|default:user.username }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid px-0">
+    <!-- Stats Row -->
+    <div class="row g-4 mb-5">
+      <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Students</p><h3 class="stat-number">{{ student_count|default:0 }}</h3></div></div>
+      <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Teachers</p><h3 class="stat-number">{{ teacher_count|default:0 }}</h3></div></div>
+      <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Classes</p><h3 class="stat-number">{{ class_count|default:0 }}</h3></div></div>
+      <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Active Users</p><h3 class="stat-number">{{ active_users|default:0 }}</h3></div></div>
+    </div>
+
+    <!-- Recent Tables -->
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-header bg-white border-0 pt-3"><h5><i class="fas fa-calendar-alt me-2 text-primary"></i> Upcoming Exams</h5></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th>Subject</th><th>Class</th><th>Date</th><th>Max Marks</th></tr></thead>
+                <tbody>{% for exam in recent_exams %}<tr><td>{{ exam.subject.subject }}</td><td>{{ exam.class_room.name }}</td><td>{{ exam.exam_date|date:"d M Y" }}</td><td>{{ exam.max_marks }}</td></tr>{% empty %}<tr><td colspan="4" class="text-center">No upcoming exams</td></tr>{% endfor %}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-header bg-white border-0 pt-3"><h5><i class="fas fa-user-graduate me-2 text-primary"></i> Recent Students</h5></div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th>Name</th><th>Class</th><th>Admission Date</th></tr></thead>
+                <tbody>{% for student in recent_students %}<tr><td>{{ student.user.get_full_name|default:student.user.username }}</td><td>{{ student.class_room|default:"-" }}</td><td>{{ student.admission_date|date:"d M Y" }}</td></tr>{% empty %}<td><td colspan="3" class="text-center">No students</td></tr>{% endfor %}</tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mt-2">
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-header bg-white border-0 pt-3"><h5><i class="fas fa-bell me-2 text-primary"></i> Recent Notices</h5></div>
+          <div class="card-body">
+            <ul class="list-group list-group-flush">{% for notice in recent_notifications %}<li class="list-group-item d-flex justify-content-between align-items-center">{{ notice.title|truncatechars:50 }}<small class="text-muted">{{ notice.created_at|date:"d M" }}</small></li>{% empty %}<li class="list-group-item text-center">No notices yet.</li>{% endfor %}</ul>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="card shadow-sm border-0 rounded-4">
+          <div class="card-header bg-white border-0 pt-3"><h5><i class="fas fa-chart-line me-2 text-primary"></i> System Health</h5></div>
+          <div class="card-body">
+            <div class="d-flex justify-content-between py-2 border-bottom"><span>Database</span><span class="badge bg-success">Active</span></div>
+            <div class="d-flex justify-content-between py-2 border-bottom"><span>Server</span><span class="badge bg-success">Running</span></div>
+            <div class="d-flex justify-content-between py-2"><span>Last Backup</span><span class="badge bg-info">Today</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    // Mobile toggle
+    const toggleBtn = document.getElementById('mobileSidebarToggle');
+    const sidebar = document.getElementById('adminSidebar');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sidebar.classList.toggle('mobile-open');
+      });
+      document.addEventListener('click', (event) => {
+        if (window.innerWidth <= 768 && sidebar.classList.contains('mobile-open')) {
+          if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
+            sidebar.classList.remove('mobile-open');
+          }
+        }
+      });
+    }
+
+    // Active link highlighting + auto-scroll into view
+    const currentPath = window.location.pathname;
+    let activeLink = null;
+    document.querySelectorAll('.admin-sidebar .nav-link').forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href) return;
+      // Exact match or prefix match (except dashboard main)
+      if (currentPath === href || (href !== '/' && currentPath.startsWith(href) && href !== '/dashboard/admin/' && !currentPath.includes('/dashboard/teacher/') && !currentPath.includes('/dashboard/student/'))) {
+        link.classList.add('active');
+        activeLink = link;
+      } else {
+        link.classList.remove('active');
+      }
+    });
+    // Ensure dashboard main link is active on its page
+    if (currentPath === '/dashboard/admin/' || currentPath === '/dashboard/admin') {
+      const dashLink = document.querySelector('.admin-sidebar .nav-link[href*="dashboard_admin"]');
+      if (dashLink) dashLink.classList.add('active');
+      activeLink = dashLink;
+    }
+    // Scroll active link into view (so the user always sees the highlighted button)
+    if (activeLink) {
+      activeLink.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  })();
+</script>
+{% endblock %}

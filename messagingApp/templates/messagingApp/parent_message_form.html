@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Contact School Administration{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-primary text-white rounded-top-4">
+                    <h4 class="mb-0"><i class="fas fa-envelope me-2"></i> Send Message to School</h4>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted">Use this form to ask about fee schedules, school calendars, your child's performance, or any other query. The administration will respond as soon as possible.</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        {% for field in form %}
+                        <div class="mb-3">
+                            <label for="{{ field.id_for_label }}" class="form-label fw-semibold">{{ field.label }}</label>
+                            {{ field }}
+                            {% if field.help_text %}<small class="form-text text-muted">{{ field.help_text }}</small>{% endif %}
+                            {% for error in field.errors %}<div class="text-danger small">{{ error }}</div>{% endfor %}
+                        </div>
+                        {% endfor %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <button type="submit" class="btn btn-success px-4 py-2 rounded-pill"><i class="fas fa-paper-plane me-2"></i> Send Message</button>
+                            <a href="{% url 'dashboard_parent' %}" class="btn btn-outline-secondary px-4 py-2 rounded-pill">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Inbox{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h3><i class="bi bi-envelope"></i> Your Messages</h3>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Messaging feature is under development. You will soon be able to send and receive messages.</p>
+            <a href="{% url 'dashboard_admin' %}" class="btn btn-primary">Back to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
