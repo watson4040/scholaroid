@@ -150,7 +150,7 @@
     </a>
     <!-- Dynamic admin changelist URLs – these resolve to correct admin paths -->
     <a class="nav-link" href="{% url 'admin:studentsApp_student_changelist' %}">
-      <i class="fas fa-user-graduate"></i> Students
+      <i class="fas fa-user-graduate"></i> Pupils
     </a>
     <a class="nav-link" href="{% url 'admin:teachersApp_teacher_changelist' %}">
       <i class="fas fa-chalkboard-user"></i> Teachers
@@ -206,7 +206,7 @@
   <div class="container-fluid px-0">
     <!-- Stats Row -->
     <div class="row g-4 mb-5">
-      <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Students</p><h3 class="stat-number">{{ student_count|default:0 }}</h3></div></div>
+      <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Pupils</p><h3 class="stat-number">{{ student_count|default:0 }}</h3></div></div>
       <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Teachers</p><h3 class="stat-number">{{ teacher_count|default:0 }}</h3></div></div>
       <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Classes</p><h3 class="stat-number">{{ class_count|default:0 }}</h3></div></div>
       <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Active Users</p><h3 class="stat-number">{{ active_users|default:0 }}</h3></div></div>
@@ -229,12 +229,12 @@
       </div>
       <div class="col-lg-6">
         <div class="card shadow-sm border-0 rounded-4">
-          <div class="card-header bg-white border-0 pt-3"><h5><i class="fas fa-user-graduate me-2 text-primary"></i> Recent Students</h5></div>
+          <div class="card-header bg-white border-0 pt-3"><h5><i class="fas fa-user-graduate me-2 text-primary"></i> Recent Pupils</h5></div>
           <div class="card-body p-0">
             <div class="table-responsive">
               <table class="table table-hover align-middle mb-0">
                 <thead class="table-light"><tr><th>Name</th><th>Class</th><th>Admission Date</th></tr></thead>
-                <tbody>{% for student in recent_students %}<tr><td>{{ student.user.get_full_name|default:student.user.username }}</td><td>{{ student.class_room|default:"-" }}</td><td>{{ student.admission_date|date:"d M Y" }}</td></tr>{% empty %}<td><td colspan="3" class="text-center">No students</td></tr>{% endfor %}</tbody>
+                <tbody>{% for student in recent_students %}<tr><td>{{ student.user.get_full_name|default:student.user.username }}</td><td>{{ student.class_room|default:"-" }}</td><td>{{ student.admission_date|date:"d M Y" }}</td></tr>{% empty %}<td><td colspan="3" class="text-center">No pupils</td></tr>{% endfor %}</tbody>
               </table>
             </div>
           </div>
