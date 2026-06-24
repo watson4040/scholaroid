@@ -21,7 +21,7 @@ class Exam(models.Model):
 
 class ExamResult(models.Model):
     exam = models.ForeignKey(Exam, on_delete=models.CASCADE, related_name='results')
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name="Pupil")
     marks_obtained = models.DecimalField(max_digits=5, decimal_places=2)
     remarks = models.TextField(blank=True)
 
@@ -43,4 +43,6 @@ class ExamResult(models.Model):
         return 'F'
 
     def __str__(self):
-        return f"{self.student.user.username} - {self.exam.subject.subject}: {self.marks_obtained}"
+        # Show full name if available, otherwise username
+        name = self.student.user.get_full_name() or self.student.user.username
+        return f"{name} - {self.exam.subject.subject}: {self.marks_obtained}"

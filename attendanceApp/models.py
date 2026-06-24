@@ -8,8 +8,8 @@ class Attendance(models.Model):
         ('absent', 'Absent'),
         ('late', 'Late'),
     ]
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, verbose_name="Pupil")
+    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, verbose_name="Teacher")
     date = models.DateField()
     status = models.CharField(max_length=10, choices=STATUS_CHOICES)
 

@@ -41,27 +41,36 @@ def admin_message_list(request):
         'unread_count': unread_count,
     })
 
+
 @login_required
 def admin_message_detail(request, pk):
     """Admin view a single message, mark as read, and reply."""
     if not (request.user.is_staff or request.user.is_superuser):
         messages.error(request, "Permission denied.")
         return redirect('home')
-    msg = get_object_or_404(Message, pk=pk, recipient=request.user)
-    if not msg.is_read:
+    
+    msg = get_object_or_404(Message, pk=pk)
+    
+    # Mark as read if the admin is the recipient
+    if msg.recipient == request.user and not msg.is_read:
         msg.is_read = True
         msg.save()
+    
     if request.method == 'POST':
         reply_body = request.POST.get('reply_body')
         if reply_body:
+            # Create the reply
             reply = Message.objects.create(
                 sender=request.user,
-                recipient=msg.sender,
+                recipient=msg.sender,  # Send back to the original sender
                 subject=f"RE: {msg.subject}",
                 message_type=msg.message_type,
                 body=reply_body,
-                parent_message_id=msg
+                parent_message_id=msg  # Link to the original message
             )
-            messages.success(request, "Reply sent.")
+            messages.success(request, "Reply sent successfully.")
             return redirect('admin_message_detail', pk=pk)
+        else:
+            messages.error(request, "Reply cannot be empty.")
+    
     return render(request, 'messagingApp/admin_message_detail.html', {'message': msg})
