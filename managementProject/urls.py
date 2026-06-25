@@ -30,11 +30,11 @@ urlpatterns = [
     path('enroll/', enrollment_request, name='enroll'),
     path('enroll/success/', enrollment_success, name='enrollment_success'),
 
-    # Messaging URLs
+    # Messaging URLs – changed to match hardcoded link
     path('inbox/', user_inbox, name='inbox'),
     path('conversation/<int:user_id>/', conversation, name='conversation'),
     path('parent/message/', parent_send_message, name='parent_send_message'),
-    path('admin/messages/', admin_message_list, name='admin_message_list'),
+    path('admin-inbox/', admin_message_list, name='admin_message_list'),   # <-- changed from /admin/messages/
     path('admin/message/<int:pk>/', admin_message_detail, name='admin_message_detail'),
 
     path('fees/', include('feesApp.urls')),
