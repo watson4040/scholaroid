@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse
+from django.db.models import Q  # <-- add this import
 from accountsApp.forms import *
 from accountsApp.forms import ChangePasswordForm
 from accountsApp.models import Notice
@@ -14,6 +15,7 @@ from parentsApp.models import Parent
 from classesApp.models import ClassRoom
 from attendanceApp.models import Attendance
 from examsApp.models import Exam
+from examsApp.models import ExamResult
 from messagingApp.models import Message
 
 def home(request):
@@ -138,7 +140,6 @@ def dashboard_admin(request):
         "active_users": get_user_model().objects.filter(is_active=True).count(),
     }
     return render(request, "accountsApp/dashboard.html", context)
-from examsApp.models import ExamResult   # add this import at the top
 
 @login_required
 def dashboard_student(request):
@@ -196,11 +197,18 @@ def dashboard_parent(request):
             'exams': exams,
         })
     notices = Notice.objects.order_by('-created_at')[:5]
+    
+    # Get recent messages for this parent (where parent is sender or recipient)
+    recent_messages = Message.objects.filter(
+        Q(sender=parent.user) | Q(recipient=parent.user)
+    ).order_by('-created_at')[:5]
+    
     context = {
         'parent': parent,
         'children': children,
         'children_data': children_data,
         'notices': notices,
+        'recent_messages': recent_messages,
     }
     return render(request, 'accountsApp/dashboard_parent.html', context)
 
