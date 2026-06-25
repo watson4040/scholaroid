@@ -6,8 +6,8 @@ from messagingApp.views import (
     parent_send_message,
     admin_message_list,
     admin_message_detail,
-    user_inbox,          # <-- added
-    conversation,        # <-- added
+    user_inbox,
+    conversation,
 )
 
 urlpatterns = [
@@ -31,8 +31,8 @@ urlpatterns = [
     path('enroll/success/', enrollment_success, name='enrollment_success'),
 
     # Messaging URLs
-    path('inbox/', user_inbox, name='inbox'),                                    # <-- added
-    path('conversation/<int:user_id>/', conversation, name='conversation'),      # <-- added
+    path('inbox/', user_inbox, name='inbox'),
+    path('conversation/<int:user_id>/', conversation, name='conversation'),
     path('parent/message/', parent_send_message, name='parent_send_message'),
     path('admin/messages/', admin_message_list, name='admin_message_list'),
     path('admin/message/<int:pk>/', admin_message_detail, name='admin_message_detail'),
