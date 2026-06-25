@@ -72,10 +72,9 @@
     min-height: 100vh;
   }
 
-  /* Sticky dashboard title area (below the top navbar) */
   .sticky-dashboard-header {
     position: sticky;
-    top: 70px;  /* assumes navbar height ~70px */
+    top: 70px;
     background: #f8f9fc;
     z-index: 990;
     padding: 0.5rem 0 1rem 0;
@@ -148,7 +147,6 @@
     <a class="nav-link" href="{% url 'dashboard_admin' %}">
       <i class="fas fa-tachometer-alt"></i> Dashboard
     </a>
-    <!-- Dynamic admin changelist URLs – these resolve to correct admin paths -->
     <a class="nav-link" href="{% url 'admin:studentsApp_student_changelist' %}">
       <i class="fas fa-user-graduate"></i> Pupils
     </a>
@@ -175,7 +173,8 @@
     <a class="nav-link" href="{% url 'admin:attendanceApp_attendance_changelist' %}">
       <i class="fas fa-calendar-check"></i> Attendance
     </a>
-    <a class="nav-link" href="{% url 'admin:messagingApp_message_changelist' %}">
+    <!-- ✅ CORRECT LINK: custom admin inbox, not Django admin -->
+    <a class="nav-link" href="{% url 'admin_message_list' %}">
       <i class="fas fa-envelope"></i> Messages
     </a>
     <a class="nav-link" href="{% url 'admin:parentsApp_parent_changelist' %}">
@@ -191,7 +190,6 @@
 </div>
 
 <div class="admin-main-content">
-  <!-- Sticky Dashboard Header -->
   <div class="sticky-dashboard-header">
     <div class="d-flex justify-content-between align-items-center flex-wrap">
       <h2 class="fw-semibold mb-0">Admin Dashboard</h2>
@@ -204,7 +202,6 @@
   </div>
 
   <div class="container-fluid px-0">
-    <!-- Stats Row -->
     <div class="row g-4 mb-5">
       <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Pupils</p><h3 class="stat-number">{{ student_count|default:0 }}</h3></div></div>
       <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Total Teachers</p><h3 class="stat-number">{{ teacher_count|default:0 }}</h3></div></div>
@@ -212,7 +209,6 @@
       <div class="col-md-3 col-6"><div class="stat-card"><p class="stat-label">Active Users</p><h3 class="stat-number">{{ active_users|default:0 }}</h3></div></div>
     </div>
 
-    <!-- Recent Tables -->
     <div class="row g-4">
       <div class="col-lg-6">
         <div class="card shadow-sm border-0 rounded-4">
@@ -267,7 +263,6 @@
 
 <script>
   (function() {
-    // Mobile toggle
     const toggleBtn = document.getElementById('mobileSidebarToggle');
     const sidebar = document.getElementById('adminSidebar');
     if (toggleBtn) {
@@ -284,13 +279,11 @@
       });
     }
 
-    // Active link highlighting + auto-scroll into view
     const currentPath = window.location.pathname;
     let activeLink = null;
     document.querySelectorAll('.admin-sidebar .nav-link').forEach(link => {
       const href = link.getAttribute('href');
       if (!href) return;
-      // Exact match or prefix match (except dashboard main)
       if (currentPath === href || (href !== '/' && currentPath.startsWith(href) && href !== '/dashboard/admin/' && !currentPath.includes('/dashboard/teacher/') && !currentPath.includes('/dashboard/student/'))) {
         link.classList.add('active');
         activeLink = link;
@@ -298,13 +291,11 @@
         link.classList.remove('active');
       }
     });
-    // Ensure dashboard main link is active on its page
     if (currentPath === '/dashboard/admin/' || currentPath === '/dashboard/admin') {
       const dashLink = document.querySelector('.admin-sidebar .nav-link[href*="dashboard_admin"]');
       if (dashLink) dashLink.classList.add('active');
       activeLink = dashLink;
     }
-    // Scroll active link into view (so the user always sees the highlighted button)
     if (activeLink) {
       activeLink.scrollIntoView({ block: 'center', behavior: 'smooth' });
     }
