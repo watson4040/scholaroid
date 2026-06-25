@@ -32,20 +32,28 @@
         </div>
     </div>
 </div>
-{% if user.sent_messages.all %}
-<div class="mt-4">
-    <h5>Your Previous Messages</h5>
-    <div class="list-group">
-        {% for msg in user.sent_messages.all|slice:":5" %}
-        <div class="list-group-item">
-            <strong>{{ msg.subject }}</strong>
-            <span class="badge bg-secondary float-end">{{ msg.created_at|date:"d M Y" }}</span>
-            <p class="mb-0 small">{{ msg.body|truncatechars:80 }}</p>
-            {% if msg.replies.all %}
-            <span class="badge bg-success mt-1">Replied</span>
-            {% endif %}
+{% if sent_messages %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h5 class="mt-4">Your Previous Messages</h5>
+            <div class="list-group">
+                {% for msg in sent_messages %}
+                <div class="list-group-item">
+                    <strong>{{ msg.subject }}</strong>
+                    <span class="badge bg-secondary float-end">{{ msg.created_at|date:"d M Y" }}</span>
+                    <p class="mb-0 small">{{ msg.body|truncatechars:80 }}</p>
+                    {% if msg.replies.all %}
+                        <span class="badge bg-success mt-1">Replied</span>
+                        <div class="mt-1 small text-muted">
+                            <strong>Admin replied:</strong> {{ msg.replies.last.body|truncatechars:60 }}
+                            <a href="{% url 'conversation' msg.replies.last.sender.id %}" class="ms-2">View Conversation</a>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
         </div>
-        {% endfor %}
     </div>
 </div>
 {% endif %}
