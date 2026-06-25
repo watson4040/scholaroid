@@ -2,7 +2,13 @@ from django.urls import path, include
 from django.contrib import admin
 from . import views
 from studentsApp.views import enrollment_request, enrollment_success
-from messagingApp.views import parent_send_message, admin_message_list, admin_message_detail
+from messagingApp.views import (
+    parent_send_message,
+    admin_message_list,
+    admin_message_detail,
+    user_inbox,          # <-- added
+    conversation,        # <-- added
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,8 +29,13 @@ urlpatterns = [
     path('change-password/', views.change_password, name='change_password'),
     path('enroll/', enrollment_request, name='enroll'),
     path('enroll/success/', enrollment_success, name='enrollment_success'),
+
+    # Messaging URLs
+    path('inbox/', user_inbox, name='inbox'),                                    # <-- added
+    path('conversation/<int:user_id>/', conversation, name='conversation'),      # <-- added
     path('parent/message/', parent_send_message, name='parent_send_message'),
     path('admin/messages/', admin_message_list, name='admin_message_list'),
     path('admin/message/<int:pk>/', admin_message_detail, name='admin_message_detail'),
+
     path('fees/', include('feesApp.urls')),
 ]
