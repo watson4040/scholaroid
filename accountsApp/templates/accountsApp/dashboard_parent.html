@@ -146,10 +146,6 @@
     .stat-number { font-size: 1.5rem; }
     .fab-message { display: block; }
   }
-  .message-preview {
-    max-height: 200px;
-    overflow-y: auto;
-  }
 </style>
 {% endblock %}
 
@@ -216,34 +212,16 @@
       </div>
     </div>
 
-    <!-- Message Widget -->
+    <!-- Message Widget with auto-refresh -->
     <div id="messages" class="card shadow-sm border-0 rounded-4 mb-4">
       <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
         <h5><i class="fas fa-envelope me-2 text-primary"></i> Recent Messages</h5>
         <a href="{% url 'inbox' %}" class="btn btn-sm btn-outline-primary">View All</a>
       </div>
       <div class="card-body">
-        {% if recent_messages %}
-          <div class="message-preview">
-            <ul class="list-group list-group-flush">
-              {% for msg in recent_messages %}
-              <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                  <strong>{{ msg.subject }}</strong>
-                  <span class="badge bg-secondary ms-2">{{ msg.get_message_type_display }}</span>
-                  <br>
-                  <small class="text-muted">{{ msg.body|truncatechars:60 }}</small>
-                </div>
-                <div>
-                  <a href="{% url 'conversation' msg.sender.id %}" class="btn btn-sm btn-outline-primary">Reply</a>
-                </div>
-              </li>
-              {% endfor %}
-            </ul>
-          </div>
-        {% else %}
-          <p class="text-muted mb-0">No messages yet.</p>
-        {% endif %}
+        <ul id="messages-list" class="list-group list-group-flush">
+          <!-- Dynamically loaded by JavaScript -->
+        </ul>
         <div class="mt-3">
           <a href="{% url 'parent_send_message' %}" class="btn btn-primary btn-sm">Send New Message</a>
         </div>
@@ -324,6 +302,39 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Auto‑refresh messages every 5 seconds
+  function refreshMessages() {
+    fetch('/api/recent-messages/')
+      .then(r => r.json())
+      .then(data => {
+        const container = document.getElementById('messages-list');
+        if (container) {
+          container.innerHTML = data.messages.map(msg => `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>${msg.subject}</strong>
+                <span class="badge bg-secondary ms-2">${msg.type}</span>
+                <br>
+                <small class="text-muted">${msg.body}</small>
+              </div>
+              <div>
+                <a href="/conversation/${msg.sender_id}/" class="btn btn-sm btn-outline-primary">Reply</a>
+              </div>
+            </li>
+          `).join('');
+        }
+      })
+      .catch(err => console.error('Error fetching messages:', err));
+  }
+
+  // Initial load
+  refreshMessages();
+
+  // Poll every 5 seconds
+  setInterval(refreshMessages, 5000);
+</script>
 
 <script>
   (function() {
