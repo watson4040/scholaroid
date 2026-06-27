@@ -2,42 +2,107 @@
 {% load static %}
 {% block title %}Admin Messages{% endblock %}
 
+{% block extra_css %}
+<style>
+  .container-fluid {
+    max-width: 1200px;
+  }
+  .card {
+    border-radius: 20px;
+  }
+  .card-header {
+    border-radius: 20px 20px 0 0 !important;
+  }
+  .list-group-item {
+    flex-wrap: wrap;
+    padding: 0.75rem 1rem;
+  }
+  .list-group-item > div:first-child {
+    flex: 1 1 70%;
+    min-width: 150px;
+  }
+  .list-group-item > div:last-child {
+    flex: 0 0 auto;
+    margin-left: 8px;
+  }
+  @media (max-width: 576px) {
+    .list-group-item {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .list-group-item > div:first-child {
+      flex: 1 1 100%;
+      margin-bottom: 8px;
+    }
+    .list-group-item > div:last-child {
+      text-align: right;
+    }
+  }
+  .badge-unread {
+    background-color: #dc3545;
+    color: white;
+  }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid py-4">
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-header bg-white rounded-top-4 d-flex justify-content-between align-items-center">
             <h4 class="mb-0"><i class="fas fa-inbox me-2 text-primary"></i> Messages from Parents</h4>
-            <span class="badge bg-danger rounded-pill">{{ unread_count }} unread</span>
+            <span id="unread-badge" class="badge bg-danger rounded-pill">{{ unread_count }}</span>
         </div>
         <div class="card-body p-0">
-            {% if conversations %}
-                <ul class="list-group list-group-flush">
-                {% for conv in conversations %}
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <a href="{% url 'conversation' conv.user.id %}" class="text-decoration-none flex-grow-1">
-                            <div>
-                                <strong>{{ conv.user.get_full_name|default:conv.user.username }}</strong>
-                                <span class="badge bg-secondary float-end">{{ conv.user.role|title }}</span>
-                            </div>
-                            <div class="small text-muted">
-                                {% if conv.last_message %}
-                                    {{ conv.last_message.body|truncatechars:50 }}
-                                    <span class="float-end">{{ conv.last_message.created_at|date:"d M Y, H:i" }}</span>
-                                {% else %}
-                                    No messages
-                                {% endif %}
-                            </div>
-                        </a>
-                        {% if conv.unread_count > 0 %}
-                            <span class="badge bg-danger rounded-pill ms-2">{{ conv.unread_count }}</span>
-                        {% endif %}
-                    </li>
-                {% endfor %}
-                </ul>
-            {% else %}
-                <div class="text-center p-4">No messages from parents yet.</div>
-            {% endif %}
+            <ul id="admin-messages-list" class="list-group list-group-flush">
+                <!-- Dynamically loaded by JavaScript -->
+            </ul>
         </div>
     </div>
 </div>
+
+<script>
+  function refreshAdminMessages() {
+    fetch('/api/recent-messages/')
+      .then(r => r.json())
+      .then(data => {
+        const container = document.getElementById('admin-messages-list');
+        if (container) {
+          if (data.messages && data.messages.length > 0) {
+            container.innerHTML = data.messages.map(msg => `
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                  <strong>${msg.sender_name}</strong>
+                  <span class="badge bg-secondary ms-2">${msg.type}</span>
+                  <br>
+                  <small class="text-muted">${msg.subject}</small>
+                  <br>
+                  <small class="text-muted">${msg.body}</small>
+                </div>
+                <div>
+                  <a href="/conversation/${msg.sender_id}/" class="btn btn-sm btn-outline-primary">Reply</a>
+                </div>
+              </li>
+            `).join('');
+          } else {
+            container.innerHTML = `<li class="list-group-item text-center text-muted">No messages from parents yet.</li>`;
+          }
+        }
+        // Optional: update unread count if your API includes is_read
+        // For now, keep the server-side count unchanged.
+      })
+      .catch(err => {
+        console.error('Error fetching admin messages:', err);
+        const container = document.getElementById('admin-messages-list');
+        if (container) {
+          container.innerHTML = `<li class="list-group-item text-center text-muted">Unable to load messages.</li>`;
+        }
+      });
+  }
+
+  // Initial load
+  refreshAdminMessages();
+
+  // Poll every 5 seconds
+  setInterval(refreshAdminMessages, 5000);
+</script>
 {% endblock %}
