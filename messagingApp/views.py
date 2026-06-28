@@ -192,7 +192,8 @@ def delete_message(request):
         if not message_id:
             return JsonResponse({'error': 'Message ID required'}, status=400)
         msg = get_object_or_404(Message, id=message_id)
-        if msg.sender != request.user:
+        # Allow sender or staff to delete
+        if msg.sender != request.user and not request.user.is_staff:
             return JsonResponse({'error': 'Permission denied'}, status=403)
         msg.delete()
         return JsonResponse({'status': 'ok'})
