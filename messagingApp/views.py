@@ -118,6 +118,55 @@ def get_recent_messages(request):
     return JsonResponse({'messages': data})
 
 @login_required
+def get_conversation_api(request, user_id):
+    """Return full conversation with a specific user (as JSON)."""
+    other = get_object_or_404(User, id=user_id)
+    user = request.user
+    messages_qs = Message.objects.filter(
+        (Q(sender=user, recipient=other) | Q(sender=other, recipient=user))
+    ).order_by('created_at')
+    typing_status = UserTypingStatus.objects.filter(user=other).first()
+    is_other_typing = typing_status.is_typing if typing_status else False
+    data = []
+    for m in messages_qs:
+        data.append({
+            'id': m.id,
+            'sender_id': m.sender.id,
+            'sender_name': m.sender.get_full_name() or m.sender.username,
+            'body': m.body,
+            'created_at': m.created_at.strftime('%H:%M, %d %b %Y'),
+            'is_self': m.sender == user,
+        })
+    return JsonResponse({'messages': data, 'other_typing': is_other_typing})
+
+@login_required
+def send_message_api(request, user_id):
+    """Send a message via AJAX (JSON)."""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    data = json.loads(request.body)
+    body = data.get('body')
+    if not body:
+        return JsonResponse({'error': 'Empty message'}, status=400)
+    other = get_object_or_404(User, id=user_id)
+    msg = Message.objects.create(
+        sender=request.user,
+        recipient=other,
+        subject=f"Re: Conversation with {other.get_full_name() or other.username}",
+        message_type='other',
+        body=body,
+    )
+    # Mark as read if admin replies to parent (optional)
+    return JsonResponse({'status': 'ok', 'message': {
+        'id': msg.id,
+        'sender_id': msg.sender.id,
+        'sender_name': msg.sender.get_full_name() or msg.sender.username,
+        'body': msg.body,
+        'created_at': msg.created_at.strftime('%H:%M, %d %b %Y'),
+        'is_self': True,
+    }})
+
+@login_required
 def typing_indicator(request):
     """Set typing status for the current user."""
     if request.method == 'POST':

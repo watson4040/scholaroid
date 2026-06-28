@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 {% load static %}
 {% block title %}Admin Messages{% endblock %}
@@ -12,6 +13,42 @@
   }
   .card-header {
     border-radius: 20px 20px 0 0 !important;
+  }
+  .message-item {
+    transition: all 0.3s ease;
+    animation: fadeIn 0.4s;
+  }
+  .message-item:hover {
+    background: #f8f9fa;
+  }
+  .message-item .delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .message-item:hover .delete-btn {
+    opacity: 1;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .typing-indicator {
+    display: none;
+    font-style: italic;
+    color: #6c757d;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid #e9ecef;
+  }
+  .typing-indicator .dots::after {
+    content: '...';
+    animation: dots 1.2s steps(3, end) infinite;
+  }
+  @keyframes dots {
+    0% { content: ''; }
+    33% { content: '.'; }
+    66% { content: '..'; }
+    100% { content: '...'; }
   }
   .list-group-item {
     flex-wrap: wrap;
@@ -38,43 +75,43 @@
       text-align: right;
     }
   }
-  .badge-unread {
-    background-color: #dc3545;
-    color: white;
-  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h2><i class="fas fa-inbox me-2 text-primary"></i> Messages from Parents</h2>
+        <h2><i class="fas fa-inbox me-2 text-primary"></i> Parent Messages</h2>
         <span id="unread-badge" class="badge bg-danger rounded-pill fs-6 px-3 py-2">{{ unread_count|default:0 }}</span>
     </div>
 
     <div class="card shadow-sm border-0 rounded-4">
         <div class="card-body p-0">
+            <div id="typing-indicator" class="typing-indicator px-3">Someone is typing <span class="dots"></span></div>
             <ul id="admin-messages-list" class="list-group list-group-flush">
+                <!-- Server-rendered fallback -->
                 {% if conversations %}
                     {% for conv in conversations %}
                     <li class="list-group-item d-flex justify-content-between align-items-center" data-conv-id="{{ conv.user.id }}">
-                        <a href="{% url 'conversation' conv.user.id %}" class="text-decoration-none flex-grow-1">
-                            <div>
-                                <strong>{{ conv.user.get_full_name|default:conv.user.username }}</strong>
-                                <span class="badge bg-secondary float-end">{{ conv.user.role|title }}</span>
-                            </div>
-                            <div class="small text-muted">
+                        <div>
+                            <strong>{{ conv.user.get_full_name|default:conv.user.username }}</strong>
+                            <span class="badge bg-secondary ms-2">{{ conv.user.role|title }}</span>
+                            <br>
+                            <small class="text-muted">
                                 {% if conv.last_message %}
                                     {{ conv.last_message.body|truncatechars:50 }}
                                     <span class="float-end">{{ conv.last_message.created_at|date:"d M Y, H:i" }}</span>
                                 {% else %}
                                     No messages
                                 {% endif %}
-                            </div>
-                        </a>
-                        {% if conv.unread_count > 0 %}
-                            <span class="badge bg-danger rounded-pill ms-2">{{ conv.unread_count }}</span>
-                        {% endif %}
+                            </small>
+                        </div>
+                        <div>
+                            <a href="{% url 'conversation' conv.user.id %}" class="btn btn-sm btn-outline-primary">Reply</a>
+                            {% if conv.unread_count > 0 %}
+                                <span class="badge bg-danger rounded-pill ms-2">{{ conv.unread_count }}</span>
+                            {% endif %}
+                        </div>
                     </li>
                     {% endfor %}
                 {% else %}
@@ -86,64 +123,71 @@
 </div>
 
 <script>
-  // This is a safe polling script that updates the list without breaking if the API fails.
-  function refreshAdminMessages() {
-    const container = document.getElementById('admin-messages-list');
-    if (!container) return;
+  const csrfToken = '{{ csrf_token }}';
 
+  function refreshAdminMessages() {
     fetch('/api/recent-messages/')
-      .then(response => {
-        if (!response.ok) {
-          throw new Error('Network response was not ok');
-        }
-        return response.json();
-      })
+      .then(r => r.json())
       .then(data => {
-        if (data.messages && data.messages.length > 0) {
-          // Replace the list with the new data
-          container.innerHTML = data.messages.map(msg => `
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                <strong>${msg.sender_name}</strong>
-                <span class="badge bg-secondary ms-2">${msg.type}</span>
-                <br>
-                <small class="text-muted">${msg.subject}</small>
-                <br>
-                <small class="text-muted">${msg.body}</small>
-              </div>
-              <div>
-                <a href="/conversation/${msg.sender_id}/" class="btn btn-sm btn-outline-primary">Reply</a>
-              </div>
-            </li>
-          `).join('');
-        } else {
-          // If API returns empty, keep the existing content (do not override)
-          // But if we want to show "No messages", we can do that.
-          // However, the server-rendered content is already shown, so we only update if we have new data.
-          // To be safe, we check if the current list is the "No messages" placeholder and replace it.
-          const currentText = container.textContent.trim();
-          if (currentText.includes('No messages from parents yet') || currentText.includes('No messages')) {
+        const container = document.getElementById('admin-messages-list');
+        const typingIndicator = document.getElementById('typing-indicator');
+        if (container) {
+          if (data.messages && data.messages.length > 0) {
+            let anyTyping = data.messages.some(msg => msg.is_typing);
+            typingIndicator.style.display = anyTyping ? 'block' : 'none';
+            container.innerHTML = data.messages.map(msg => `
+              <li class="list-group-item d-flex justify-content-between align-items-center message-item" data-mid="${msg.id}">
+                <div>
+                  <strong>${msg.sender_name}</strong>
+                  <span class="badge bg-secondary ms-2">${msg.type}</span>
+                  <br>
+                  <small class="text-muted">${msg.subject}</small>
+                  <br>
+                  <small class="text-muted">${msg.body}</small>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  <a href="/conversation/${msg.sender_id}/" class="btn btn-sm btn-outline-primary">Reply</a>
+                  <button class="btn btn-sm btn-outline-danger delete-btn" data-mid="${msg.id}">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </li>
+            `).join('');
+            // Bind delete events
+            container.querySelectorAll('.delete-btn').forEach(btn => {
+              btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const mid = this.dataset.mid;
+                if (confirm('Delete this message?')) {
+                  fetch('/api/delete-message/', {
+                    method: 'POST',
+                    headers: {
+                      'X-CSRFToken': csrfToken,
+                      'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ message_id: mid })
+                  })
+                  .then(res => res.json())
+                  .then(() => refreshAdminMessages())
+                  .catch(err => console.error('Delete error:', err));
+                }
+              });
+            });
+          } else {
             container.innerHTML = `<li class="list-group-item text-center text-muted">No messages from parents yet.</li>`;
+            typingIndicator.style.display = 'none';
           }
         }
-        // Update unread count if we have data (optional)
-        const badge = document.getElementById('unread-badge');
-        if (badge && data.messages) {
-          // Count unread – we don't have that in the API response, so skip for now.
-        }
+        // Update unread count – optional (we don't have it in API, keep server count)
       })
       .catch(err => {
-        // Silently fail – keep the existing content (server-rendered)
-        console.log('Polling failed, keeping existing content:', err);
+        console.error('Polling error:', err);
+        // Keep server-rendered content
       });
   }
 
-  // Initial load: if the container has the "No messages" placeholder, try a refresh after 2 seconds
-  // but we don't want to overwrite existing conversations if they are already there.
-  // We'll just start polling.
-  setTimeout(refreshAdminMessages, 1000); // first refresh after 1 sec
-
-  // Poll every 10 seconds (longer interval to reduce load)
-  setInterval(refreshAdminMessages, 10000);
+  // Initial load (will replace server content after first fetch)
+  refreshAdminMessages();
+  setInterval(refreshAdminMessages, 1500);
 </script>
 {% endblock %}
