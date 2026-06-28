@@ -27,34 +27,11 @@
                             <a href="{% url 'dashboard_parent' %}" class="btn btn-outline-secondary px-4 py-2 rounded-pill">Cancel</a>
                         </div>
                     </form>
+                    <hr>
+                    <p class="text-center"><a href="{% url 'inbox' %}" class="btn btn-outline-primary">View Your Inbox</a></p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% if sent_messages %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <h5 class="mt-4">Your Previous Messages</h5>
-            <div class="list-group">
-                {% for msg in sent_messages %}
-                <div class="list-group-item">
-                    <strong>{{ msg.subject }}</strong>
-                    <span class="badge bg-secondary float-end">{{ msg.created_at|date:"d M Y" }}</span>
-                    <p class="mb-0 small">{{ msg.body|truncatechars:80 }}</p>
-                    {% if msg.replies.all %}
-                        <span class="badge bg-success mt-1">Replied</span>
-                        <div class="mt-1 small text-muted">
-                            <strong>Admin replied:</strong> {{ msg.replies.last.body|truncatechars:60 }}
-                            <a href="{% url 'conversation' msg.replies.last.sender.id %}" class="ms-2">View Conversation</a>
-                        </div>
-                    {% endif %}
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
-{% endif %}
 {% endblock %}

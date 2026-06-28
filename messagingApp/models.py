@@ -24,3 +24,13 @@ class Message(models.Model):
 
     def __str__(self):
         return f"{self.subject} from {self.sender.email}"
+
+
+# New model for typing status
+class UserTypingStatus(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    is_typing = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.user.email} typing: {self.is_typing}"
