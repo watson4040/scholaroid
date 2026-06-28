@@ -158,18 +158,26 @@
 
     let typingTimeout = null;
     let lastScrollHeight = messageContainer.scrollHeight;
+    let existingIds = new Set();
+
+    // Initialize existing IDs from server-rendered messages
+    document.querySelectorAll('#messages-list .message-item').forEach(el => {
+      const mid = el.dataset.mid;
+      if (mid) existingIds.add(parseInt(mid));
+    });
 
     function scrollToBottom() {
       messageContainer.scrollTop = messageContainer.scrollHeight;
     }
 
-    function renderMessages(data) {
-      if (!data.messages || data.messages.length === 0) {
-        messagesList.innerHTML = '<div class="text-center text-muted py-4">No messages yet. Start the conversation!</div>';
-        return;
-      }
-      let html = '';
-      data.messages.forEach(msg => {
+    function appendMessages(data) {
+      // data.messages is expected to be in chronological order (oldest first)
+      // We'll add any messages that are not already present
+      let newMessages = data.messages.filter(msg => !existingIds.has(msg.id));
+      if (newMessages.length === 0) return;
+
+      // For each new message, append to the list
+      newMessages.forEach(msg => {
         const isSelf = msg.is_self;
         const bubbleClass = isSelf ? 'bg-primary text-white' : 'bg-light';
         const senderName = msg.sender_name;
@@ -182,7 +190,7 @@
             </button>
           </div>
         ` : '';
-        html += `
+        const html = `
           <div class="d-flex mb-3 ${isSelf ? 'justify-content-end' : 'justify-content-start'} message-item" data-mid="${msg.id}">
             <div class="p-3 rounded-3 shadow-sm chat-bubble ${bubbleClass}">
               <div class="small ${isSelf ? 'text-white-50' : 'text-muted'}">
@@ -194,46 +202,67 @@
             ${deleteBtn}
           </div>
         `;
+        // Insert at the end (since new messages are appended)
+        messagesList.insertAdjacentHTML('beforeend', html);
+        existingIds.add(msg.id);
+        // Attach delete event for this new message
+        const newEl = messagesList.lastElementChild;
+        const delBtn = newEl.querySelector('.delete-btn');
+        if (delBtn) {
+          delBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const mid = this.dataset.mid;
+            if (confirm('Delete this message?')) {
+              fetch('/api/delete-message/', {
+                method: 'POST',
+                headers: {
+                  'X-CSRFToken': csrfToken,
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message_id: mid })
+              })
+              .then(res => res.json())
+              .then(() => {
+                // Remove the element from DOM and from the Set
+                const elToRemove = messagesList.querySelector(`.message-item[data-mid="${mid}"]`);
+                if (elToRemove) elToRemove.remove();
+                existingIds.delete(parseInt(mid));
+              })
+              .catch(err => console.error('Delete error:', err));
+            }
+          });
+        }
       });
-      messagesList.innerHTML = html;
 
-      // Attach delete events
-      messagesList.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-          e.preventDefault();
-          const mid = this.dataset.mid;
-          if (confirm('Delete this message?')) {
-            fetch('/api/delete-message/', {
-              method: 'POST',
-              headers: {
-                'X-CSRFToken': csrfToken,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ message_id: mid })
-            })
-            .then(res => res.json())
-            .then(() => refreshConversation())
-            .catch(err => console.error('Delete error:', err));
-          }
-        });
-      });
+      // Scroll to bottom if new messages were added
+      const newHeight = messageContainer.scrollHeight;
+      if (newHeight > lastScrollHeight) {
+        scrollToBottom();
+      }
+      lastScrollHeight = newHeight;
     }
 
     function refreshConversation() {
       fetch(`/api/conversation/${otherUserId}/`)
-        .then(r => r.json())
+        .then(r => {
+          if (!r.ok) throw new Error('Network error');
+          return r.json();
+        })
         .then(data => {
+          // Update typing indicator
           if (data.other_typing) {
             typingIndicator.style.display = 'block';
           } else {
             typingIndicator.style.display = 'none';
           }
-          renderMessages(data);
-          const newHeight = messageContainer.scrollHeight;
-          if (newHeight > lastScrollHeight) {
-            scrollToBottom();
+          // Append new messages (incremental)
+          if (data.messages && data.messages.length > 0) {
+            appendMessages(data);
           }
-          lastScrollHeight = newHeight;
+          // If the list is empty and we have no messages, show placeholder
+          if (data.messages && data.messages.length === 0 && messagesList.children.length === 0) {
+            messagesList.innerHTML = '<div class="text-center text-muted py-4">No messages yet. Start the conversation!</div>';
+          }
         })
         .catch(err => {
           console.error('Polling error:', err);
@@ -266,8 +295,10 @@
       .then(data => {
         if (data.status === 'ok') {
           input.value = '';
+          // Immediately append the new message locally (optional, but we rely on polling)
+          // To avoid waiting for the next poll, we can call refreshConversation immediately
           refreshConversation();
-          setTimeout(scrollToBottom, 100);
+          setTimeout(scrollToBottom, 50);
           // Send typing false
           fetch('/api/typing/', {
             method: 'POST',
@@ -326,9 +357,13 @@
     });
 
     // Initial load
-    setTimeout(refreshConversation, 300);
+    // We already have server-rendered content, so we just start polling after a small delay
+    setTimeout(refreshConversation, 500);
     setInterval(refreshConversation, 1500);
-    scrollToBottom();
+
+    // Scroll to bottom after initial render
+    setTimeout(scrollToBottom, 100);
+    // Update lastScrollHeight after render
     setTimeout(() => { lastScrollHeight = messageContainer.scrollHeight; }, 500);
   })();
 </script>
