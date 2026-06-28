@@ -7,6 +7,9 @@ from .models import Message, UserTypingStatus
 from .forms import ParentMessageForm
 from accountsApp.models import User
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def user_inbox(request):
@@ -98,11 +101,9 @@ def admin_message_detail(request, pk):
 
 @login_required
 def get_recent_messages(request):
-    """Return last 5 messages for the current user (as JSON)."""
     messages_qs = Message.objects.filter(recipient=request.user).order_by('-created_at')[:5]
     data = []
     for m in messages_qs:
-        # Check if sender is typing
         typing_status = UserTypingStatus.objects.filter(user=m.sender).first()
         is_typing = typing_status.is_typing if typing_status else False
         data.append({
@@ -119,7 +120,6 @@ def get_recent_messages(request):
 
 @login_required
 def get_conversation_api(request, user_id):
-    """Return full conversation with a specific user (as JSON)."""
     other = get_object_or_404(User, id=user_id)
     user = request.user
     messages_qs = Message.objects.filter(
@@ -141,10 +141,12 @@ def get_conversation_api(request, user_id):
 
 @login_required
 def send_message_api(request, user_id):
-    """Send a message via AJAX (JSON)."""
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=400)
-    data = json.loads(request.body)
+    try:
+        data = json.loads(request.body)
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
     body = data.get('body')
     if not body:
         return JsonResponse({'error': 'Empty message'}, status=400)
@@ -156,7 +158,6 @@ def send_message_api(request, user_id):
         message_type='other',
         body=body,
     )
-    # Mark as read if admin replies to parent (optional)
     return JsonResponse({'status': 'ok', 'message': {
         'id': msg.id,
         'sender_id': msg.sender.id,
@@ -168,9 +169,11 @@ def send_message_api(request, user_id):
 
 @login_required
 def typing_indicator(request):
-    """Set typing status for the current user."""
     if request.method == 'POST':
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
         is_typing = data.get('is_typing', False)
         status, created = UserTypingStatus.objects.get_or_create(user=request.user)
         status.is_typing = is_typing
@@ -180,9 +183,11 @@ def typing_indicator(request):
 
 @login_required
 def delete_message(request):
-    """Delete a message (only sender can delete)."""
     if request.method == 'POST':
-        data = json.loads(request.body)
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
         message_id = data.get('message_id')
         if not message_id:
             return JsonResponse({'error': 'Message ID required'}, status=400)

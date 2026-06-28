@@ -11,7 +11,7 @@
   .conversation-wrapper {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 70px); /* adjust for navbar height */
+    height: calc(100vh - 70px);
     max-height: calc(100vh - 70px);
   }
   .card {
@@ -223,14 +223,12 @@
       fetch(`/api/conversation/${otherUserId}/`)
         .then(r => r.json())
         .then(data => {
-          // Update typing indicator
           if (data.other_typing) {
             typingIndicator.style.display = 'block';
           } else {
             typingIndicator.style.display = 'none';
           }
           renderMessages(data);
-          // Auto-scroll if new content
           const newHeight = messageContainer.scrollHeight;
           if (newHeight > lastScrollHeight) {
             scrollToBottom();
@@ -239,11 +237,10 @@
         })
         .catch(err => {
           console.error('Polling error:', err);
-          // Keep existing content
         });
     }
 
-    // Send message via AJAX
+    // Send message
     form.addEventListener('submit', function(e) {
       e.preventDefault();
       const body = input.value.trim();
@@ -260,12 +257,16 @@
         },
         body: JSON.stringify({ body: body })
       })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) {
+          return res.json().then(err => { throw new Error(err.error || 'Server error'); });
+        }
+        return res.json();
+      })
       .then(data => {
         if (data.status === 'ok') {
           input.value = '';
           refreshConversation();
-          // Immediately scroll to bottom
           setTimeout(scrollToBottom, 100);
           // Send typing false
           fetch('/api/typing/', {
@@ -276,9 +277,14 @@
             },
             body: JSON.stringify({ is_typing: false })
           }).catch(() => {});
+        } else {
+          alert('Failed to send message: ' + (data.error || 'Unknown error'));
         }
       })
-      .catch(err => console.error('Send error:', err))
+      .catch(err => {
+        console.error('Send error:', err);
+        alert('Error sending message: ' + err.message);
+      })
       .finally(() => {
         sendBtn.disabled = false;
         sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
@@ -319,15 +325,10 @@
       }
     });
 
-    // Initial load: render server-side content first, then start polling
-    // Since we already have server-rendered content, we just poll to update.
-    // But we also want to ensure we have the latest messages, so we call refresh immediately.
+    // Initial load
     setTimeout(refreshConversation, 300);
     setInterval(refreshConversation, 1500);
-
-    // Scroll to bottom on load
     scrollToBottom();
-    // Update lastScrollHeight after rendering
     setTimeout(() => { lastScrollHeight = messageContainer.scrollHeight; }, 500);
   })();
 </script>
