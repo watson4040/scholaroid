@@ -61,7 +61,28 @@
         <div class="card-body" style="max-height: 500px; overflow-y: auto;" id="message-container">
             <div id="typing-indicator" class="typing-indicator">{{ other.get_full_name|default:other.username }} is typing <span class="dots"></span></div>
             <div id="messages-list">
-                <!-- Rendered by JavaScript -->
+                {% if messages %}
+                    {% for msg in messages %}
+                    <div class="d-flex mb-3 {% if msg.sender == user %}justify-content-end{% else %}justify-content-start{% endif %} message-item" data-mid="{{ msg.id }}">
+                        <div class="p-3 rounded-3 shadow-sm chat-bubble {% if msg.sender == user %}bg-primary text-white{% else %}bg-light{% endif %}">
+                            <div class="small {% if msg.sender == user %}text-white-50{% else %}text-muted{% endif %}">
+                                {{ msg.sender.get_full_name|default:msg.sender.username }}
+                                <span class="float-end ms-2">{{ msg.created_at|date:"H:i, d M Y" }}</span>
+                            </div>
+                            <div class="mt-1">{{ msg.body|linebreaks }}</div>
+                        </div>
+                        {% if msg.sender == user %}
+                        <div class="ms-2 d-flex align-items-start">
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-mid="{{ msg.id }}" style="padding: 2px 6px; font-size: 0.7rem;">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-muted py-4">No messages yet. Start the conversation!</div>
+                {% endif %}
             </div>
         </div>
         <div class="card-footer bg-white">
@@ -80,7 +101,7 @@
   const csrfToken = '{{ csrf_token }}';
   const otherUserId = {{ other.id }};
   let typingTimeout = null;
-  let lastScrollHeight = 0;
+  let lastScrollHeight = document.getElementById('message-container')?.scrollHeight || 0;
 
   function refreshConversation() {
     fetch(`/api/conversation/${otherUserId}/`)
@@ -146,19 +167,18 @@
             }
             lastScrollHeight = newScrollHeight;
           } else {
-            container.innerHTML = '<div class="text-center text-muted py-4">No messages yet. Start the conversation!</div>';
+            // If the API returns empty, we can show a message, but we already have server-rendered content.
+            // We'll keep the existing content if empty.
           }
         }
       })
-      .catch(err => console.error('Fetch error:', err));
+      .catch(err => {
+        console.error('Fetch error:', err);
+        // Keep server-rendered content on error
+      });
   }
 
-  // Initial load
-  refreshConversation();
-  // Poll every 1.5 seconds
-  setInterval(refreshConversation, 1500);
-
-  // Handle message submission via AJAX (to keep conversation without reload)
+  // Handle message submission via AJAX
   document.getElementById('message-form').addEventListener('submit', function(e) {
     e.preventDefault();
     const input = document.getElementById('message-input');
@@ -178,7 +198,7 @@
       if (data.status === 'ok') {
         input.value = '';
         refreshConversation();
-        // Also send typing false
+        // Send typing false
         fetch('/api/typing/', {
           method: 'POST',
           headers: {
@@ -192,7 +212,7 @@
     .catch(err => console.error('Send error:', err));
   });
 
-  // Typing indicator - send typing status when user starts typing
+  // Typing indicator
   const inputField = document.getElementById('message-input');
   inputField.addEventListener('input', function() {
     if (this.value.trim().length > 0) {
@@ -227,11 +247,14 @@
     }
   });
 
+  // Initial load: start polling after 1 second
+  setTimeout(refreshConversation, 500);
+  setInterval(refreshConversation, 1500);
+
   // Scroll to bottom on load
   const container = document.getElementById('message-container');
   if (container) {
     container.scrollTop = container.scrollHeight;
-    lastScrollHeight = container.scrollHeight;
   }
 </script>
 {% endblock %}
