@@ -147,40 +147,41 @@
     <a class="nav-link" href="{% url 'dashboard_admin' %}">
       <i class="fas fa-tachometer-alt"></i> Dashboard
     </a>
-    <a class="nav-link" href="{% url 'admin:studentsApp_student_changelist' %}">
+    <!-- All admin links now open in a new tab so the dashboard remains -->
+    <a class="nav-link" href="{% url 'admin:studentsApp_student_changelist' %}" target="_blank">
       <i class="fas fa-user-graduate"></i> Pupils
     </a>
-    <a class="nav-link" href="{% url 'admin:teachersApp_teacher_changelist' %}">
+    <a class="nav-link" href="{% url 'admin:teachersApp_teacher_changelist' %}" target="_blank">
       <i class="fas fa-chalkboard-user"></i> Teachers
     </a>
-    <a class="nav-link" href="{% url 'admin:classesApp_classroom_changelist' %}">
+    <a class="nav-link" href="{% url 'admin:classesApp_classroom_changelist' %}" target="_blank">
       <i class="fas fa-building"></i> Classes
     </a>
-    <a class="nav-link" href="{% url 'admin:accountsApp_user_changelist' %}">
+    <a class="nav-link" href="{% url 'admin:accountsApp_user_changelist' %}" target="_blank">
       <i class="fas fa-users"></i> Users
     </a>
-    <a class="nav-link" href="{% url 'admin:accountsApp_user_add' %}">
+    <a class="nav-link" href="{% url 'admin:accountsApp_user_add' %}" target="_blank">
       <i class="fas fa-user-plus"></i> Add User
     </a>
 
     <div class="nav-divider">Management</div>
-    <a class="nav-link" href="{% url 'admin:examsApp_exam_changelist' %}">
+    <a class="nav-link" href="{% url 'admin:examsApp_exam_changelist' %}" target="_blank">
       <i class="fas fa-file-alt"></i> Exams
     </a>
-    <a class="nav-link" href="{% url 'admin:classesApp_subjects_changelist' %}">
+    <a class="nav-link" href="{% url 'admin:classesApp_subjects_changelist' %}" target="_blank">
       <i class="fas fa-book"></i> Subjects
     </a>
-    <a class="nav-link" href="{% url 'admin:attendanceApp_attendance_changelist' %}">
+    <a class="nav-link" href="{% url 'admin:attendanceApp_attendance_changelist' %}" target="_blank">
       <i class="fas fa-calendar-check"></i> Attendance
     </a>
-    <!-- ✅ HARDCODED TO MATCH /admin-inbox/ IN URLS.PY -->
+    <!-- Messages link – keep as is (opens the custom admin inbox) -->
     <a class="nav-link" href="/admin-inbox/">
       <i class="fas fa-envelope"></i> Messages
     </a>
-    <a class="nav-link" href="{% url 'admin:parentsApp_parent_changelist' %}">
+    <a class="nav-link" href="{% url 'admin:parentsApp_parent_changelist' %}" target="_blank">
       <i class="fas fa-users"></i> Parents
     </a>
-    <a class="nav-link" href="{% url 'admin:resourcesApp_resource_changelist' %}">
+    <a class="nav-link" href="{% url 'admin:resourcesApp_resource_changelist' %}" target="_blank">
       <i class="fas fa-download"></i> Resources
     </a>
     <a class="nav-link" href="{% url 'notice_list' %}">
