@@ -167,7 +167,7 @@ if not DEBUG:
 USE_X_FORWARDED_HOST = True
 
 # ============================================================================
-# JAZZMIN ADMIN THEME SETTINGS – ADD THIS SECTION
+# JAZZMIN ADMIN THEME SETTINGS – STICKY SIDEBAR ENABLED
 # ============================================================================
 JAZZMIN_SETTINGS = {
     "site_title": "Scholaroid Admin",
@@ -175,7 +175,8 @@ JAZZMIN_SETTINGS = {
     "site_brand": "Scholaroid School Management",
     "welcome_sign": "Welcome to Scholaroid Admin",
     "copyright": "Scholaroid Ltd",
-    # Add a link to your custom dashboard in the top menu
+    "navigation_sticky": True,          # <--- Makes sidebar stick
+    "navigation_expanded": True,
     "topmenu_links": [
         {"name": "Dashboard", "url": "/dashboard/admin/", "permissions": ["auth.view_user"]},
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
