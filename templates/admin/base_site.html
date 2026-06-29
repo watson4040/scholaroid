@@ -10,4 +10,28 @@
 {% block footer %}
   {{ block.super }}
   <script src="{% static 'js/admin.js' %}"></script>
+  <script>
+    // Keep the active sidebar link highlighted and visible
+    (function() {
+      // Find all sidebar links (Jazzmin uses .nav-link)
+      const links = document.querySelectorAll('.nav-sidebar .nav-link');
+      const currentPath = window.location.pathname;
+      
+      links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
+          link.classList.add('active');
+          // Scroll the sidebar to show the active link
+          setTimeout(() => {
+            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }, 100);
+        } else if (href && currentPath === href) {
+          link.classList.add('active');
+          setTimeout(() => {
+            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }, 100);
+        }
+      });
+    })();
+  </script>
 {% endblock %}

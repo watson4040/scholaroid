@@ -167,7 +167,7 @@ if not DEBUG:
 USE_X_FORWARDED_HOST = True
 
 # ============================================================================
-# JAZZMIN ADMIN THEME SETTINGS – STICKY SIDEBAR ENABLED
+# JAZZMIN ADMIN THEME SETTINGS – STICKY SIDEBAR + HEADER
 # ============================================================================
 JAZZMIN_SETTINGS = {
     "site_title": "Scholaroid Admin",
@@ -175,7 +175,10 @@ JAZZMIN_SETTINGS = {
     "site_brand": "Scholaroid School Management",
     "welcome_sign": "Welcome to Scholaroid Admin",
     "copyright": "Scholaroid Ltd",
-    "navigation_sticky": True,          # <--- Makes sidebar stick
+    # Sticky sidebar
+    "navigation_sticky": True,
+    # Sticky top navbar (header)
+    "navbar_sticky": True,               # <--- Keeps the top header fixed
     "navigation_expanded": True,
     "topmenu_links": [
         {"name": "Dashboard", "url": "/dashboard/admin/", "permissions": ["auth.view_user"]},
