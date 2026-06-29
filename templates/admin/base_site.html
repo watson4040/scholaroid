@@ -5,6 +5,38 @@
   {{ block.super }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+  <style>
+    /* Ensure the header is always fixed */
+    .main-header.navbar {
+      position: fixed !important;
+      top: 0 !important;
+      width: 100% !important;
+      z-index: 1030 !important;
+      background: #fff !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+    }
+    /* Push content down so it doesn't hide behind header */
+    .content-wrapper {
+      margin-top: 56px !important; /* adjust based on header height */
+    }
+    /* Sidebar stays fixed */
+    .main-sidebar {
+      position: fixed !important;
+      top: 56px !important;
+      bottom: 0 !important;
+      height: calc(100vh - 56px) !important;
+      overflow-y: auto !important;
+    }
+    @media (max-width: 768px) {
+      .main-sidebar {
+        top: 0 !important;
+        height: 100vh !important;
+      }
+      .content-wrapper {
+        margin-top: 0 !important;
+      }
+    }
+  </style>
 {% endblock %}
 
 {% block footer %}
@@ -13,7 +45,6 @@
   <script>
     // Keep the active sidebar link highlighted and visible
     (function() {
-      // Find all sidebar links (Jazzmin uses .nav-link)
       const links = document.querySelectorAll('.nav-sidebar .nav-link');
       const currentPath = window.location.pathname;
       
@@ -21,15 +52,14 @@
         const href = link.getAttribute('href');
         if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
           link.classList.add('active');
-          // Scroll the sidebar to show the active link
           setTimeout(() => {
             link.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
+          }, 150);
         } else if (href && currentPath === href) {
           link.classList.add('active');
           setTimeout(() => {
             link.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
+          }, 150);
         }
       });
     })();
