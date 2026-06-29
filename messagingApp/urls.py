@@ -21,4 +21,5 @@ urlpatterns = [
     path('api/send-message/<int:user_id>/', views.send_message_api, name='send_message_api'),
     path('api/typing/', views.typing_indicator, name='typing_indicator'),
     path('api/delete-message/', views.delete_message, name='delete_message'),
+    path('api/clear-conversation/<int:user_id>/', views.clear_conversation_api, name='clear_conversation_api'),
 ]

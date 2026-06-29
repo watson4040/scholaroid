@@ -198,3 +198,20 @@ def delete_message(request):
         msg.delete()
         return JsonResponse({'status': 'ok'})
     return JsonResponse({'error': 'POST required'}, status=400)
+
+# ---- NEW: Clear entire conversation ----
+@login_required
+def clear_conversation_api(request, user_id):
+    """Delete all messages between the current user and another user."""
+    if not request.user.is_staff:
+        return JsonResponse({'error': 'Permission denied. Only admins can clear conversations.'}, status=403)
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST required'}, status=400)
+    other = get_object_or_404(User, id=user_id)
+    # Delete all messages between the two users
+    messages_to_delete = Message.objects.filter(
+        (Q(sender=request.user, recipient=other) | Q(sender=other, recipient=request.user))
+    )
+    count = messages_to_delete.count()
+    messages_to_delete.delete()
+    return JsonResponse({'status': 'ok', 'deleted_count': count})
