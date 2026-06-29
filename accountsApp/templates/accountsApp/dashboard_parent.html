@@ -146,10 +146,10 @@
     .stat-number { font-size: 1.5rem; }
     .fab-message { display: block; }
   }
-  /* Message widget */
+
+  /* Message widget – no animation to avoid blink */
   .message-item {
-    transition: all 0.3s ease;
-    animation: fadeIn 0.4s;
+    transition: background 0.2s;
   }
   .message-item:hover {
     background: #f8f9fa;
@@ -160,10 +160,6 @@
   }
   .message-item:hover .delete-btn {
     opacity: 1;
-  }
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-8px); }
-    to { opacity: 1; transform: translateY(0); }
   }
   .typing-indicator {
     display: none;
@@ -275,7 +271,7 @@
       </div>
     </div>
 
-    <!-- Message Widget with auto-refresh -->
+    <!-- Message Widget with auto-refresh (no blink) -->
     <div id="messages" class="card shadow-sm border-0 rounded-4 mb-4">
       <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
         <h5><i class="fas fa-envelope me-2 text-primary"></i> Recent Messages</h5>
@@ -370,20 +366,37 @@
 </div>
 
 <script>
-  const csrfToken = '{{ csrf_token }}';
+  (function() {
+    const csrfToken = '{{ csrf_token }}';
+    const container = document.getElementById('messages-list');
+    const typingIndicator = document.getElementById('typing-indicator');
 
-  function refreshMessages() {
-    fetch('/api/recent-messages/')
-      .then(r => r.json())
-      .then(data => {
-        const container = document.getElementById('messages-list');
-        const typingIndicator = document.getElementById('typing-indicator');
-        if (container) {
+    function getMessageIds() {
+      const items = container.querySelectorAll('li[data-mid]');
+      return Array.from(items).map(li => li.dataset.mid).filter(id => id);
+    }
+
+    function refreshMessages() {
+      fetch('/api/recent-messages/')
+        .then(r => r.json())
+        .then(data => {
+          // Update typing indicator
+          const anyTyping = data.messages && data.messages.some(msg => msg.is_typing);
+          typingIndicator.style.display = anyTyping ? 'block' : 'none';
+
           if (data.messages && data.messages.length > 0) {
-            let anyTyping = data.messages.some(msg => msg.is_typing);
-            typingIndicator.style.display = anyTyping ? 'block' : 'none';
+            // Compare IDs
+            const newIds = data.messages.map(msg => String(msg.id));
+            const currentIds = getMessageIds();
+            const same = newIds.length === currentIds.length && newIds.every(id => currentIds.includes(id));
+            if (same) {
+              // No change – do nothing to avoid blinking
+              return;
+            }
+
+            // Update list
             container.innerHTML = data.messages.map(msg => `
-              <li class="list-group-item d-flex justify-content-between align-items-center message-item" data-mid="${msg.id}">
+              <li class="list-group-item d-flex justify-content-between align-items-center" data-mid="${msg.id}">
                 <div>
                   <strong>${msg.subject}</strong>
                   <span class="badge bg-secondary ms-2">${msg.type}</span>
@@ -398,7 +411,8 @@
                 </div>
               </li>
             `).join('');
-            // Bind delete events
+
+            // Rebind delete events
             container.querySelectorAll('.delete-btn').forEach(btn => {
               btn.addEventListener('click', function(e) {
                 e.preventDefault();
@@ -419,16 +433,41 @@
               });
             });
           } else {
-            container.innerHTML = `<li class="list-group-item text-center text-muted">No messages yet.</li>`;
-            typingIndicator.style.display = 'none';
+            // No messages – show placeholder
+            const placeholder = container.querySelector('.text-center');
+            if (!placeholder) {
+              container.innerHTML = `<li class="list-group-item text-center text-muted">No messages yet.</li>`;
+            }
           }
-        }
-      })
-      .catch(err => console.error('Fetch error:', err));
-  }
+        })
+        .catch(err => console.error('Fetch error:', err));
+    }
 
-  refreshMessages();
-  setInterval(refreshMessages, 1500);
+    // Initial bind for delete buttons on server-rendered content
+    container.querySelectorAll('.delete-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        const mid = this.dataset.mid;
+        if (confirm('Delete this message?')) {
+          fetch('/api/delete-message/', {
+            method: 'POST',
+            headers: {
+              'X-CSRFToken': csrfToken,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message_id: mid })
+          })
+          .then(res => res.json())
+          .then(() => refreshMessages())
+          .catch(err => console.error('Delete error:', err));
+        }
+      });
+    });
+
+    // Start polling every 1.5 seconds
+    refreshMessages();
+    setInterval(refreshMessages, 1500);
+  })();
 </script>
 
 <script>

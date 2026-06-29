@@ -6,11 +6,10 @@ from django.contrib.messages import constants as messages
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config("SECRET_KEY", default="django-insecure-temp-key-change-in-production")
+SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-
-ALLOWED_HOSTS = [h.strip() for h in config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",") if h.strip()]
-CSRF_TRUSTED_ORIGINS = [o.strip() for o in config("CSRF_TRUSTED_ORIGINS", default="").split(",") if o.strip()]
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
+CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="").split(",")
 
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
@@ -166,3 +165,19 @@ if not DEBUG:
     X_FRAME_OPTIONS = "DENY"
 
 USE_X_FORWARDED_HOST = True
+
+# ============================================================================
+# JAZZMIN ADMIN THEME SETTINGS – ADD THIS SECTION
+# ============================================================================
+JAZZMIN_SETTINGS = {
+    "site_title": "Scholaroid Admin",
+    "site_header": "Scholaroid",
+    "site_brand": "Scholaroid School Management",
+    "welcome_sign": "Welcome to Scholaroid Admin",
+    "copyright": "Scholaroid Ltd",
+    # Add a link to your custom dashboard in the top menu
+    "topmenu_links": [
+        {"name": "Dashboard", "url": "/dashboard/admin/", "permissions": ["auth.view_user"]},
+        {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
+    ],
+}
