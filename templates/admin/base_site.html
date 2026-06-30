@@ -5,7 +5,7 @@
   {{ block.super }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* ─── STICKY HEADER ─── */
+    /* Inline styles to ensure header is sticky and always visible */
     #header {
       position: sticky !important;
       top: 0 !important;
@@ -21,11 +21,7 @@
       width: 100% !important;
       border-bottom: 1px solid #e9ecef !important;
     }
-    #header .brand {
-      font-size: 1.1rem !important;
-      font-weight: 600 !important;
-      order: 1 !important;
-    }
+    #header .brand { font-size: 1.1rem !important; font-weight: 600 !important; order: 1 !important; }
     #header .top-menu {
       display: flex !important;
       flex-wrap: wrap !important;
@@ -47,20 +43,9 @@
       background: rgba(40,167,69,0.08) !important;
       border-radius: 20px !important;
     }
-    .sidebar-toggle {
-      order: 2 !important;
-      margin-left: auto !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      background: transparent !important;
-      border: none !important;
-      font-size: 1.3rem !important;
-      padding: 4px 8px !important;
-      cursor: pointer !important;
-    }
+    .sidebar-toggle { order: 2 !important; margin-left: auto !important; display: flex !important; align-items: center !important; justify-content: center !important; background: transparent !important; border: none !important; font-size: 1.3rem !important; padding: 4px 8px !important; cursor: pointer !important; }
 
-    /* ─── FLOATING DASHBOARD BUTTON (mobile only) ─── */
+    /* Floating Dashboard button – shown only on mobile */
     #floating-dashboard-btn {
       position: fixed !important;
       bottom: 24px !important;
@@ -81,13 +66,8 @@
       user-select: none !important;
       transition: transform 0.2s, box-shadow 0.2s !important;
     }
-    #floating-dashboard-btn:hover {
-      transform: scale(1.05) !important;
-      box-shadow: 0 8px 32px rgba(40,167,69,0.55) !important;
-    }
-    #floating-dashboard-btn:active {
-      transform: scale(0.95) !important;
-    }
+    #floating-dashboard-btn:hover { transform: scale(1.05) !important; box-shadow: 0 8px 32px rgba(40,167,69,0.55) !important; }
+    #floating-dashboard-btn:active { transform: scale(0.95) !important; }
     #floating-dashboard-btn a {
       color: white !important;
       text-decoration: none !important;
@@ -95,19 +75,10 @@
       align-items: center !important;
       gap: 8px !important;
     }
-
-    /* Show floating button only on mobile (screens < 768px) */
     @media (max-width: 768px) {
-      #floating-dashboard-btn {
-        display: flex !important;
-      }
-      #header .top-menu .nav-link {
-        font-size: 0.75rem !important;
-        padding: 3px 6px !important;
-      }
-      #header .brand {
-        font-size: 0.95rem !important;
-      }
+      #floating-dashboard-btn { display: flex !important; }
+      #header .top-menu .nav-link { font-size: 0.75rem !important; padding: 3px 6px !important; }
+      #header .brand { font-size: 0.95rem !important; }
     }
   </style>
   <link rel="stylesheet" href="{% static 'css/admin.css' %}">
@@ -123,4 +94,39 @@
   </div>
 
   <script src="{% static 'js/admin.js' %}"></script>
+  <script>
+    (function() {
+      // Keep active sidebar link highlighted
+      const links = document.querySelectorAll('.nav-sidebar .nav-link');
+      const currentPath = window.location.pathname;
+      links.forEach(link => {
+        const href = link.getAttribute('href');
+        if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
+          link.classList.add('active');
+          setTimeout(() => {
+            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }, 100);
+        } else if (href && currentPath === href) {
+          link.classList.add('active');
+          setTimeout(() => {
+            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+          }, 100);
+        }
+      });
+
+      // Prevent auto‑scroll on sidebar clicks (save scroll position)
+      document.querySelectorAll('.nav-sidebar .nav-link, .sidebar .nav-link').forEach(link => {
+        link.addEventListener('click', function() {
+          sessionStorage.setItem('scrollY', window.scrollY);
+        });
+      });
+      window.addEventListener('load', function() {
+        const saved = sessionStorage.getItem('scrollY');
+        if (saved && parseInt(saved) > 0) {
+          window.scrollTo(0, parseInt(saved));
+          sessionStorage.removeItem('scrollY');
+        }
+      });
+    })();
+  </script>
 {% endblock %}
