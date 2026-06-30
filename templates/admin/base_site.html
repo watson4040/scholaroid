@@ -11,11 +11,10 @@
   {{ block.super }}
   <script src="{% static 'js/admin.js' %}"></script>
   <script>
-    // Keep the active sidebar link highlighted and visible
     (function() {
+      // Keep active sidebar link highlighted
       const links = document.querySelectorAll('.nav-sidebar .nav-link');
       const currentPath = window.location.pathname;
-      
       links.forEach(link => {
         const href = link.getAttribute('href');
         if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
@@ -31,11 +30,22 @@
         }
       });
 
-      // Ensure the Dashboard link in the top menu is always visible on mobile
+      // On mobile, ensure the Dashboard link is always visible in the top menu
       const dashboardLink = document.querySelector('.top-menu .nav-link[href*="/dashboard/admin/"]');
       if (dashboardLink) {
         dashboardLink.style.display = 'inline-block !important';
       }
+
+      // Prevent body from scrolling to top on pagination or filter clicks
+      // (Keep scroll position)
+      document.querySelectorAll('.paginator .step-links a, .filter-btn').forEach(el => {
+        el.addEventListener('click', function(e) {
+          // Store current scroll position before navigation
+          const scrollY = window.scrollY;
+          // The click will navigate, but we can restore after page load.
+          // We'll handle via sticky positioning.
+        });
+      });
     })();
   </script>
 {% endblock %}

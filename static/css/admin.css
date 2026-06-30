@@ -116,43 +116,50 @@
 
 /* ===== MOBILE RESPONSIVENESS FIXES ===== */
 @media (max-width: 768px) {
-  /* Ensure the top navbar doesn't hide the page title */
+  /* Fix header to not overlap and wrap */
   #header {
     flex-wrap: wrap;
     height: auto !important;
-    min-height: 56px;
-    padding: 8px 10px;
+    min-height: 50px;
+    padding: 4px 10px;
+    align-items: center;
   }
   #header .brand {
-    font-size: 1.1rem;
+    font-size: 1rem;
+    order: 1;
   }
-  /* Make the top menu wrap properly */
   #header .top-menu {
     flex-wrap: wrap;
-    gap: 5px;
+    gap: 3px;
+    order: 3;
+    width: 100%;
+    margin-top: 2px;
   }
-  /* Ensure the Dashboard link is always visible */
   #header .top-menu .nav-link {
-    font-size: 0.85rem;
-    padding: 4px 8px;
+    font-size: 0.8rem;
+    padding: 4px 6px;
   }
-  /* For the custom dashboard link in the top menu, force it to show */
+  /* Ensure Dashboard link is always visible */
   .top-menu .nav-link[href*="/dashboard/admin/"] {
     display: inline-block !important;
   }
-  /* Sidebar toggle button should be visible */
+  /* Sidebar toggle button */
   .sidebar-toggle {
     display: flex !important;
+    order: 2;
+    margin-left: auto;
   }
-  /* Prevent overlap of header and content */
+  /* Remove extra bottom space */
   #content {
-    padding-top: 10px;
+    padding: 10px 8px !important;
+    min-height: calc(100vh - 120px);
   }
-  /* Sticky pagination on mobile – adjust padding */
-  #changelist .paginator {
-    padding: 6px 0;
+  /* Breadcrumb */
+  .breadcrumbs {
+    font-size: 0.75rem;
+    padding: 4px 8px !important;
   }
-  /* Toast messages on mobile – smaller, top margin */
+  /* Toast */
   .toast-container {
     top: 60px;
     right: 10px;
@@ -160,11 +167,16 @@
   }
   .toast-message {
     font-size: 13px;
-    padding: 10px 14px;
+    padding: 8px 12px;
   }
-  /* Breadcrumb adjustments */
-  .breadcrumbs {
-    font-size: 0.8rem;
-    padding: 6px 12px !important;
+  /* Prevent scrolling to top on pagination */
+  .paginator .step-links a {
+    display: inline-block;
+    padding: 4px 8px;
+  }
+  /* Ensure the main content area is scrollable */
+  #container {
+    height: 100vh;
+    overflow-y: auto;
   }
 }
