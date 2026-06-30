@@ -167,7 +167,7 @@ if not DEBUG:
 USE_X_FORWARDED_HOST = True
 
 # ============================================================================
-# JAZZMIN ADMIN THEME SETTINGS – FULL CUSTOM NAVIGATION
+# JAZZMIN ADMIN THEME SETTINGS – DASHBOARD IN TOP MENU
 # ============================================================================
 JAZZMIN_SETTINGS = {
     "site_title": "Scholaroid Admin",
@@ -175,11 +175,10 @@ JAZZMIN_SETTINGS = {
     "site_brand": "Scholaroid School Management",
     "welcome_sign": "Welcome to Scholaroid Admin",
     "copyright": "Scholaroid Ltd",
-    # Sticky sidebar and header
     "navigation_sticky": True,
     "navbar_sticky": True,
     "navigation_expanded": True,
-    # Custom sidebar navigation
+    # Custom sidebar navigation (already fine)
     "navigation": [
         {
             "name": "Dashboard",
@@ -226,7 +225,7 @@ JAZZMIN_SETTINGS = {
             ],
         },
     ],
-    # Top menu links – includes Dashboard so it's always visible on mobile
+    # TOP MENU – Dashboard link always visible (like Logout)
     "topmenu_links": [
         {"name": "Dashboard", "url": "/dashboard/admin/", "permissions": ["auth.view_user"]},
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
