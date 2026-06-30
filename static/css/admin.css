@@ -66,7 +66,7 @@
 /* ─── STICKY PAGINATION & ACTIONS ─── */
 #changelist .changelist-actions {
   position: sticky;
-  top: 52px; /* header height */
+  top: 52px;
   z-index: 10;
   background: white;
   padding: 10px 0;
@@ -91,7 +91,13 @@
   background-color: #218838 !important;
 }
 
-/* ─── FIXED HEADER LAYOUT ─── */
+/* ─── FIXED HEADER & FULL HEIGHT LAYOUT ─── */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
 #header {
   position: fixed !important;
   top: 0 !important;
@@ -109,10 +115,10 @@
   border-bottom: 1px solid #e9ecef !important;
 }
 #container {
-  padding-top: 52px; /* exactly the header height */
-  display: flex;
-  height: 100vh;
-  overflow: hidden;
+  padding-top: 52px !important;
+  display: flex !important;
+  height: calc(100vh - 52px) !important;
+  overflow: hidden !important;
 }
 #content {
   flex: 1;
