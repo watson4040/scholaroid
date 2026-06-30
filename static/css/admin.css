@@ -1,4 +1,4 @@
-/* ─── HEADER: FLEX, WRAP, STICKY ─── */
+/* ─── HEADER: FIXED, ALWAYS VISIBLE ─── */
 #header {
   position: fixed !important;
   top: 0 !important;
