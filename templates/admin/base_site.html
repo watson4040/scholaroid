@@ -15,6 +15,7 @@
       // Keep active sidebar link highlighted and scroll into view
       const links = document.querySelectorAll('.nav-sidebar .nav-link');
       const currentPath = window.location.pathname;
+      
       links.forEach(link => {
         const href = link.getAttribute('href');
         if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
@@ -30,14 +31,15 @@
         }
       });
 
-      // Prevent auto-scroll to top on pagination/filter clicks (we rely on sticky positioning)
+      // Ensure the Dashboard link is always visible (it's in the sidebar navigation)
+      // No extra action needed – it's in the custom navigation menu.
+
+      // Prevent auto-scroll to top on pagination/filter clicks
       document.querySelectorAll('.paginator .step-links a, .filter-btn').forEach(el => {
         el.addEventListener('click', function(e) {
-          // No action needed – sticky pagination keeps it in view
+          // Sticky positioning keeps the pagination in view – no action needed.
         });
       });
-
-      // Ensure the Dashboard link is always visible in the sidebar (it's in the custom navigation)
     })();
   </script>
 {% endblock %}
