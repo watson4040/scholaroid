@@ -107,7 +107,7 @@
   background-color: #218838 !important;
 }
 
-/* ===== FIX: Content starts at top ===== */
+/* ===== LAYOUT FIX: content starts at top, no auto-scroll ===== */
 #container {
   display: flex;
   flex-direction: column;
@@ -119,12 +119,10 @@
   flex: 1;
   overflow-y: auto;
   padding: 15px 20px !important;
-  /* Ensure content starts at the top */
   margin-top: 0 !important;
   padding-top: 10px !important;
 }
 
-/* Sidebar sticky */
 .admin-sidebar {
   position: sticky;
   top: 0;
@@ -132,12 +130,11 @@
   overflow-y: auto;
 }
 
-/* Ensure header doesn't push content down */
 #header {
   flex-shrink: 0;
 }
 
-/* ===== MOBILE RESPONSIVENESS FIXES ===== */
+/* ===== MOBILE RESPONSIVENESS ===== */
 @media (max-width: 768px) {
   #header {
     flex-wrap: wrap;
@@ -156,10 +153,18 @@
     order: 3;
     width: 100%;
     margin-top: 2px;
+    justify-content: flex-start;
   }
   #header .top-menu .nav-link {
     font-size: 0.8rem;
     padding: 4px 6px;
+    display: inline-block !important;
+  }
+  /* Ensure the Dashboard link is never hidden */
+  .top-menu .nav-link[href*="/dashboard/admin/"] {
+    display: inline-block !important;
+    font-weight: bold;
+    color: #28a745 !important;
   }
   .sidebar-toggle {
     display: flex !important;

@@ -167,7 +167,7 @@ if not DEBUG:
 USE_X_FORWARDED_HOST = True
 
 # ============================================================================
-# JAZZMIN ADMIN THEME SETTINGS – CUSTOM SIDEBAR NAVIGATION
+# JAZZMIN ADMIN THEME SETTINGS – FULL CUSTOM NAVIGATION
 # ============================================================================
 JAZZMIN_SETTINGS = {
     "site_title": "Scholaroid Admin",
@@ -179,7 +179,7 @@ JAZZMIN_SETTINGS = {
     "navigation_sticky": True,
     "navbar_sticky": True,
     "navigation_expanded": True,
-    # Custom navigation menu – adds Dashboard link to sidebar
+    # Custom sidebar navigation
     "navigation": [
         {
             "name": "Dashboard",
@@ -191,99 +191,44 @@ JAZZMIN_SETTINGS = {
             "name": "Accounts",
             "icon": "fas fa-users",
             "children": [
-                {
-                    "name": "Users",
-                    "url": "admin:accountsApp_user_changelist",
-                    "icon": "fas fa-user",
-                },
-                {
-                    "name": "Pupils",
-                    "url": "admin:studentsApp_student_changelist",
-                    "icon": "fas fa-user-graduate",
-                },
-                {
-                    "name": "Teachers",
-                    "url": "admin:teachersApp_teacher_changelist",
-                    "icon": "fas fa-chalkboard-user",
-                },
-                {
-                    "name": "Parents",
-                    "url": "admin:parentsApp_parent_changelist",
-                    "icon": "fas fa-users",
-                },
+                {"name": "Users", "url": "admin:accountsApp_user_changelist", "icon": "fas fa-user"},
+                {"name": "Pupils", "url": "admin:studentsApp_student_changelist", "icon": "fas fa-user-graduate"},
+                {"name": "Teachers", "url": "admin:teachersApp_teacher_changelist", "icon": "fas fa-chalkboard-user"},
+                {"name": "Parents", "url": "admin:parentsApp_parent_changelist", "icon": "fas fa-users"},
             ],
         },
         {
             "name": "Academics",
             "icon": "fas fa-book",
             "children": [
-                {
-                    "name": "Classes",
-                    "url": "admin:classesApp_classroom_changelist",
-                    "icon": "fas fa-building",
-                },
-                {
-                    "name": "Subjects",
-                    "url": "admin:classesApp_subjects_changelist",
-                    "icon": "fas fa-book",
-                },
-                {
-                    "name": "Exams",
-                    "url": "admin:examsApp_exam_changelist",
-                    "icon": "fas fa-file-alt",
-                },
-                {
-                    "name": "Exam Results",
-                    "url": "admin:examsApp_examresult_changelist",
-                    "icon": "fas fa-chart-line",
-                },
+                {"name": "Classes", "url": "admin:classesApp_classroom_changelist", "icon": "fas fa-building"},
+                {"name": "Subjects", "url": "admin:classesApp_subjects_changelist", "icon": "fas fa-book"},
+                {"name": "Exams", "url": "admin:examsApp_exam_changelist", "icon": "fas fa-file-alt"},
+                {"name": "Exam Results", "url": "admin:examsApp_examresult_changelist", "icon": "fas fa-chart-line"},
             ],
         },
         {
             "name": "Operations",
             "icon": "fas fa-tasks",
             "children": [
-                {
-                    "name": "Attendance",
-                    "url": "admin:attendanceApp_attendance_changelist",
-                    "icon": "fas fa-calendar-check",
-                },
-                {
-                    "name": "Resources",
-                    "url": "admin:resourcesApp_resource_changelist",
-                    "icon": "fas fa-download",
-                },
-                {
-                    "name": "Notices",
-                    "url": "admin:accountsApp_notice_changelist",
-                    "icon": "fas fa-bell",
-                },
+                {"name": "Attendance", "url": "admin:attendanceApp_attendance_changelist", "icon": "fas fa-calendar-check"},
+                {"name": "Resources", "url": "admin:resourcesApp_resource_changelist", "icon": "fas fa-download"},
+                {"name": "Notices", "url": "admin:accountsApp_notice_changelist", "icon": "fas fa-bell"},
             ],
         },
         {
             "name": "Fees",
             "icon": "fas fa-money-bill-wave",
             "children": [
-                {
-                    "name": "Fee Structures",
-                    "url": "admin:feesApp_feestructure_changelist",
-                    "icon": "fas fa-file-invoice",
-                },
-                {
-                    "name": "Invoices",
-                    "url": "admin:feesApp_invoice_changelist",
-                    "icon": "fas fa-receipt",
-                },
-                {
-                    "name": "Payments",
-                    "url": "admin:feesApp_payment_changelist",
-                    "icon": "fas fa-credit-card",
-                },
+                {"name": "Fee Structures", "url": "admin:feesApp_feestructure_changelist", "icon": "fas fa-file-invoice"},
+                {"name": "Invoices", "url": "admin:feesApp_invoice_changelist", "icon": "fas fa-receipt"},
+                {"name": "Payments", "url": "admin:feesApp_payment_changelist", "icon": "fas fa-credit-card"},
             ],
         },
     ],
-    # Top menu link (optional – keep for quick access)
+    # Top menu links – includes Dashboard so it's always visible on mobile
     "topmenu_links": [
+        {"name": "Dashboard", "url": "/dashboard/admin/", "permissions": ["auth.view_user"]},
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
     ],
 }
