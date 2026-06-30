@@ -12,11 +12,10 @@
   <div id="floating-dashboard-btn">
     <a href="/dashboard/admin/"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
   </div>
-
   <script src="{% static 'js/admin.js' %}"></script>
   <script>
     (function() {
-      // ─── HIGHLIGHT ACTIVE SIDEBAR LINK ───
+      // Highlight active sidebar link
       const links = document.querySelectorAll('.nav-sidebar .nav-link');
       const currentPath = window.location.pathname;
       links.forEach(link => {
