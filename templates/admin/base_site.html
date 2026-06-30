@@ -5,6 +5,75 @@
   {{ block.super }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+  <!-- FORCE HEADER FIXED WITH INLINE STYLES (highest priority) -->
+  <style>
+    #header, .main-header, .navbar, .navbar-nav, nav.navbar {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 1030 !important;
+      background: #fff !important;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+      display: flex !important;
+      flex-wrap: wrap !important;
+      align-items: center !important;
+      justify-content: space-between !important;
+      padding: 6px 16px !important;
+      min-height: 52px !important;
+      border-bottom: 1px solid #e9ecef !important;
+      margin-bottom: 0 !important;
+    }
+    /* Force any header class to be fixed */
+    .navbar {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      z-index: 1030 !important;
+    }
+    body {
+      padding-top: 52px !important;
+    }
+    .content {
+      margin-top: 0 !important;
+    }
+    #container, .container {
+      margin-top: 0 !important;
+      padding-top: 0 !important;
+    }
+    /* Floating Dashboard button – mobile only */
+    #floating-dashboard-btn {
+      position: fixed !important;
+      bottom: 24px !important;
+      right: 24px !important;
+      z-index: 9999 !important;
+      background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+      color: #fff !important;
+      padding: 14px 22px !important;
+      border-radius: 60px !important;
+      box-shadow: 0 6px 24px rgba(40,167,69,0.45) !important;
+      font-size: 15px !important;
+      font-weight: 600 !important;
+      cursor: pointer !important;
+      display: none !important;
+      align-items: center !important;
+      gap: 8px !important;
+      border: none !important;
+    }
+    #floating-dashboard-btn:hover { transform: scale(1.05); box-shadow: 0 8px 32px rgba(40,167,69,0.55); }
+    #floating-dashboard-btn:active { transform: scale(0.95); }
+    #floating-dashboard-btn a {
+      color: white !important;
+      text-decoration: none !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+    @media (max-width: 768px) {
+      #floating-dashboard-btn { display: flex !important; }
+    }
+  </style>
 {% endblock %}
 
 {% block footer %}
