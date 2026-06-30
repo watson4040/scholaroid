@@ -16,7 +16,7 @@
   <script src="{% static 'js/admin.js' %}"></script>
   <script>
     (function() {
-      // ─── DISABLE AUTO-SCROLL ON PAGE LOAD ───
+      // ─── DISABLE BROWSER AUTO‑SCROLL RESTORATION ───
       if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
       }
@@ -28,8 +28,9 @@
         });
       });
 
-      // ─── RESTORE SCROLL POSITION ───
-      window.addEventListener('load', function() {
+      // ─── RESTORE SCROLL POSITION IMMEDIATELY ───
+      // Run this as soon as possible (before the browser's default scroll)
+      function restoreScroll() {
         const saved = sessionStorage.getItem('scrollY');
         if (saved !== null) {
           const y = parseInt(saved, 10);
@@ -38,7 +39,17 @@
           }
           sessionStorage.removeItem('scrollY');
         }
-      });
+      }
+
+      // Try to run on DOMContentLoaded (earlier than load)
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', restoreScroll);
+      } else {
+        restoreScroll();
+      }
+
+      // Also run on load to catch any late restoration
+      window.addEventListener('load', restoreScroll);
 
       // ─── HIGHLIGHT ACTIVE SIDEBAR LINK ───
       const links = document.querySelectorAll('.nav-sidebar .nav-link');

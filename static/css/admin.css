@@ -35,6 +35,7 @@
   flex: 1 !important;
   overflow-y: auto !important;
   padding: 15px 20px !important;
+  scroll-behavior: auto !important; /* prevent smooth scroll on load */
 }
 
 /* ─── STICKY PAGINATION ─── */
