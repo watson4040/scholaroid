@@ -1,4 +1,4 @@
-/* Toast notifications */
+/* ─── TOAST NOTIFICATIONS ─── */
 .toast-container {
   position: fixed;
   top: 80px;
@@ -34,7 +34,7 @@
   to { transform: translateX(0); opacity: 1; }
 }
 
-/* Fade-in rows */
+/* ─── TABLE ROW ANIMATIONS ─── */
 #changelist .results tbody tr {
   animation: fadeIn 0.3s ease;
 }
@@ -47,7 +47,7 @@
   transition: background 0.2s;
 }
 
-/* Button feedback */
+/* ─── BUTTON FEEDBACK ─── */
 .object-tools .addlink,
 .submit-row input[type="submit"] {
   transition: transform 0.15s, box-shadow 0.15s;
@@ -63,7 +63,7 @@
   background: #e9ecef;
 }
 
-/* Sticky pagination & actions */
+/* ─── STICKY PAGINATION & ACTIONS ─── */
 #changelist .changelist-actions {
   position: sticky;
   top: 0;
@@ -91,7 +91,7 @@
   background-color: #218838 !important;
 }
 
-/* ========== GLOBAL LAYOUT: STICKY HEADER ========== */
+/* ─── LAYOUT: STICKY HEADER, SCROLLABLE CONTENT ─── */
 #container {
   display: flex;
   flex-direction: column;
@@ -128,7 +128,7 @@
   border-bottom: 1px solid #e9ecef !important;
 }
 
-/* ========== MOBILE RESPONSIVENESS ========== */
+/* ─── MOBILE RESPONSIVENESS ─── */
 @media (max-width: 768px) {
   #header .brand { font-size: 1rem; order: 1; }
   #header .top-menu {

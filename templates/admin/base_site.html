@@ -5,7 +5,7 @@
   {{ block.super }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <style>
-    /* Inline styles to ensure header is sticky and always visible */
+    /* ─── STICKY HEADER (inline for reliability) ─── */
     #header {
       position: sticky !important;
       top: 0 !important;
@@ -45,7 +45,7 @@
     }
     .sidebar-toggle { order: 2 !important; margin-left: auto !important; display: flex !important; align-items: center !important; justify-content: center !important; background: transparent !important; border: none !important; font-size: 1.3rem !important; padding: 4px 8px !important; cursor: pointer !important; }
 
-    /* Floating Dashboard button – shown only on mobile */
+    /* ─── FLOATING DASHBOARD BUTTON (mobile only) ─── */
     #floating-dashboard-btn {
       position: fixed !important;
       bottom: 24px !important;
@@ -86,7 +86,7 @@
 
 {% block footer %}
   {{ block.super }}
-  <!-- Floating Dashboard Button (HTML) -->
+  <!-- Floating Dashboard Button -->
   <div id="floating-dashboard-btn">
     <a href="/dashboard/admin/">
       <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -96,25 +96,21 @@
   <script src="{% static 'js/admin.js' %}"></script>
   <script>
     (function() {
-      // Keep active sidebar link highlighted
+      // ─── Highlight active sidebar link ───
       const links = document.querySelectorAll('.nav-sidebar .nav-link');
       const currentPath = window.location.pathname;
       links.forEach(link => {
         const href = link.getAttribute('href');
         if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
           link.classList.add('active');
-          setTimeout(() => {
-            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
+          setTimeout(() => link.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
         } else if (href && currentPath === href) {
           link.classList.add('active');
-          setTimeout(() => {
-            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
+          setTimeout(() => link.scrollIntoView({ block: 'center', behavior: 'smooth' }), 100);
         }
       });
 
-      // Prevent auto‑scroll on sidebar clicks (save scroll position)
+      // ─── Prevent auto‑scroll on sidebar clicks ───
       document.querySelectorAll('.nav-sidebar .nav-link, .sidebar .nav-link').forEach(link => {
         link.addEventListener('click', function() {
           sessionStorage.setItem('scrollY', window.scrollY);

@@ -59,3 +59,8 @@
     });
 
 })();
+// This file is minimal; the main logic is in base_site.html.
+// It exists only to satisfy the static file reference.
+(function() {
+  // The logic is already present in base_site.html.
+})();
