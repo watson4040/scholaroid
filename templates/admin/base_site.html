@@ -14,8 +14,8 @@
   </div>
   <script src="{% static 'js/admin.js' %}"></script>
   <script>
+    // Highlight active sidebar link
     (function() {
-      // Highlight active sidebar link
       const links = document.querySelectorAll('.nav-sidebar .nav-link');
       const currentPath = window.location.pathname;
       links.forEach(link => {

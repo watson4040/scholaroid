@@ -15,42 +15,6 @@
   min-height: 52px !important;
   border-bottom: 1px solid #e9ecef !important;
 }
-#header .brand {
-  font-size: 1.1rem !important;
-  font-weight: 600 !important;
-  flex-shrink: 0 !important;
-}
-#header .top-menu {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  gap: 4px !important;
-  align-items: center !important;
-  flex: 1 1 auto !important;
-  justify-content: flex-end !important;
-}
-#header .top-menu .nav-link {
-  font-size: 0.85rem !important;
-  padding: 4px 10px !important;
-  display: inline-block !important;
-  white-space: nowrap !important;
-}
-.top-menu .nav-link[href*="/dashboard/admin/"] {
-  font-weight: bold !important;
-  color: #28a745 !important;
-  background: rgba(40,167,69,0.08) !important;
-  border-radius: 20px !important;
-}
-.sidebar-toggle {
-  display: flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: transparent !important;
-  border: none !important;
-  font-size: 1.3rem !important;
-  padding: 4px 8px !important;
-  cursor: pointer !important;
-  flex-shrink: 0 !important;
-}
 
 /* ─── SIDEBAR STICKY ─── */
 .sidebar, .main-sidebar {
@@ -121,8 +85,4 @@
 }
 @media (max-width: 768px) {
   #floating-dashboard-btn { display: flex !important; }
-  #header .top-menu { justify-content: flex-start !important; }
-  #header .top-menu .nav-link { font-size: 0.75rem !important; padding: 3px 6px !important; }
-  #header .brand { font-size: 0.95rem !important; }
-  .sidebar-toggle { margin-left: auto !important; }
 }
