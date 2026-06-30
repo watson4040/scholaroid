@@ -4,41 +4,6 @@
 {% block extrahead %}
   {{ block.super }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    /* Floating Dashboard button – mobile only */
-    #floating-dashboard-btn {
-      position: fixed !important;
-      bottom: 24px !important;
-      right: 24px !important;
-      z-index: 9999 !important;
-      background: linear-gradient(135deg, #28a745, #1e7e34) !important;
-      color: #fff !important;
-      padding: 14px 22px !important;
-      border-radius: 60px !important;
-      box-shadow: 0 6px 24px rgba(40,167,69,0.45) !important;
-      font-size: 15px !important;
-      font-weight: 600 !important;
-      cursor: pointer !important;
-      display: none !important;
-      align-items: center !important;
-      gap: 8px !important;
-      border: none !important;
-      user-select: none !important;
-      transition: transform 0.2s, box-shadow 0.2s !important;
-    }
-    #floating-dashboard-btn:hover { transform: scale(1.05) !important; box-shadow: 0 8px 32px rgba(40,167,69,0.55) !important; }
-    #floating-dashboard-btn:active { transform: scale(0.95) !important; }
-    #floating-dashboard-btn a {
-      color: white !important;
-      text-decoration: none !important;
-      display: flex !important;
-      align-items: center !important;
-      gap: 8px !important;
-    }
-    @media (max-width: 768px) {
-      #floating-dashboard-btn { display: flex !important; }
-    }
-  </style>
   <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 {% endblock %}
 
@@ -51,7 +16,7 @@
   <script src="{% static 'js/admin.js' %}"></script>
   <script>
     (function() {
-      // ─── DISABLE BROWSER AUTO‑SCROLL RESTORATION ───
+      // ─── DISABLE AUTO-SCROLL ON PAGE LOAD ───
       if ('scrollRestoration' in history) {
         history.scrollRestoration = 'manual';
       }
@@ -63,7 +28,7 @@
         });
       });
 
-      // ─── RESTORE SCROLL POSITION ON PAGE LOAD ───
+      // ─── RESTORE SCROLL POSITION ───
       window.addEventListener('load', function() {
         const saved = sessionStorage.getItem('scrollY');
         if (saved !== null) {
