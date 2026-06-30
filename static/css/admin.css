@@ -107,35 +107,64 @@
   background-color: #218838 !important;
 }
 
-/* ===== STICKY HEADER OVERRIDE ===== */
-/* These are also in base_site.html, but we duplicate for safety */
-.main-header.navbar {
-  position: fixed !important;
-  top: 0 !important;
-  width: 100% !important;
-  z-index: 1030 !important;
-  background: #fff !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+.admin-sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
 }
 
-.content-wrapper {
-  margin-top: 56px !important; /* adjust if header height changes */
-}
-
-.main-sidebar {
-  position: fixed !important;
-  top: 56px !important;
-  bottom: 0 !important;
-  height: calc(100vh - 56px) !important;
-  overflow-y: auto !important;
-}
-
+/* ===== MOBILE RESPONSIVENESS FIXES ===== */
 @media (max-width: 768px) {
-  .main-sidebar {
-    top: 0 !important;
-    height: 100vh !important;
+  /* Ensure the top navbar doesn't hide the page title */
+  #header {
+    flex-wrap: wrap;
+    height: auto !important;
+    min-height: 56px;
+    padding: 8px 10px;
   }
-  .content-wrapper {
-    margin-top: 0 !important;
+  #header .brand {
+    font-size: 1.1rem;
+  }
+  /* Make the top menu wrap properly */
+  #header .top-menu {
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+  /* Ensure the Dashboard link is always visible */
+  #header .top-menu .nav-link {
+    font-size: 0.85rem;
+    padding: 4px 8px;
+  }
+  /* For the custom dashboard link in the top menu, force it to show */
+  .top-menu .nav-link[href*="/dashboard/admin/"] {
+    display: inline-block !important;
+  }
+  /* Sidebar toggle button should be visible */
+  .sidebar-toggle {
+    display: flex !important;
+  }
+  /* Prevent overlap of header and content */
+  #content {
+    padding-top: 10px;
+  }
+  /* Sticky pagination on mobile – adjust padding */
+  #changelist .paginator {
+    padding: 6px 0;
+  }
+  /* Toast messages on mobile – smaller, top margin */
+  .toast-container {
+    top: 60px;
+    right: 10px;
+    max-width: 90%;
+  }
+  .toast-message {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+  /* Breadcrumb adjustments */
+  .breadcrumbs {
+    font-size: 0.8rem;
+    padding: 6px 12px !important;
   }
 }
