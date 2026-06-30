@@ -107,7 +107,7 @@
   background-color: #218838 !important;
 }
 
-/* ===== LAYOUT FIX: content starts at top, no auto-scroll ===== */
+/* ===== LAYOUT FIX: content starts at top ===== */
 #container {
   display: flex;
   flex-direction: column;
@@ -134,7 +134,7 @@
   flex-shrink: 0;
 }
 
-/* ===== MOBILE RESPONSIVENESS – HEADER VISIBILITY ===== */
+/* ===== MOBILE RESPONSIVENESS – FORCE DASHBOARD LINK VISIBLE ===== */
 @media (max-width: 768px) {
   #header {
     flex-wrap: wrap;
@@ -160,7 +160,7 @@
     padding: 4px 6px;
     display: inline-block !important;
   }
-  /* Ensure Dashboard link is always visible */
+  /* Force the Dashboard link to always be visible */
   .top-menu .nav-link[href*="/dashboard/admin/"] {
     display: inline-block !important;
     font-weight: bold;

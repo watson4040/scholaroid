@@ -167,7 +167,7 @@ if not DEBUG:
 USE_X_FORWARDED_HOST = True
 
 # ============================================================================
-# JAZZMIN ADMIN THEME SETTINGS – DASHBOARD IN TOP MENU
+# JAZZMIN ADMIN THEME SETTINGS – DASHBOARD IN TOP MENU (VISIBLE ON MOBILE)
 # ============================================================================
 JAZZMIN_SETTINGS = {
     "site_title": "Scholaroid Admin",
@@ -178,14 +178,8 @@ JAZZMIN_SETTINGS = {
     "navigation_sticky": True,
     "navbar_sticky": True,
     "navigation_expanded": True,
-    # Custom sidebar navigation (already fine)
+    # Custom sidebar navigation (optional – keep as is)
     "navigation": [
-        {
-            "name": "Dashboard",
-            "url": "/dashboard/admin/",
-            "icon": "fas fa-tachometer-alt",
-            "permissions": ["auth.view_user"],
-        },
         {
             "name": "Accounts",
             "icon": "fas fa-users",
@@ -225,7 +219,7 @@ JAZZMIN_SETTINGS = {
             ],
         },
     ],
-    # TOP MENU – Dashboard link always visible (like Logout)
+    # TOP MENU – Dashboard and Home links always visible
     "topmenu_links": [
         {"name": "Dashboard", "url": "/dashboard/admin/", "permissions": ["auth.view_user"]},
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]},
