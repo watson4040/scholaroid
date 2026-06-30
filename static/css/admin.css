@@ -1,202 +1,36 @@
-/* Toast notifications */
-.toast-container {
+/* ===== FLOATING DASHBOARD BUTTON – cute & always visible on mobile ===== */
+#floating-dashboard-btn {
   position: fixed;
-  top: 80px;
-  right: 20px;
+  bottom: 24px;
+  right: 24px;
   z-index: 9999;
-  max-width: 350px;
-}
-
-.toast-message {
-  background: #fff;
-  border-radius: 8px;
-  padding: 12px 20px;
-  margin-bottom: 10px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  border-left: 4px solid #28a745;
-  animation: slideIn 0.3s ease forwards;
+  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  color: white;
+  padding: 14px 22px;
+  border-radius: 60px;
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.5);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 14px;
+  gap: 8px;
+  transition: transform 0.2s, box-shadow 0.2s;
+  border: none;
+  user-select: none;
+  backdrop-filter: blur(2px);
 }
-.toast-message.error {
-  border-left-color: #dc3545;
+#floating-dashboard-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 28px rgba(40, 167, 69, 0.6);
 }
-.toast-message.warning {
-  border-left-color: #ffc107;
-}
-.toast-message.info {
-  border-left-color: #17a2b8;
-}
-.toast-message i {
-  font-size: 20px;
-}
-.toast-message .close-toast {
-  margin-left: auto;
-  cursor: pointer;
-  font-weight: bold;
-  color: #999;
+#floating-dashboard-btn:active {
+  transform: scale(0.95);
 }
 
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-/* Fade-in rows */
-#changelist .results tbody tr {
-  animation: fadeIn 0.3s ease;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Row hover */
-#changelist .results tbody tr:hover {
-  background-color: #f0f4ff !important;
-  transition: background 0.2s;
-}
-
-/* Button feedback */
-.object-tools .addlink,
-.submit-row input[type="submit"] {
-  transition: transform 0.15s, box-shadow 0.15s;
-}
-.object-tools .addlink:active,
-.submit-row input[type="submit"]:active {
-  transform: scale(0.96);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-}
-
-/* Pagination focus */
-.paginator .step-links a:focus {
-  outline: 2px solid #007bff;
-  outline-offset: 2px;
-  background: #e9ecef;
-}
-
-/* ===== GLOBAL STICKY PAGINATION & ACTIONS ===== */
-#changelist .changelist-actions {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: white;
-  padding: 10px 0;
-  border-bottom: 1px solid #ccc;
-}
-
-#changelist .paginator {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 10px 0;
-  border-top: 1px solid #ccc;
-  z-index: 5;
-}
-
-.object-tools .addlink {
-  background-color: #28a745 !important;
-  color: white !important;
-  padding: 6px 14px !important;
-  border-radius: 4px !important;
-  font-weight: bold !important;
-}
-.object-tools .addlink:hover {
-  background-color: #218838 !important;
-}
-
-/* ===== LAYOUT FIX: content starts at top ===== */
-#container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
-}
-
-#content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 15px 20px !important;
-  margin-top: 0 !important;
-  padding-top: 10px !important;
-}
-
-.admin-sidebar {
-  position: sticky;
-  top: 0;
-  height: 100vh;
-  overflow-y: auto;
-}
-
-#header {
-  flex-shrink: 0;
-}
-
-/* ===== MOBILE RESPONSIVENESS – FORCE DASHBOARD LINK VISIBLE ===== */
-@media (max-width: 768px) {
-  #header {
-    flex-wrap: wrap;
-    height: auto !important;
-    min-height: 50px;
-    padding: 4px 10px;
-    align-items: center;
+/* Hide on desktop */
+@media (min-width: 769px) {
+  #floating-dashboard-btn {
+    display: none !important;
   }
-  #header .brand {
-    font-size: 1rem;
-    order: 1;
-  }
-  #header .top-menu {
-    flex-wrap: wrap;
-    gap: 3px;
-    order: 3;
-    width: 100%;
-    margin-top: 2px;
-    justify-content: flex-start;
-    display: flex !important;
-    overflow: visible !important;
-  }
-  #header .top-menu .nav-link {
-    font-size: 0.8rem;
-    padding: 4px 6px;
-    display: inline-block !important;
-    white-space: nowrap;
-  }
-  /* Force the Dashboard link to always be visible and prominent */
-  .top-menu .nav-link[href*="/dashboard/admin/"] {
-    display: inline-block !important;
-    font-weight: bold;
-    color: #28a745 !important;
-    background: #e8f5e9;
-    padding: 2px 8px !important;
-    border-radius: 4px;
-  }
-  .sidebar-toggle {
-    display: flex !important;
-    order: 2;
-    margin-left: auto;
-  }
-  #content {
-    padding: 8px 10px !important;
-    padding-top: 5px !important;
-  }
-  .breadcrumbs {
-    font-size: 0.75rem;
-    padding: 4px 8px !important;
-  }
-  .toast-container {
-    top: 60px;
-    right: 10px;
-    max-width: 90%;
-  }
-  .toast-message {
-    font-size: 13px;
-    padding: 8px 12px;
-  }
-}
-
-/* Prevent auto-scroll when clicking sidebar links */
-.nav-sidebar .nav-link {
-  scroll-margin-block-start: 0 !important;
 }

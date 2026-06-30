@@ -2,46 +2,17 @@
     'use strict';
 
     // ----------------------------------------------------------------
-    // 1. Add a floating Dashboard button on mobile (always visible)
+    // 1. Add floating Dashboard button (will be hidden on desktop by CSS)
     // ----------------------------------------------------------------
     function addFloatingDashboardButton() {
-        // Only for screens smaller than 768px (mobile)
-        if (window.innerWidth >= 768) return;
-
-        // Check if button already exists
+        // Avoid duplicates
         if (document.getElementById('floating-dashboard-btn')) return;
 
         const btn = document.createElement('div');
         btn.id = 'floating-dashboard-btn';
-        btn.innerHTML = '<i class="fas fa-tachometer-alt" style="margin-right: 6px;"></i> Dashboard';
-        btn.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 9999;
-            background: #28a745;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 50px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            font-size: 14px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border: none;
-        `;
+        btn.innerHTML = '<i class="fas fa-tachometer-alt" style="margin-right: 8px;"></i> Dashboard';
         btn.addEventListener('click', function() {
             window.location.href = '/dashboard/admin/';
-        });
-        // Hover effect (on desktop, but works on mobile too)
-        btn.addEventListener('touchstart', function() {
-            this.style.transform = 'scale(0.95)';
-        });
-        btn.addEventListener('touchend', function() {
-            this.style.transform = 'scale(1)';
         });
         document.body.appendChild(btn);
     }
@@ -68,7 +39,7 @@
     }
 
     // ----------------------------------------------------------------
-    // 3. Keep active sidebar link highlighted and visible
+    // 3. Highlight active sidebar link
     // ----------------------------------------------------------------
     function highlightActiveLink() {
         const links = document.querySelectorAll('.nav-sidebar .nav-link');
@@ -90,24 +61,12 @@
     }
 
     // ----------------------------------------------------------------
-    // 4. Run on DOM ready and on resize (to re-check screen width)
+    // 4. Run on load
     // ----------------------------------------------------------------
     document.addEventListener('DOMContentLoaded', function() {
         addFloatingDashboardButton();
         preventAutoScroll();
         highlightActiveLink();
-    });
-
-    // Re-run on resize (for orientation changes)
-    let resizeTimer;
-    window.addEventListener('resize', function() {
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-            // Remove old button if it exists and re-add based on new width
-            const oldBtn = document.getElementById('floating-dashboard-btn');
-            if (oldBtn) oldBtn.remove();
-            addFloatingDashboardButton();
-        }, 300);
     });
 
 })();

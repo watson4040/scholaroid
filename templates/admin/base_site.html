@@ -4,27 +4,6 @@
 {% block extrahead %}
   {{ block.super }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Inline CSS for mobile header (optional, but keep for safety) -->
-  <style>
-    @media (max-width: 768px) {
-      #header .top-menu {
-        flex-wrap: wrap !important;
-        gap: 3px !important;
-        width: 100% !important;
-        margin-top: 2px !important;
-        justify-content: flex-start !important;
-      }
-      #header .top-menu .nav-link {
-        font-size: 0.8rem !important;
-        padding: 4px 6px !important;
-        display: inline-block !important;
-      }
-      .sidebar-toggle {
-        order: 2 !important;
-        margin-left: auto !important;
-      }
-    }
-  </style>
   <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 {% endblock %}
 
