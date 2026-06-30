@@ -74,7 +74,7 @@
       font-size: 15px !important;
       font-weight: 600 !important;
       cursor: pointer !important;
-      display: none !important;  /* hidden by default, shown on mobile */
+      display: none !important;
       align-items: center !important;
       gap: 8px !important;
       border: none !important;
@@ -123,39 +123,4 @@
   </div>
 
   <script src="{% static 'js/admin.js' %}"></script>
-  <script>
-    // Keep active sidebar link highlighted and prevent auto-scroll
-    (function() {
-      const links = document.querySelectorAll('.nav-sidebar .nav-link');
-      const currentPath = window.location.pathname;
-      links.forEach(link => {
-        const href = link.getAttribute('href');
-        if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
-          link.classList.add('active');
-          setTimeout(() => {
-            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
-        } else if (href && currentPath === href) {
-          link.classList.add('active');
-          setTimeout(() => {
-            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
-        }
-      });
-
-      // Prevent auto‑scroll on sidebar clicks
-      document.querySelectorAll('.nav-sidebar .nav-link, .sidebar .nav-link').forEach(link => {
-        link.addEventListener('click', function() {
-          sessionStorage.setItem('scrollY', window.scrollY);
-        });
-      });
-      window.addEventListener('load', function() {
-        const saved = sessionStorage.getItem('scrollY');
-        if (saved && parseInt(saved) > 0) {
-          window.scrollTo(0, parseInt(saved));
-          sessionStorage.removeItem('scrollY');
-        }
-      });
-    })();
-  </script>
 {% endblock %}

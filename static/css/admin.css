@@ -1,4 +1,4 @@
-/* ─── STICKY HEADER ─── */
+/* ─── STICKY HEADER (already defined in base_site.html, but we keep for fallback) ─── */
 #header {
   position: sticky !important;
   top: 0 !important;
@@ -71,8 +71,8 @@
   align-items: center !important;
   gap: 8px !important;
   border: none !important;
-  transition: transform 0.2s, box-shadow 0.2s !important;
   user-select: none !important;
+  transition: transform 0.2s, box-shadow 0.2s !important;
 }
 #floating-dashboard-btn:hover {
   transform: scale(1.05) !important;
@@ -80,6 +80,13 @@
 }
 #floating-dashboard-btn:active {
   transform: scale(0.95) !important;
+}
+#floating-dashboard-btn a {
+  color: white !important;
+  text-decoration: none !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
 }
 
 @media (max-width: 768px) {
