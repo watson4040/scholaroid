@@ -12,7 +12,7 @@
   <script src="{% static 'js/admin.js' %}"></script>
   <script>
     (function() {
-      // Keep active sidebar link highlighted
+      // Keep active sidebar link highlighted and scroll into view
       const links = document.querySelectorAll('.nav-sidebar .nav-link');
       const currentPath = window.location.pathname;
       links.forEach(link => {
@@ -30,22 +30,14 @@
         }
       });
 
-      // On mobile, ensure the Dashboard link is always visible in the top menu
-      const dashboardLink = document.querySelector('.top-menu .nav-link[href*="/dashboard/admin/"]');
-      if (dashboardLink) {
-        dashboardLink.style.display = 'inline-block !important';
-      }
-
-      // Prevent body from scrolling to top on pagination or filter clicks
-      // (Keep scroll position)
+      // Prevent auto-scroll to top on pagination/filter clicks (we rely on sticky positioning)
       document.querySelectorAll('.paginator .step-links a, .filter-btn').forEach(el => {
         el.addEventListener('click', function(e) {
-          // Store current scroll position before navigation
-          const scrollY = window.scrollY;
-          // The click will navigate, but we can restore after page load.
-          // We'll handle via sticky positioning.
+          // No action needed – sticky pagination keeps it in view
         });
       });
+
+      // Ensure the Dashboard link is always visible in the sidebar (it's in the custom navigation)
     })();
   </script>
 {% endblock %}
