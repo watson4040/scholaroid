@@ -4,42 +4,31 @@
 {% block extrahead %}
   {{ block.super }}
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Inline CSS to force mobile header visibility -->
+  <style>
+    @media (max-width: 768px) {
+      #header .top-menu {
+        flex-wrap: wrap !important;
+        gap: 3px !important;
+        width: 100% !important;
+        margin-top: 2px !important;
+        justify-content: flex-start !important;
+      }
+      #header .top-menu .nav-link {
+        font-size: 0.8rem !important;
+        padding: 4px 6px !important;
+        display: inline-block !important;
+      }
+      .sidebar-toggle {
+        order: 2 !important;
+        margin-left: auto !important;
+      }
+    }
+  </style>
   <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 {% endblock %}
 
 {% block footer %}
   {{ block.super }}
   <script src="{% static 'js/admin.js' %}"></script>
-  <script>
-    (function() {
-      // Keep active sidebar link highlighted and scroll into view
-      const links = document.querySelectorAll('.nav-sidebar .nav-link');
-      const currentPath = window.location.pathname;
-      
-      links.forEach(link => {
-        const href = link.getAttribute('href');
-        if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
-          link.classList.add('active');
-          setTimeout(() => {
-            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
-        } else if (href && currentPath === href) {
-          link.classList.add('active');
-          setTimeout(() => {
-            link.scrollIntoView({ block: 'center', behavior: 'smooth' });
-          }, 100);
-        }
-      });
-
-      // Ensure the Dashboard link is always visible (it's in the sidebar navigation)
-      // No extra action needed – it's in the custom navigation menu.
-
-      // Prevent auto-scroll to top on pagination/filter clicks
-      document.querySelectorAll('.paginator .step-links a, .filter-btn').forEach(el => {
-        el.addEventListener('click', function(e) {
-          // Sticky positioning keeps the pagination in view – no action needed.
-        });
-      });
-    })();
-  </script>
 {% endblock %}

@@ -1,85 +1,92 @@
 (function() {
     'use strict';
 
-    // ---- Toast system ----
-    function showToast(message, type = 'success') {
-        const container = document.getElementById('toast-container') || createToastContainer();
-        const toast = document.createElement('div');
-        toast.className = `toast-message ${type}`;
-        let icon = 'fa-check-circle';
-        if (type === 'error') icon = 'fa-exclamation-circle';
-        else if (type === 'warning') icon = 'fa-exclamation-triangle';
-        else if (type === 'info') icon = 'fa-info-circle';
-        toast.innerHTML = `
-            <i class="fas ${icon}"></i>
-            <span>${message}</span>
-            <span class="close-toast">&times;</span>
-        `;
-        container.appendChild(toast);
-        setTimeout(() => { toast.remove(); }, 4000);
-        toast.querySelector('.close-toast').addEventListener('click', function() {
-            toast.remove();
-        });
-    }
+    // ----------------------------------------------------------------
+    // 1. Ensure Dashboard link appears in the top menu (especially on mobile)
+    // ----------------------------------------------------------------
+    function addDashboardLinkToTopMenu() {
+        const topMenu = document.querySelector('#header .top-menu');
+        if (!topMenu) return;
 
-    function createToastContainer() {
-        const div = document.createElement('div');
-        div.id = 'toast-container';
-        div.className = 'toast-container';
-        document.body.appendChild(div);
-        return div;
-    }
+        // Check if Dashboard link already exists
+        const existing = topMenu.querySelector('a[href*="/dashboard/admin/"]');
+        if (existing) return;
 
-    // ---- Convert Django messages to toasts ----
-    function convertMessagesToToasts() {
-        const msgContainer = document.getElementById('django-messages');
-        if (msgContainer) {
-            const msgs = msgContainer.querySelectorAll('ul.messagelist li, .alert');
-            msgs.forEach(el => {
-                let type = 'success';
-                if (el.classList.contains('error') || el.classList.contains('danger')) type = 'error';
-                else if (el.classList.contains('warning')) type = 'warning';
-                else if (el.classList.contains('info')) type = 'info';
-                showToast(el.textContent.trim(), type);
-                el.remove();
-            });
-            if (msgContainer.children.length === 0) msgContainer.remove();
+        // Create the Dashboard link
+        const dashboardLink = document.createElement('a');
+        dashboardLink.href = '/dashboard/admin/';
+        dashboardLink.className = 'nav-link';
+        dashboardLink.textContent = 'Dashboard';
+        dashboardLink.style.fontWeight = 'bold';
+        dashboardLink.style.color = '#28a745';
+        dashboardLink.style.display = 'inline-block';
+        // Insert it before the first child (or after Home)
+        const firstLink = topMenu.querySelector('.nav-link');
+        if (firstLink) {
+            topMenu.insertBefore(dashboardLink, firstLink.nextSibling);
+        } else {
+            topMenu.appendChild(dashboardLink);
         }
     }
 
-    // ---- Confirm delete ----
-    function addConfirmToDelete() {
-        document.querySelectorAll('a.deletelink, .deletelink').forEach(link => {
+    // ----------------------------------------------------------------
+    // 2. Prevent page from auto‑scrolling to top on sidebar link clicks
+    // ----------------------------------------------------------------
+    function preventAutoScroll() {
+        // Store scroll position before unloading
+        window.addEventListener('beforeunload', function() {
+            sessionStorage.setItem('scrollY', window.scrollY);
+        });
+
+        // Restore scroll position after load (if not at top)
+        window.addEventListener('load', function() {
+            const savedScroll = sessionStorage.getItem('scrollY');
+            if (savedScroll && parseInt(savedScroll) > 0) {
+                window.scrollTo(0, parseInt(savedScroll));
+                sessionStorage.removeItem('scrollY');
+            }
+        });
+
+        // Also, listen to sidebar link clicks and store current scroll position
+        document.querySelectorAll('.nav-sidebar .nav-link, .sidebar .nav-link').forEach(link => {
             link.addEventListener('click', function(e) {
-                if (!confirm('Are you sure you want to delete this item? This action cannot be undone.')) {
-                    e.preventDefault();
-                }
+                // Save current scroll position before navigation
+                sessionStorage.setItem('scrollY', window.scrollY);
+                // Allow navigation to proceed (the page will reload)
+                // The 'load' event will restore the position.
             });
         });
     }
 
-    // ---- Button feedback ----
-    function addButtonFeedback() {
-        document.querySelectorAll('.object-tools .addlink, .submit-row input[type="submit"]').forEach(btn => {
-            btn.addEventListener('mousedown', function() { this.style.transform = 'scale(0.96)'; });
-            btn.addEventListener('mouseup', function() { this.style.transform = 'scale(1)'; });
-            btn.addEventListener('mouseleave', function() { this.style.transform = 'scale(1)'; });
+    // ----------------------------------------------------------------
+    // 3. Keep active sidebar link highlighted and visible
+    // ----------------------------------------------------------------
+    function highlightActiveLink() {
+        const links = document.querySelectorAll('.nav-sidebar .nav-link');
+        const currentPath = window.location.pathname;
+        links.forEach(link => {
+            const href = link.getAttribute('href');
+            if (href && currentPath.startsWith(href) && href !== '/dashboard/admin/') {
+                link.classList.add('active');
+                setTimeout(() => {
+                    link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }, 100);
+            } else if (href && currentPath === href) {
+                link.classList.add('active');
+                setTimeout(() => {
+                    link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+                }, 100);
+            }
         });
     }
 
-    // ---- Run on load ----
+    // ----------------------------------------------------------------
+    // 4. Run all on DOM ready
+    // ----------------------------------------------------------------
     document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(convertMessagesToToasts, 100);
-        addConfirmToDelete();
-        addButtonFeedback();
-
-        const urlParams = new URLSearchParams(window.location.search);
-        const msg = urlParams.get('message');
-        if (msg) {
-            showToast(decodeURIComponent(msg), 'success');
-            const newUrl = window.location.pathname + window.location.search.replace(/[?&]message=[^&]*/, '').replace(/^&/, '?');
-            history.replaceState({}, '', newUrl);
-        }
+        addDashboardLinkToTopMenu();
+        preventAutoScroll();
+        highlightActiveLink();
     });
 
 })();
