@@ -22,6 +22,7 @@
       min-height: 52px !important;
       border-bottom: 1px solid #e9ecef !important;
     }
+
     /* ─── SIDEBAR (STICKY) ─── */
     .sidebar, .main-sidebar {
       position: fixed !important;
@@ -33,12 +34,14 @@
       z-index: 1020 !important;
       background: #2c3e50 !important;
     }
+
     /* ─── MAIN CONTENT ─── */
     body {
       padding-top: 52px !important;
       margin: 0 !important;
       overflow: hidden !important;
     }
+
     #container {
       display: flex !important;
       height: calc(100vh - 52px) !important;
@@ -46,10 +49,11 @@
       margin: 0 !important;
       padding: 0 !important;
     }
+
     #content {
       flex: 1 !important;
-      overflow-y: auto !important;   /* vertical scroll only */
-      overflow-x: hidden !important;
+      overflow-y: auto !important;
+      overflow-x: auto !important;   /* Allow horizontal scroll for wide tables */
       padding: 15px 20px !important;
       margin-left: 280px !important;
       min-width: 0 !important;
@@ -57,15 +61,36 @@
       box-sizing: border-box !important;
       height: 100% !important;
     }
-    /* ─── TABLES ─── */
+
+    /* ─── FIX: Prevent content from being cut off ─── */
+    #content .results,
     #content table {
-      max-width: 100% !important;
-      word-wrap: break-word !important;
+      overflow: visible !important;
+      width: 100% !important;
+      min-width: auto !important;
     }
-    #content table td, #content table th {
+
+    #content table th,
+    #content table td {
       word-break: break-word !important;
+      white-space: normal !important;
       max-width: 300px !important;
     }
+
+    /* ─── FIX: Paginator and filter bars ─── */
+    #changelist .paginator,
+    #changelist .changelist-actions {
+      flex-shrink: 0 !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+    }
+
+    /* ─── FIX: Dashboard table on admin index ─── */
+    .dashboard #content {
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
+
     /* ─── FLOATING DASHBOARD BUTTON (mobile) ─── */
     #floating-dashboard-btn {
       position: fixed !important;
@@ -85,6 +110,7 @@
       gap: 8px !important;
       border: none !important;
     }
+
     #floating-dashboard-btn:hover { transform: scale(1.05); box-shadow: 0 8px 32px rgba(40,167,69,0.55); }
     #floating-dashboard-btn:active { transform: scale(0.95); }
     #floating-dashboard-btn a {
@@ -94,41 +120,49 @@
       align-items: center !important;
       gap: 8px !important;
     }
+
     /* ─── MOBILE ─── */
     @media (max-width: 768px) {
       #content {
         margin-left: 0 !important;
         padding: 8px 10px !important;
+        overflow-x: auto !important;
       }
+
       .sidebar, .main-sidebar {
         width: 260px !important;
         transform: translateX(-100%);
         transition: transform 0.3s ease;
       }
+
       .sidebar.open, .main-sidebar.open {
         transform: translateX(0);
       }
+
       #header .top-menu .nav-link {
         font-size: 0.75rem !important;
         padding: 3px 6px !important;
       }
+
       #floating-dashboard-btn { display: flex !important; }
-      /* Custom toggle button for mobile (visible only on small screens) */
+    }
+
+    /* ─── CUSTOM TOGGLE BUTTON (mobile) ─── */
+    .custom-toggle {
+      display: none !important;
+      background: transparent;
+      border: none;
+      font-size: 1.4rem;
+      color: #333;
+      cursor: pointer;
+      padding: 4px 8px;
+      order: 2;
+      margin-left: auto;
+    }
+
+    @media (max-width: 768px) {
       .custom-toggle {
         display: block !important;
-        background: transparent;
-        border: none;
-        font-size: 1.4rem;
-        color: #333;
-        cursor: pointer;
-        padding: 4px 8px;
-        order: 2;
-        margin-left: auto;
-      }
-    }
-    @media (min-width: 769px) {
-      .custom-toggle {
-        display: none !important;
       }
     }
   </style>
@@ -146,8 +180,8 @@
     (function() {
       // ─── MOBILE SIDEBAR TOGGLE ───
       const sidebar = document.querySelector('.sidebar, .main-sidebar');
-      // Find or create the toggle button
       let toggleBtn = document.querySelector('.sidebar-toggle, .navbar-toggler, .custom-toggle');
+
       if (!toggleBtn && sidebar) {
         const header = document.getElementById('header');
         if (header) {
@@ -164,8 +198,8 @@
           toggleBtn = btn;
         }
       }
+
       if (toggleBtn && sidebar) {
-        // Ensure we don't have duplicate listeners
         const newToggle = toggleBtn.cloneNode(true);
         toggleBtn.parentNode.replaceChild(newToggle, toggleBtn);
         toggleBtn = newToggle;
@@ -174,13 +208,15 @@
           e.stopPropagation();
           sidebar.classList.toggle('open');
         });
+
         document.addEventListener('click', function(e) {
           if (window.innerWidth <= 768 && sidebar.classList.contains('open') &&
               !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
             sidebar.classList.remove('open');
           }
         });
-        sidebar.querySelectorAll('a').forEach(link => {
+
+        sidebar.querySelectorAll('a').forEach(function(link) {
           link.addEventListener('click', function() {
             if (window.innerWidth <= 768) {
               sidebar.classList.remove('open');
@@ -192,7 +228,7 @@
       // ─── HIGHLIGHT ACTIVE SIDEBAR LINK ───
       const links = document.querySelectorAll('.nav-sidebar .nav-link, .sidebar .nav-link');
       const currentPath = window.location.pathname;
-      links.forEach(link => {
+      links.forEach(function(link) {
         const href = link.getAttribute('href');
         if (href && (currentPath.startsWith(href) && href !== '/dashboard/admin/') || currentPath === href) {
           link.classList.add('active');
@@ -208,6 +244,7 @@
           container.style.height = (window.innerHeight - headerHeight) + 'px';
         }
       }
+
       window.addEventListener('resize', adjustHeight);
       window.addEventListener('load', adjustHeight);
       setTimeout(adjustHeight, 100);
