@@ -68,7 +68,7 @@
     }
     #content, .content {
       flex: 1 !important;
-      overflow-y: auto !important;    /* vertical scroll */
+      overflow-y: auto !important;    /* vertical scroll only */
       overflow-x: hidden !important;  /* no horizontal scroll */
       padding: 15px 20px !important;
       margin-left: 280px !important;
@@ -77,7 +77,7 @@
       box-sizing: border-box !important;
       word-wrap: break-word !important;
     }
-    /* ─── CONTAIN TABLES AND WIDE ELEMENTS ─── */
+    /* ─── TABLES AND WIDE ELEMENTS ─── */
     #content table, .content table {
       max-width: 100% !important;
       width: auto !important;
@@ -87,7 +87,7 @@
     #content table th, #content table td,
     .content table th, .content table td {
       word-break: break-word !important;
-      max-width: 200px !important;    /* prevent very long words from breaking out */
+      max-width: 250px !important;
     }
     /* ─── RESPONSIVE TABLE WRAPPER (if needed) ─── */
     .table-responsive {
