@@ -37,15 +37,13 @@
 
     /* ─── MAIN CONTENT ─── */
     body {
-      padding-top: 52px !important;
+      padding-top: 52px !important;  /* Leave space for header */
       margin: 0 !important;
     }
 
     #container {
       display: flex !important;
       min-height: calc(100vh - 52px) !important;
-      height: auto !important;
-      overflow: hidden !important;
     }
 
     #content {
@@ -55,7 +53,6 @@
       padding: 15px 20px !important;
       margin-left: 280px !important;
       min-height: calc(100vh - 52px) !important;
-      height: auto !important;
       box-sizing: border-box !important;
     }
 
@@ -212,20 +209,6 @@
           link.classList.add('active');
         }
       });
-
-      // ─── ENSURE CONTENT HEIGHT FITS SCREEN ───
-      function adjustHeight() {
-        const header = document.getElementById('header');
-        const container = document.getElementById('container');
-        if (header && container) {
-          const headerHeight = header.offsetHeight;
-          container.style.minHeight = (window.innerHeight - headerHeight) + 'px';
-        }
-      }
-
-      window.addEventListener('resize', adjustHeight);
-      window.addEventListener('load', adjustHeight);
-      setTimeout(adjustHeight, 100);
     })();
   </script>
 {% endblock %}
