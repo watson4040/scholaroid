@@ -22,24 +22,7 @@
       min-height: 52px !important;
       border-bottom: 1px solid #e9ecef !important;
     }
-    /* ─── CUSTOM TOGGLE BUTTON (visible only on mobile) ─── */
-    .custom-sidebar-toggle {
-      display: none !important;
-      background: transparent;
-      border: none;
-      font-size: 1.4rem;
-      color: #333;
-      cursor: pointer;
-      padding: 4px 8px;
-      order: 2;
-      margin-left: auto;
-    }
-    @media (max-width: 768px) {
-      .custom-sidebar-toggle {
-        display: block !important;
-      }
-    }
-    /* ─── SIDEBAR ─── */
+    /* ─── SIDEBAR (STICKY) ─── */
     .sidebar, .main-sidebar {
       position: fixed !important;
       top: 52px !important;
@@ -50,7 +33,7 @@
       z-index: 1020 !important;
       background: #2c3e50 !important;
     }
-    /* ─── MAIN CONTENT – SCROLLABLE VERTICALLY ─── */
+    /* ─── MAIN CONTENT ─── */
     body {
       padding-top: 52px !important;
       margin: 0 !important;
@@ -65,7 +48,7 @@
     }
     #content {
       flex: 1 !important;
-      overflow-y: auto !important;   /* <<< VERTICAL SCROLL */
+      overflow-y: auto !important;   /* vertical scroll only */
       overflow-x: hidden !important;
       padding: 15px 20px !important;
       margin-left: 280px !important;
@@ -83,7 +66,7 @@
       word-break: break-word !important;
       max-width: 300px !important;
     }
-    /* ─── FLOATING DASHBOARD BUTTON ─── */
+    /* ─── FLOATING DASHBOARD BUTTON (mobile) ─── */
     #floating-dashboard-btn {
       position: fixed !important;
       bottom: 24px !important;
@@ -130,6 +113,23 @@
         padding: 3px 6px !important;
       }
       #floating-dashboard-btn { display: flex !important; }
+      /* Custom toggle button for mobile (visible only on small screens) */
+      .custom-toggle {
+        display: block !important;
+        background: transparent;
+        border: none;
+        font-size: 1.4rem;
+        color: #333;
+        cursor: pointer;
+        padding: 4px 8px;
+        order: 2;
+        margin-left: auto;
+      }
+    }
+    @media (min-width: 769px) {
+      .custom-toggle {
+        display: none !important;
+      }
     }
   </style>
   <link rel="stylesheet" href="{% static 'css/admin.css' %}">
@@ -144,55 +144,42 @@
   <script src="{% static 'js/admin.js' %}"></script>
   <script>
     (function() {
-      // ─── ENSURE A TOGGLE BUTTON EXISTS (FALLBACK) ───
-      function ensureToggleButton() {
-        // Check if there's already a toggle button (custom or default)
-        let toggle = document.querySelector('.sidebar-toggle, .navbar-toggler, .custom-sidebar-toggle');
-        if (!toggle) {
-          // Create custom toggle
-          const header = document.getElementById('header');
-          if (header) {
-            const btn = document.createElement('button');
-            btn.className = 'custom-sidebar-toggle';
-            btn.innerHTML = '<i class="fas fa-bars"></i>';
-            btn.setAttribute('aria-label', 'Toggle menu');
-            // Insert before the top-menu
-            const topMenu = header.querySelector('.top-menu');
-            if (topMenu) {
-              header.insertBefore(btn, topMenu);
-            } else {
-              header.appendChild(btn);
-            }
-            toggle = btn;
-          }
-        }
-        return toggle;
-      }
-
+      // ─── MOBILE SIDEBAR TOGGLE ───
       const sidebar = document.querySelector('.sidebar, .main-sidebar');
-      let toggleBtn = ensureToggleButton();
-
+      // Find or create the toggle button
+      let toggleBtn = document.querySelector('.sidebar-toggle, .navbar-toggler, .custom-toggle');
+      if (!toggleBtn && sidebar) {
+        const header = document.getElementById('header');
+        if (header) {
+          const btn = document.createElement('button');
+          btn.className = 'custom-toggle';
+          btn.innerHTML = '<i class="fas fa-bars"></i>';
+          btn.setAttribute('aria-label', 'Toggle menu');
+          const topMenu = header.querySelector('.top-menu');
+          if (topMenu) {
+            header.insertBefore(btn, topMenu);
+          } else {
+            header.appendChild(btn);
+          }
+          toggleBtn = btn;
+        }
+      }
       if (toggleBtn && sidebar) {
-        // Remove old listeners by cloning
+        // Ensure we don't have duplicate listeners
         const newToggle = toggleBtn.cloneNode(true);
         toggleBtn.parentNode.replaceChild(newToggle, toggleBtn);
         toggleBtn = newToggle;
 
-        // Toggle sidebar on click
         toggleBtn.addEventListener('click', function(e) {
           e.stopPropagation();
           sidebar.classList.toggle('open');
         });
-
-        // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(e) {
           if (window.innerWidth <= 768 && sidebar.classList.contains('open') &&
               !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
             sidebar.classList.remove('open');
           }
         });
-
-        // Close sidebar when a link inside it is clicked (mobile)
         sidebar.querySelectorAll('a').forEach(link => {
           link.addEventListener('click', function() {
             if (window.innerWidth <= 768) {
@@ -212,8 +199,8 @@
         }
       });
 
-      // ─── CONTENT HEIGHT ADJUSTMENT ───
-      function adjustContentHeight() {
+      // ─── ENSURE CONTENT HEIGHT FITS SCREEN ───
+      function adjustHeight() {
         const header = document.getElementById('header');
         const container = document.getElementById('container');
         if (header && container) {
@@ -221,9 +208,9 @@
           container.style.height = (window.innerHeight - headerHeight) + 'px';
         }
       }
-      window.addEventListener('resize', adjustContentHeight);
-      window.addEventListener('load', adjustContentHeight);
-      setTimeout(adjustContentHeight, 100);
+      window.addEventListener('resize', adjustHeight);
+      window.addEventListener('load', adjustHeight);
+      setTimeout(adjustHeight, 100);
     })();
   </script>
 {% endblock %}
