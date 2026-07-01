@@ -216,6 +216,5 @@ JAZZMIN_SETTINGS = {
     "messagingApp.Message": "fas fa-envelope",
     "resourcesApp.Resource": "fas fa-book"
 }
-```
 
 }
