@@ -39,53 +39,41 @@
     body {
       padding-top: 52px !important;
       margin: 0 !important;
-      overflow: hidden !important;
     }
 
     #container {
       display: flex !important;
-      height: calc(100vh - 52px) !important;
+      min-height: calc(100vh - 52px) !important;
+      height: auto !important;
       overflow: hidden !important;
-      margin: 0 !important;
-      padding: 0 !important;
     }
 
     #content {
       flex: 1 !important;
-      overflow-y: auto !important;   /* vertical scroll */
-      overflow-x: auto !important;   /* horizontal scroll when needed (tables) */
+      overflow-y: auto !important;
+      overflow-x: auto !important;
       padding: 15px 20px !important;
       margin-left: 280px !important;
-      min-width: 0 !important;
-      width: 100% !important;
+      min-height: calc(100vh - 52px) !important;
+      height: auto !important;
       box-sizing: border-box !important;
-      height: 100% !important;
     }
 
-    /* ─── ENSURE TABLES DON'T OVERFLOW ─── */
+    /* ─── FIX TABLES ─── */
     #content .results {
       overflow-x: auto !important;
     }
     #content table {
       width: 100% !important;
-      min-width: auto !important;
     }
     #content table th,
     #content table td {
       word-break: break-word !important;
-      white-space: normal !important;
       max-width: 300px !important;
     }
-    /* ─── FIX: Paginator and filter bars ─── */
-    #changelist .paginator,
-    #changelist .changelist-actions {
-      flex-shrink: 0 !important;
-      width: 100% !important;
-      box-sizing: border-box !important;
-    }
-    /* ─── ADMIN INDEX DASHBOARD ─── */
+
+    /* ─── ADMIN INDEX ─── */
     .dashboard #content {
-      overflow-y: auto !important;
       overflow-x: hidden !important;
     }
 
@@ -123,6 +111,7 @@
       #content {
         margin-left: 0 !important;
         padding: 8px 10px !important;
+        min-height: calc(100vh - 52px) !important;
       }
       .sidebar, .main-sidebar {
         width: 260px !important;
@@ -137,7 +126,6 @@
         padding: 3px 6px !important;
       }
       #floating-dashboard-btn { display: flex !important; }
-      /* ─── CUSTOM MOBILE TOGGLE ─── */
       .custom-toggle {
         display: block !important;
         background: transparent;
@@ -231,7 +219,7 @@
         const container = document.getElementById('container');
         if (header && container) {
           const headerHeight = header.offsetHeight;
-          container.style.height = (window.innerHeight - headerHeight) + 'px';
+          container.style.minHeight = (window.innerHeight - headerHeight) + 'px';
         }
       }
 
