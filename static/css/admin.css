@@ -1,88 +1,232 @@
-/* ─── HEADER: FIXED, ALWAYS VISIBLE ─── */
-#header {
-  position: fixed !important;
-  top: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  z-index: 1030 !important;
-  background: #fff !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
-  display: flex !important;
-  flex-wrap: wrap !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  padding: 6px 16px !important;
-  min-height: 52px !important;
-  border-bottom: 1px solid #e9ecef !important;
+/* ==========================================================================
+SCHOLAROID PROFESSIONAL JAZZMIN ADMIN
+========================================================================== */
+
+:root{
+--navbar-height:57px;
+--primary:#007bff;
+--success:#28a745;
+--dark:#343a40;
+--shadow:0 2px 12px rgba(0,0,0,.08);
 }
 
-/* ─── SIDEBAR STICKY ─── */
-.sidebar, .main-sidebar {
-  position: sticky !important;
-  top: 52px !important;
-  height: calc(100vh - 52px) !important;
-  overflow-y: auto !important;
+/* ==========================================================================
+GLOBAL
+========================================================================== */
+
+html,
+body{
+overflow-x:hidden;
 }
 
-/* ─── MAIN CONTENT ─── */
-#container {
-  padding-top: 52px !important;
-  display: flex !important;
-  height: 100vh !important;
-  overflow: hidden !important;
-}
-#content {
-  flex: 1 !important;
-  overflow-y: auto !important;
-  padding: 15px 20px !important;
+/* ==========================================================================
+FIXED HEADER
+========================================================================== */
+
+.main-header{
+position:fixed !important;
+top:0 !important;
+left:0 !important;
+right:0 !important;
+z-index:9999 !important;
+box-shadow:var(--shadow);
 }
 
-/* ─── STICKY PAGINATION ─── */
-#changelist .changelist-actions {
-  position: sticky;
-  top: 52px;
-  z-index: 10;
-  background: white;
-  padding: 10px 0;
-  border-bottom: 1px solid #ccc;
-}
-#changelist .paginator {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 10px 0;
-  border-top: 1px solid #ccc;
-  z-index: 5;
+/* ==========================================================================
+FIXED SIDEBAR WITH SCROLL
+========================================================================== */
+
+.main-sidebar{
+position:fixed !important;
+top:var(--navbar-height) !important;
+left:0 !important;
+height:calc(100vh - var(--navbar-height)) !important;
+
+```
+overflow-y:auto !important;
+overflow-x:hidden !important;
+
+scrollbar-width:thin;
+```
+
 }
 
-/* ─── FLOATING DASHBOARD BUTTON (mobile) ─── */
-#floating-dashboard-btn {
-  position: fixed !important;
-  bottom: 24px !important;
-  right: 24px !important;
-  z-index: 9999 !important;
-  background: linear-gradient(135deg, #28a745, #1e7e34) !important;
-  color: #fff !important;
-  padding: 14px 22px !important;
-  border-radius: 60px !important;
-  box-shadow: 0 6px 24px rgba(40,167,69,0.45) !important;
-  font-size: 15px !important;
-  font-weight: 600 !important;
-  cursor: pointer !important;
-  display: none !important;
-  align-items: center !important;
-  gap: 8px !important;
-  border: none !important;
+.main-sidebar::-webkit-scrollbar{
+width:6px;
 }
-#floating-dashboard-btn:hover { transform: scale(1.05); box-shadow: 0 8px 32px rgba(40,167,69,0.55); }
-#floating-dashboard-btn:active { transform: scale(0.95); }
-#floating-dashboard-btn a {
-  color: white !important;
-  text-decoration: none !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
+
+.main-sidebar::-webkit-scrollbar-thumb{
+background:rgba(255,255,255,.25);
+border-radius:20px;
 }
-@media (max-width: 768px) {
-  #floating-dashboard-btn { display: flex !important; }
+
+/* ==========================================================================
+CONTENT
+========================================================================== */
+
+.content-wrapper{
+margin-top:var(--navbar-height) !important;
+min-height:calc(100vh - var(--navbar-height)) !important;
+}
+
+.content{
+overflow-x:auto !important;
+}
+
+/* ==========================================================================
+TABLES
+========================================================================== */
+
+.table-responsive{
+overflow-x:auto !important;
+}
+
+table{
+width:100%;
+}
+
+table th{
+white-space:nowrap;
+}
+
+/* ==========================================================================
+CARDS
+========================================================================== */
+
+.card{
+border-radius:12px;
+border:none;
+box-shadow:var(--shadow);
+}
+
+/* ==========================================================================
+ACTIVE SIDEBAR LINK
+========================================================================== */
+
+.nav-sidebar .nav-link.active{
+background:var(--primary) !important;
+color:#fff !important;
+border-radius:8px;
+}
+
+.nav-sidebar .nav-link.active i{
+color:#fff !important;
+}
+
+/* ==========================================================================
+PAGINATION
+========================================================================== */
+
+.pagination{
+margin-top:15px;
+}
+
+/* ==========================================================================
+FLOATING MOBILE DASHBOARD BUTTON
+========================================================================== */
+
+#floating-dashboard-btn{
+position:fixed;
+right:20px;
+bottom:20px;
+z-index:9999;
+
+```
+display:none;
+
+background:linear-gradient(
+    135deg,
+    #28a745,
+    #1e7e34
+);
+
+border-radius:50px;
+
+box-shadow:
+0 8px 20px rgba(0,0,0,.25);
+```
+
+}
+
+#floating-dashboard-btn a{
+color:#fff;
+text-decoration:none;
+
+```
+display:flex;
+align-items:center;
+gap:10px;
+
+padding:14px 20px;
+
+font-weight:600;
+```
+
+}
+
+#floating-dashboard-btn:hover{
+transform:translateY(-2px);
+}
+
+/* ==========================================================================
+LOADER
+========================================================================== */
+
+#page-loader{
+position:fixed;
+inset:0;
+
+```
+background:#fff;
+
+display:flex;
+align-items:center;
+justify-content:center;
+
+z-index:999999;
+```
+
+}
+
+.loader-spinner{
+width:50px;
+height:50px;
+
+```
+border:4px solid #ddd;
+border-top-color:var(--primary);
+
+border-radius:50%;
+
+animation:spin 1s linear infinite;
+```
+
+}
+
+@keyframes spin{
+to{
+transform:rotate(360deg);
+}
+}
+
+/* ==========================================================================
+MOBILE
+========================================================================== */
+
+@media (max-width:768px){
+
+```
+#floating-dashboard-btn{
+    display:flex;
+}
+
+.content-wrapper{
+    margin-left:0 !important;
+}
+
+.card{
+    border-radius:10px;
+}
+```
+
 }
