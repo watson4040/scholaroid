@@ -8,12 +8,26 @@
 <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 
 <style>
-  /* ─── SIDEBAR: INDEPENDENT SCROLL ─── */
+  /* ─── PREVENT MAIN CONTENT SCROLLING ─── */
+  body {
+    overflow: hidden !important;           /* no scrolling at all */
+  }
+  #container {
+    height: calc(100vh - 52px) !important;
+    overflow: hidden !important;
+  }
+  #content {
+    overflow: hidden !important;           /* main content does NOT scroll */
+    height: 100% !important;
+  }
+
+  /* ─── SIDEBAR: SCROLLABLE INDEPENDENTLY ─── */
   .sidebar, .main-sidebar {
-    overflow-y: auto !important;      /* enables scrolling inside sidebar */
+    overflow-y: auto !important;           /* sidebar scrolls */
     overflow-x: hidden !important;
     scroll-behavior: smooth !important;
     -webkit-overflow-scrolling: touch !important;
+    height: calc(100vh - 52px) !important; /* fill remaining height */
   }
 
   /* ─── SIDEBAR ACTIVE LINK HIGHLIGHT ─── */
