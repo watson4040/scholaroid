@@ -4,7 +4,7 @@
 
 {% block extra_css %}
 <style>
-  /* Fixed Sidebar */
+  /* ─── FIXED SIDEBAR ─── */
   .teacher-sidebar {
     position: fixed;
     top: 0;
@@ -73,7 +73,6 @@
     min-height: 100vh;
   }
 
-  /* Sticky dashboard title area */
   .sticky-dashboard-header {
     position: sticky;
     top: 70px;
@@ -120,6 +119,11 @@
   .stat-number { font-size: 2rem; font-weight: 700; margin: 0; color: #1e2a3a; }
   .stat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
 
+  .message-preview {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
   @media (max-width: 768px) {
     .teacher-sidebar {
       transform: translateX(-100%);
@@ -151,8 +155,10 @@
     </a>
     <a class="nav-link" href="#classes"><i class="fas fa-building"></i> My Classes</a>
     <a class="nav-link" href="#attendance"><i class="fas fa-calendar-check"></i> Attendance</a>
-    <a class="nav-link" href="#exams"><i class="fas fa-file-alt"></i> Grades / Exams</a>
-    <a class="nav-link" href="#notices"><i class="fas fa-bell"></i> Notices</a>
+    <a class="nav-link" href="#exams"><i class="fas fa-file-alt"></i> Exams</a>
+    <a class="nav-link" href="{% url 'teacher_resources' %}"><i class="fas fa-download"></i> Resources</a>
+    <a class="nav-link" href="{% url 'notice_list' %}"><i class="fas fa-bell"></i> Notices</a>
+    <a class="nav-link" href="{% url 'inbox' %}"><i class="fas fa-envelope"></i> Messages</a>
     <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user-circle"></i> My Profile</a>
   </nav>
 </div>
@@ -172,22 +178,44 @@
   <div class="container-fluid px-0">
     <!-- Stats -->
     <div class="row g-4 mb-5">
-      <div class="col-md-4 col-6">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p class="stat-label">My Classes</p>
           <h3 class="stat-number">{{ classes|length }}</h3>
         </div>
       </div>
-      <div class="col-md-4 col-6">
+      <div class="col-md-3 col-6">
+        <div class="stat-card">
+          <p class="stat-label">Subjects</p>
+          <h3 class="stat-number">{{ teacher.subject.all|length }}</h3>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p class="stat-label">Total Students</p>
           <h3 class="stat-number">{{ students_count }}</h3>
         </div>
       </div>
-      <div class="col-md-4 col-6">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p class="stat-label">Upcoming Exams</p>
           <h3 class="stat-number">{{ recent_exams|length }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Message Widget (like parent) -->
+    <div id="messages" class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-envelope me-2 text-primary"></i> Recent Messages</h5>
+        <a href="{% url 'inbox' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body">
+        <ul id="messages-list" class="list-group list-group-flush">
+          <!-- Dynamically loaded by JavaScript -->
+        </ul>
+        <div class="mt-3">
+          <a href="{% url 'inbox' %}" class="btn btn-primary btn-sm">Go to Inbox</a>
         </div>
       </div>
     </div>
@@ -209,7 +237,7 @@
                 <td>{{ class.name }}</td>
                 <td>{{ class.section|default:"-" }}</td>
                 <td>{{ class.students.count }}</td>
-                <td><a href="/admin/classesApp/classroom/{{ class.id }}/change/" class="btn btn-sm btn-outline-primary">Manage</a></td>
+                <td><a href="{% url 'teacher_class_detail' class.id %}" class="btn btn-sm btn-outline-primary">Open</a></td>
               </tr>
               {% empty %}
               <tr><td colspan="4" class="text-center">No classes assigned.</td></tr>
@@ -299,14 +327,15 @@
 
 <script>
   (function() {
+    // ─── Sidebar toggle for mobile ───
     const toggleBtn = document.getElementById('mobileSidebarToggle');
     const sidebar = document.getElementById('teacherSidebar');
     if (toggleBtn) {
-      toggleBtn.addEventListener('click', (e) => {
+      toggleBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         sidebar.classList.toggle('mobile-open');
       });
-      document.addEventListener('click', (event) => {
+      document.addEventListener('click', function(event) {
         if (window.innerWidth <= 768 && sidebar.classList.contains('mobile-open')) {
           if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
             sidebar.classList.remove('mobile-open');
@@ -314,7 +343,8 @@
         }
       });
     }
-    // Smooth scroll for anchor links
+
+    // ─── Smooth scroll for anchor links ───
     document.querySelectorAll('.teacher-sidebar .nav-link[href^="#"]').forEach(anchor => {
       anchor.addEventListener('click', function(e) {
         e.preventDefault();
@@ -322,12 +352,49 @@
         if (target) target.scrollIntoView({ behavior: 'smooth' });
       });
     });
-    // Active link highlighting based on current URL or anchor
-    const currentHash = window.location.hash;
-    if (currentHash) {
-      const activeLink = document.querySelector(`.teacher-sidebar .nav-link[href="${currentHash}"]`);
-      if (activeLink) activeLink.classList.add('active');
+
+    // ─── Auto-refresh messages (like parent dashboard) ───
+    function refreshMessages() {
+      fetch('/api/recent-messages/')
+        .then(r => r.json())
+        .then(data => {
+          const container = document.getElementById('messages-list');
+          if (container) {
+            if (data.messages && data.messages.length > 0) {
+              container.innerHTML = data.messages.map(msg => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <strong>${msg.subject}</strong>
+                    <span class="badge bg-secondary ms-2">${msg.type}</span>
+                    <br>
+                    <small class="text-muted">${msg.body}</small>
+                  </div>
+                  <div>
+                    <a href="/conversation/${msg.sender_id}/" class="btn btn-sm btn-outline-primary">Reply</a>
+                  </div>
+                </li>
+              `).join('');
+            } else {
+              container.innerHTML = `<li class="list-group-item text-center text-muted">No messages yet.</li>`;
+            }
+          }
+        })
+        .catch(err => console.error('Fetch error:', err));
     }
+
+    refreshMessages();
+    setInterval(refreshMessages, 5000);
+
+    // ─── Active link highlighting ───
+    const currentPath = window.location.pathname;
+    document.querySelectorAll('.teacher-sidebar .nav-link').forEach(link => {
+      const href = link.getAttribute('href');
+      if (href && currentPath.startsWith(href) && href !== '/dashboard/teacher/') {
+        link.classList.add('active');
+      } else if (href && currentPath === href) {
+        link.classList.add('active');
+      }
+    });
   })();
 </script>
 {% endblock %}
