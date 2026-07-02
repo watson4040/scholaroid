@@ -5,7 +5,7 @@ from django.contrib.auth import get_user_model
 from django.contrib import messages
 from django.http import JsonResponse
 from django.urls import reverse
-from django.db.models import Q  # <-- add this import
+from django.db.models import Q
 from accountsApp.forms import *
 from accountsApp.forms import ChangePasswordForm
 from accountsApp.models import Notice
@@ -14,9 +14,14 @@ from teachersApp.models import Teacher
 from parentsApp.models import Parent
 from classesApp.models import ClassRoom
 from attendanceApp.models import Attendance
-from examsApp.models import Exam
-from examsApp.models import ExamResult
+from examsApp.models import Exam, ExamResult
 from messagingApp.models import Message
+
+# Try to import Resource if it exists (to avoid errors if the app is not installed)
+try:
+    from resourcesApp.models import Resource
+except ImportError:
+    Resource = None
 
 def home(request):
     return render(request, 'home.html')
@@ -173,6 +178,10 @@ def dashboard_teacher(request):
     recent_exams = Exam.objects.filter(class_room__in=classes).order_by('exam_date')[:5]
     recent_attendance = Attendance.objects.filter(student__class_room__in=classes).order_by('-date')[:10]
     notices = Notice.objects.order_by('-created_at')[:5]
+    # Get resources if the Resource model exists
+    resources = []
+    if Resource is not None:
+        resources = Resource.objects.filter(teacher=teacher).order_by('-uploaded_at')[:5]
     context = {
         'teacher': teacher,
         'classes': classes,
@@ -180,6 +189,7 @@ def dashboard_teacher(request):
         'recent_exams': recent_exams,
         'recent_attendance': recent_attendance,
         'notices': notices,
+        'resources': resources,
     }
     return render(request, 'accountsApp/dashboard_teacher.html', context)
 
@@ -197,12 +207,12 @@ def dashboard_parent(request):
             'exams': exams,
         })
     notices = Notice.objects.order_by('-created_at')[:5]
-    
+
     # Get recent messages for this parent (where parent is sender or recipient)
     recent_messages = Message.objects.filter(
         Q(sender=parent.user) | Q(recipient=parent.user)
     ).order_by('-created_at')[:5]
-    
+
     context = {
         'parent': parent,
         'children': children,
