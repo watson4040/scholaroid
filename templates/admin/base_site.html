@@ -7,26 +7,255 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 
+<style>
+  /* ─── FIXED HEADER ─── */
+  #header {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1030 !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 6px 16px !important;
+    min-height: 52px !important;
+    border-bottom: 1px solid #e9ecef !important;
+  }
+
+  /* ─── SIDEBAR (FIXED, INDEPENDENTLY SCROLLABLE) ─── */
+  .sidebar, .main-sidebar {
+    position: fixed !important;
+    top: 52px !important;
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 280px !important;
+    overflow-y: auto !important;   /* independent scroll */
+    overflow-x: hidden !important;
+    z-index: 1020 !important;
+    background: #2c3e50 !important;
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: smooth !important;
+  }
+
+  /* ─── MAIN CONTENT ─── */
+  body {
+    padding-top: 52px !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #container {
+    display: flex !important;
+    height: calc(100vh - 52px) !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #content {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    padding: 15px 20px !important;
+    margin-left: 280px !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    height: 100% !important;
+  }
+
+  /* ─── TABLES ─── */
+  #content .results {
+    overflow-x: auto !important;
+  }
+  #content table {
+    width: 100% !important;
+    min-width: auto !important;
+  }
+  #content table th,
+  #content table td {
+    word-break: break-word !important;
+    white-space: normal !important;
+    max-width: 300px !important;
+  }
+
+  /* ─── PAGINATOR & FILTER BARS ─── */
+  #changelist .paginator,
+  #changelist .changelist-actions {
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* ─── ADMIN INDEX ─── */
+  .dashboard #content {
+    overflow-x: hidden !important;
+  }
+
+  /* ─── FLOATING DASHBOARD BUTTON (mobile) ─── */
+  #floating-dashboard-btn {
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    z-index: 9999 !important;
+    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+    color: #fff !important;
+    padding: 14px 22px !important;
+    border-radius: 60px !important;
+    box-shadow: 0 6px 24px rgba(40,167,69,0.45) !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    display: none !important;
+    align-items: center !important;
+    gap: 8px !important;
+    border: none !important;
+  }
+  #floating-dashboard-btn:hover { transform: scale(1.05); box-shadow: 0 8px 32px rgba(40,167,69,0.55); }
+  #floating-dashboard-btn:active { transform: scale(0.95); }
+  #floating-dashboard-btn a {
+    color: white !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  /* ─── MOBILE ─── */
+  @media (max-width: 768px) {
+    #content {
+      margin-left: 0 !important;
+      padding: 8px 10px !important;
+    }
+    .sidebar, .main-sidebar {
+      width: 260px !important;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+    }
+    .sidebar.open, .main-sidebar.open {
+      transform: translateX(0);
+    }
+    #header .top-menu .nav-link {
+      font-size: 0.75rem !important;
+      padding: 3px 6px !important;
+    }
+    #floating-dashboard-btn { display: flex !important; }
+    .custom-toggle {
+      display: block !important;
+      background: transparent;
+      border: none;
+      font-size: 1.4rem;
+      color: #333;
+      cursor: pointer;
+      padding: 4px 8px;
+      order: 2;
+      margin-left: auto;
+    }
+  }
+  @media (min-width: 769px) {
+    .custom-toggle {
+      display: none !important;
+    }
+  }
+</style>
 {% endblock %}
 
 {% block footer %}
 {{ block.super }}
 
-<!-- Mobile Dashboard Button -->
-
+<!-- Floating Dashboard Button -->
 <div id="floating-dashboard-btn">
-    <a href="/dashboard/admin/">
-        <i class="fas fa-tachometer-alt"></i>
-        Dashboard
-    </a>
+  <a href="/dashboard/admin/">
+    <i class="fas fa-tachometer-alt"></i> Dashboard
+  </a>
 </div>
 
 <!-- Page Loader -->
-
 <div id="page-loader">
-    <div class="loader-spinner"></div>
+  <div class="loader-spinner"></div>
 </div>
 
 <script src="{% static 'js/admin.js' %}"></script>
+<script>
+  (function() {
+    // ─── MOBILE SIDEBAR TOGGLE ───
+    const sidebar = document.querySelector('.sidebar, .main-sidebar');
+    let toggleBtn = document.querySelector('.sidebar-toggle, .navbar-toggler, .custom-toggle');
 
+    if (!toggleBtn && sidebar) {
+      const header = document.getElementById('header');
+      if (header) {
+        const btn = document.createElement('button');
+        btn.className = 'custom-toggle';
+        btn.innerHTML = '<i class="fas fa-bars"></i>';
+        btn.setAttribute('aria-label', 'Toggle menu');
+        const topMenu = header.querySelector('.top-menu');
+        if (topMenu) {
+          header.insertBefore(btn, topMenu);
+        } else {
+          header.appendChild(btn);
+        }
+        toggleBtn = btn;
+      }
+    }
+
+    if (toggleBtn && sidebar) {
+      const newToggle = toggleBtn.cloneNode(true);
+      toggleBtn.parentNode.replaceChild(newToggle, toggleBtn);
+      toggleBtn = newToggle;
+
+      toggleBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        sidebar.classList.toggle('open');
+      });
+
+      document.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768 && sidebar.classList.contains('open') &&
+            !sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+          sidebar.classList.remove('open');
+        }
+      });
+
+      sidebar.querySelectorAll('a').forEach(function(link) {
+        link.addEventListener('click', function() {
+          if (window.innerWidth <= 768) {
+            sidebar.classList.remove('open');
+          }
+        });
+      });
+    }
+
+    // ─── HIGHLIGHT ACTIVE SIDEBAR LINK & SCROLL INTO VIEW ───
+    const links = document.querySelectorAll('.nav-sidebar .nav-link, .sidebar .nav-link');
+    const currentPath = window.location.pathname;
+    links.forEach(function(link) {
+      const href = link.getAttribute('href');
+      if (href && (currentPath.startsWith(href) && href !== '/dashboard/admin/') || currentPath === href) {
+        link.classList.add('active');
+        // Scroll the sidebar so the active link is centered
+        setTimeout(function() {
+          link.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        }, 100);
+      }
+    });
+
+    // ─── ENSURE CONTENT HEIGHT FITS SCREEN ───
+    function adjustHeight() {
+      const header = document.getElementById('header');
+      const container = document.getElementById('container');
+      if (header && container) {
+        const headerHeight = header.offsetHeight;
+        container.style.height = (window.innerHeight - headerHeight) + 'px';
+      }
+    }
+
+    window.addEventListener('resize', adjustHeight);
+    window.addEventListener('load', adjustHeight);
+    setTimeout(adjustHeight, 100);
+  })();
+</script>
 {% endblock %}
