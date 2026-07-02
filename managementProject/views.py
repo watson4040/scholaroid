@@ -17,12 +17,6 @@ from attendanceApp.models import Attendance
 from examsApp.models import Exam, ExamResult
 from messagingApp.models import Message
 
-# Try to import Resource if it exists (to avoid errors if the app is not installed)
-try:
-    from resourcesApp.models import Resource
-except ImportError:
-    Resource = None
-
 def home(request):
     return render(request, 'home.html')
 
@@ -178,10 +172,20 @@ def dashboard_teacher(request):
     recent_exams = Exam.objects.filter(class_room__in=classes).order_by('exam_date')[:5]
     recent_attendance = Attendance.objects.filter(student__class_room__in=classes).order_by('-date')[:10]
     notices = Notice.objects.order_by('-created_at')[:5]
-    # Get resources if the Resource model exists
+    
+    # ─── SAFE RESOURCES LOADING ───
     resources = []
-    if Resource is not None:
-        resources = Resource.objects.filter(teacher=teacher).order_by('-uploaded_at')[:5]
+    try:
+        from resourcesApp.models import Resource
+        # Only query if the model has a 'teacher' field (ForeignKey to Teacher)
+        if hasattr(Resource, 'teacher'):
+            resources = Resource.objects.filter(teacher=teacher).order_by('-uploaded_at')[:5]
+        else:
+            resources = []
+    except Exception:
+        # If anything fails (model doesn't exist, field missing, etc.), just keep empty list
+        resources = []
+    
     context = {
         'teacher': teacher,
         'classes': classes,
