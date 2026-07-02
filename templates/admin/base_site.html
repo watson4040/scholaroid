@@ -8,93 +8,26 @@
 <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 
 <style>
-  /* ─── HEADER (fixed) ─── */
-  #header {
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    z-index: 1030 !important;
-    background: #fff !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08) !important;
-    display: flex !important;
-    flex-wrap: wrap !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    padding: 6px 16px !important;
-    min-height: 52px !important;
-    border-bottom: 1px solid #e9ecef !important;
+  /* ─── PREVENT MAIN CONTENT SCROLLING ─── */
+  body {
+    overflow: hidden !important;           /* no scrolling at all */
+  }
+  #container {
+    height: calc(100vh - 52px) !important;
+    overflow: hidden !important;
+  }
+  #content {
+    overflow: hidden !important;           /* main content does NOT scroll */
+    height: 100% !important;
   }
 
-  /* ─── SIDEBAR (independently scrollable) ─── */
+  /* ─── SIDEBAR: SCROLLABLE INDEPENDENTLY ─── */
   .sidebar, .main-sidebar {
-    position: fixed !important;
-    top: 52px !important;
-    left: 0 !important;
-    bottom: 0 !important;
-    width: 280px !important;
     overflow-y: auto !important;           /* sidebar scrolls */
     overflow-x: hidden !important;
     scroll-behavior: smooth !important;
     -webkit-overflow-scrolling: touch !important;
-    z-index: 1020 !important;
-    background: #2c3e50 !important;
-    height: calc(100vh - 52px) !important;
-  }
-
-  /* ─── MAIN CONTENT (scrollable) ─── */
-  body {
-    padding-top: 52px !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-  }
-
-  #container {
-    display: flex !important;
-    height: calc(100vh - 52px) !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  #content {
-    flex: 1 !important;
-    overflow-y: auto !important;           /* MAIN CONTENT SCROLLS */
-    overflow-x: hidden !important;
-    padding: 15px 20px !important;
-    margin-left: 280px !important;
-    min-width: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-    height: 100% !important;
-  }
-
-  /* ─── TABLES ─── */
-  #content .results {
-    overflow-x: auto !important;
-  }
-  #content table {
-    width: 100% !important;
-    min-width: auto !important;
-  }
-  #content table th,
-  #content table td {
-    word-break: break-word !important;
-    white-space: normal !important;
-    max-width: 300px !important;
-  }
-
-  /* ─── PAGINATOR & FILTER BARS ─── */
-  #changelist .paginator,
-  #changelist .changelist-actions {
-    flex-shrink: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-  }
-
-  /* ─── ADMIN INDEX ─── */
-  .dashboard #content {
-    overflow-x: hidden !important;
+    height: calc(100vh - 52px) !important; /* fill remaining height */
   }
 
   /* ─── SIDEBAR ACTIVE LINK HIGHLIGHT ─── */
@@ -103,72 +36,6 @@
     background: rgba(26, 188, 156, 0.2) !important;
     color: white !important;
     border-left-color: #1abc9c !important;
-  }
-
-  /* ─── FLOATING DASHBOARD BUTTON (mobile) ─── */
-  #floating-dashboard-btn {
-    position: fixed !important;
-    bottom: 24px !important;
-    right: 24px !important;
-    z-index: 9999 !important;
-    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
-    color: #fff !important;
-    padding: 14px 22px !important;
-    border-radius: 60px !important;
-    box-shadow: 0 6px 24px rgba(40,167,69,0.45) !important;
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    display: none !important;
-    align-items: center !important;
-    gap: 8px !important;
-    border: none !important;
-  }
-  #floating-dashboard-btn:hover { transform: scale(1.05); box-shadow: 0 8px 32px rgba(40,167,69,0.55); }
-  #floating-dashboard-btn:active { transform: scale(0.95); }
-  #floating-dashboard-btn a {
-    color: white !important;
-    text-decoration: none !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-  }
-
-  /* ─── MOBILE ─── */
-  @media (max-width: 768px) {
-    #content {
-      margin-left: 0 !important;
-      padding: 8px 10px !important;
-    }
-    .sidebar, .main-sidebar {
-      width: 260px !important;
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-    }
-    .sidebar.open, .main-sidebar.open {
-      transform: translateX(0);
-    }
-    #header .top-menu .nav-link {
-      font-size: 0.75rem !important;
-      padding: 3px 6px !important;
-    }
-    #floating-dashboard-btn { display: flex !important; }
-    .custom-toggle {
-      display: block !important;
-      background: transparent;
-      border: none;
-      font-size: 1.4rem;
-      color: #333;
-      cursor: pointer;
-      padding: 4px 8px;
-      order: 2;
-      margin-left: auto;
-    }
-  }
-  @media (min-width: 769px) {
-    .custom-toggle {
-      display: none !important;
-    }
   }
 </style>
 
