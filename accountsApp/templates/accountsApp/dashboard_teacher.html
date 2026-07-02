@@ -4,7 +4,7 @@
 
 {% block extra_css %}
 <style>
-  /* Fixed Sidebar */
+  /* ─── Fixed Sidebar ─── */
   .teacher-sidebar {
     position: fixed;
     top: 0;
@@ -73,7 +73,6 @@
     min-height: 100vh;
   }
 
-  /* Sticky dashboard title area */
   .sticky-dashboard-header {
     position: sticky;
     top: 70px;
@@ -112,6 +111,7 @@
     transition: transform 0.2s, box-shadow 0.2s;
     border-left: 4px solid #1abc9c;
     margin-bottom: 1rem;
+    animation: fadeInUp 0.5s ease;
   }
   .stat-card:hover {
     transform: translateY(-4px);
@@ -120,9 +120,18 @@
   .stat-number { font-size: 2rem; font-weight: 700; margin: 0; color: #1e2a3a; }
   .stat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
 
+  .card {
+    animation: fadeInUp 0.5s ease;
+  }
+
   .message-preview {
     max-height: 200px;
     overflow-y: auto;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   @media (max-width: 768px) {
@@ -134,6 +143,42 @@
     .main-content { margin-left: 0 !important; padding-top: 4rem; }
     .mobile-sidebar-toggle { display: block; }
     .stat-number { font-size: 1.5rem; }
+  }
+
+  /* ─── Toast notification ─── */
+  .toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+  }
+  .toast-message {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-left: 4px solid #28a745;
+    animation: slideIn 0.3s ease forwards;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .toast-message.error { border-left-color: #dc3545; }
+  .toast-message.warning { border-left-color: #ffc107; }
+  .toast-message.info { border-left-color: #17a2b8; }
+  .toast-message i { font-size: 20px; }
+  .toast-message .close-toast {
+    margin-left: auto;
+    cursor: pointer;
+    font-weight: bold;
+    color: #999;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
   }
 </style>
 {% endblock %}
@@ -157,6 +202,7 @@
     <a class="nav-link" href="#classes"><i class="fas fa-building"></i> My Classes</a>
     <a class="nav-link" href="#attendance"><i class="fas fa-calendar-check"></i> Attendance</a>
     <a class="nav-link" href="#exams"><i class="fas fa-file-alt"></i> Exams</a>
+    <a class="nav-link" href="{% url 'teacher_resources' %}"><i class="fas fa-download"></i> Resources</a>
     <a class="nav-link" href="{% url 'inbox' %}"><i class="fas fa-envelope"></i> Messages</a>
     <a class="nav-link" href="#notices"><i class="fas fa-bell"></i> Notices</a>
     <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user-circle"></i> My Profile</a>
@@ -178,27 +224,33 @@
   <div class="container-fluid px-0">
     <!-- Stats -->
     <div class="row g-4 mb-5">
-      <div class="col-md-4 col-6">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p class="stat-label">My Classes</p>
           <h3 class="stat-number">{{ classes|length }}</h3>
         </div>
       </div>
-      <div class="col-md-4 col-6">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p class="stat-label">Total Students</p>
           <h3 class="stat-number">{{ students_count }}</h3>
         </div>
       </div>
-      <div class="col-md-4 col-6">
+      <div class="col-md-3 col-6">
         <div class="stat-card">
           <p class="stat-label">Upcoming Exams</p>
           <h3 class="stat-number">{{ recent_exams|length }}</h3>
         </div>
       </div>
+      <div class="col-md-3 col-6">
+        <div class="stat-card">
+          <p class="stat-label">Resources</p>
+          <h3 class="stat-number">{{ resources|length|default:"0" }}</h3>
+        </div>
+      </div>
     </div>
 
-    <!-- Message Widget (like parent dashboard) -->
+    <!-- Message Widget -->
     <div id="messages" class="card shadow-sm border-0 rounded-4 mb-4">
       <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
         <h5><i class="fas fa-envelope me-2 text-primary"></i> Recent Messages</h5>
@@ -210,6 +262,7 @@
         </ul>
         <div class="mt-3">
           <a href="{% url 'inbox' %}" class="btn btn-primary btn-sm">Go to Inbox</a>
+          <a href="{% url 'parent_send_message' %}" class="btn btn-outline-primary btn-sm">Send Message</a>
         </div>
       </div>
     </div>
@@ -297,6 +350,36 @@
       </div>
     </div>
 
+    <!-- Resources Section -->
+    <div id="resources" class="card shadow-sm border-0 rounded-4 mb-4">
+      <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
+        <h5><i class="fas fa-download me-2 text-primary"></i> Recent Resources</h5>
+        <a href="{% url 'teacher_resources' %}" class="btn btn-sm btn-outline-primary">View All</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0">
+            <thead class="table-light"><tr><th>Title</th><th>Type</th><th>Uploaded</th><th>Action</th></tr></thead>
+            <tbody>
+              {% for resource in resources|slice:":5" %}
+              <tr>
+                <td>{{ resource.title|truncatechars:30 }}</td>
+                <td><span class="badge bg-info">{{ resource.file_type|default:"File" }}</span></td>
+                <td>{{ resource.uploaded_at|date:"d M Y" }}</td>
+                <td><a href="{{ resource.file.url }}" target="_blank" class="btn btn-sm btn-outline-success">Download</a></td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="4" class="text-center">No resources uploaded yet.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <div class="p-3">
+          <a href="{% url 'teacher_resources' %}" class="btn btn-primary btn-sm">Manage Resources</a>
+        </div>
+      </div>
+    </div>
+
     <!-- Notices -->
     <div id="notices" class="card shadow-sm border-0 rounded-4">
       <div class="card-header bg-white border-0 pt-3">
@@ -319,8 +402,48 @@
   </div>
 </div>
 
+<!-- ─── TOAST CONTAINER ─── -->
+<div id="toast-container" class="toast-container"></div>
+
 <script>
   (function() {
+    // ─── Toast system ───
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = `toast-message ${type}`;
+      let icon = 'fa-check-circle';
+      if (type === 'error') icon = 'fa-exclamation-circle';
+      else if (type === 'warning') icon = 'fa-exclamation-triangle';
+      else if (type === 'info') icon = 'fa-info-circle';
+      toast.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
+        <span class="close-toast">&times;</span>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+      toast.querySelector('.close-toast').addEventListener('click', function() {
+        toast.remove();
+      });
+    }
+
+    // ─── Show any Django messages as toasts ───
+    const msgContainer = document.getElementById('django-messages');
+    if (msgContainer) {
+      const msgs = msgContainer.querySelectorAll('ul.messagelist li, .alert');
+      msgs.forEach(el => {
+        let type = 'success';
+        if (el.classList.contains('error') || el.classList.contains('danger')) type = 'error';
+        else if (el.classList.contains('warning')) type = 'warning';
+        else if (el.classList.contains('info')) type = 'info';
+        showToast(el.textContent.trim(), type);
+        el.remove();
+      });
+      if (msgContainer.children.length === 0) msgContainer.remove();
+    }
+
     // ─── Sidebar toggle for mobile ───
     const toggleBtn = document.getElementById('mobileSidebarToggle');
     const sidebar = document.getElementById('teacherSidebar');
@@ -347,7 +470,7 @@
       });
     });
 
-    // ─── Auto-refresh messages (like parent dashboard) ───
+    // ─── Auto-refresh messages ───
     function refreshMessages() {
       fetch('/api/recent-messages/')
         .then(r => r.json())
@@ -389,6 +512,11 @@
         link.classList.add('active');
       }
     });
+
+    // ─── Show a welcome toast ───
+    setTimeout(() => {
+      showToast('Welcome, {{ teacher.user.first_name|default:"Teacher" }}!', 'info');
+    }, 500);
   })();
 </script>
 {% endblock %}
