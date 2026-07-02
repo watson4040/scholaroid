@@ -173,19 +173,7 @@ def dashboard_teacher(request):
     recent_attendance = Attendance.objects.filter(student__class_room__in=classes).order_by('-date')[:10]
     notices = Notice.objects.order_by('-created_at')[:5]
     
-    # ─── SAFE RESOURCES LOADING ───
-    resources = []
-    try:
-        from resourcesApp.models import Resource
-        # Only query if the model has a 'teacher' field (ForeignKey to Teacher)
-        if hasattr(Resource, 'teacher'):
-            resources = Resource.objects.filter(teacher=teacher).order_by('-uploaded_at')[:5]
-        else:
-            resources = []
-    except Exception:
-        # If anything fails (model doesn't exist, field missing, etc.), just keep empty list
-        resources = []
-    
+    # Simple, reliable context without resources
     context = {
         'teacher': teacher,
         'classes': classes,
@@ -193,7 +181,6 @@ def dashboard_teacher(request):
         'recent_exams': recent_exams,
         'recent_attendance': recent_attendance,
         'notices': notices,
-        'resources': resources,
     }
     return render(request, 'accountsApp/dashboard_teacher.html', context)
 

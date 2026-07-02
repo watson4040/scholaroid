@@ -202,7 +202,6 @@
     <a class="nav-link" href="#classes"><i class="fas fa-building"></i> My Classes</a>
     <a class="nav-link" href="#attendance"><i class="fas fa-calendar-check"></i> Attendance</a>
     <a class="nav-link" href="#exams"><i class="fas fa-file-alt"></i> Exams</a>
-    <a class="nav-link" href="{% url 'teacher_resources' %}"><i class="fas fa-download"></i> Resources</a>
     <a class="nav-link" href="{% url 'inbox' %}"><i class="fas fa-envelope"></i> Messages</a>
     <a class="nav-link" href="#notices"><i class="fas fa-bell"></i> Notices</a>
     <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user-circle"></i> My Profile</a>
@@ -224,28 +223,22 @@
   <div class="container-fluid px-0">
     <!-- Stats -->
     <div class="row g-4 mb-5">
-      <div class="col-md-3 col-6">
+      <div class="col-md-4 col-6">
         <div class="stat-card">
           <p class="stat-label">My Classes</p>
           <h3 class="stat-number">{{ classes|length }}</h3>
         </div>
       </div>
-      <div class="col-md-3 col-6">
+      <div class="col-md-4 col-6">
         <div class="stat-card">
           <p class="stat-label">Total Students</p>
           <h3 class="stat-number">{{ students_count }}</h3>
         </div>
       </div>
-      <div class="col-md-3 col-6">
+      <div class="col-md-4 col-6">
         <div class="stat-card">
           <p class="stat-label">Upcoming Exams</p>
           <h3 class="stat-number">{{ recent_exams|length }}</h3>
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div class="stat-card">
-          <p class="stat-label">Resources</p>
-          <h3 class="stat-number">{{ resources|length|default:"0" }}</h3>
         </div>
       </div>
     </div>
@@ -349,38 +342,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Resources Section (only shown if resources exist) -->
-    {% if resources %}
-    <div id="resources" class="card shadow-sm border-0 rounded-4 mb-4">
-      <div class="card-header bg-white border-0 pt-3 d-flex justify-content-between align-items-center">
-        <h5><i class="fas fa-download me-2 text-primary"></i> Recent Resources</h5>
-        <a href="{% url 'teacher_resources' %}" class="btn btn-sm btn-outline-primary">View All</a>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-sm table-hover mb-0">
-            <thead class="table-light"><tr><th>Title</th><th>Type</th><th>Uploaded</th><th>Action</th></tr></thead>
-            <tbody>
-              {% for resource in resources|slice:":5" %}
-              <tr>
-                <td>{{ resource.title|truncatechars:30 }}</td>
-                <td><span class="badge bg-info">{{ resource.file_type|default:"File" }}</span></td>
-                <td>{{ resource.uploaded_at|date:"d M Y" }}</td>
-                <td><a href="{{ resource.file.url }}" target="_blank" class="btn btn-sm btn-outline-success">Download</a></td>
-              </tr>
-              {% empty %}
-              <tr><td colspan="4" class="text-center">No resources uploaded yet.</td></tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-        <div class="p-3">
-          <a href="{% url 'teacher_resources' %}" class="btn btn-primary btn-sm">Manage Resources</a>
-        </div>
-      </div>
-    </div>
-    {% endif %}
 
     <!-- Notices -->
     <div id="notices" class="card shadow-sm border-0 rounded-4">
