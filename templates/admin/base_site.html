@@ -42,7 +42,7 @@
     height: calc(100vh - 52px) !important;
   }
 
-  /* ─── MAIN CONTENT (scrollable only when needed) ─── */
+  /* ─── MAIN CONTENT (scrollable) ─── */
   body {
     padding-top: 52px !important;
     margin: 0 !important;
@@ -59,8 +59,8 @@
 
   #content {
     flex: 1 !important;
-    overflow-y: auto !important;           /* vertical scroll ONLY when content overflows */
-    overflow-x: hidden !important;         /* no horizontal scroll */
+    overflow-y: auto !important;           /* MAIN CONTENT SCROLLS */
+    overflow-x: hidden !important;
     padding: 15px 20px !important;
     margin-left: 280px !important;
     min-width: 0 !important;
