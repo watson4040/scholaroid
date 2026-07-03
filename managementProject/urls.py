@@ -13,6 +13,7 @@ from messagingApp.views import (
     send_message_api,
     typing_indicator,
     delete_message,
+    send_message_to_any,   # <-- ADD THIS IMPORT
 )
 
 urlpatterns = [
@@ -40,6 +41,8 @@ urlpatterns = [
     path('parent/message/', parent_send_message, name='parent_send_message'),
     path('admin-inbox/', admin_message_list, name='admin_message_list'),
     path('admin/message/<int:pk>/', admin_message_detail, name='admin_message_detail'),
+    # ─── NEW: Send message to any user ───
+    path('send/', send_message_to_any, name='send_message_to_any'),
     # API endpoints
     path('api/recent-messages/', get_recent_messages, name='get_recent_messages'),
     path('api/conversation/<int:user_id>/', get_conversation_api, name='get_conversation_api'),
@@ -47,6 +50,6 @@ urlpatterns = [
     path('api/typing/', typing_indicator, name='typing_indicator'),
     path('api/delete-message/', delete_message, name='delete_message'),
     # Exams app
-    path('exams/', include('examsApp.urls')),   # <-- THIS IS THE KEY LINE
+    path('exams/', include('examsApp.urls')),
     path('fees/', include('feesApp.urls')),
 ]
