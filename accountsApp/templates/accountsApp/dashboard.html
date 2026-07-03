@@ -118,6 +118,41 @@
   .stat-number { font-size: 2rem; font-weight: 700; margin: 0; color: #1e2a3a; }
   .stat-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; color: #64748b; }
 
+  .toast-container {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 350px;
+  }
+  .toast-message {
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px 20px;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-left: 4px solid #28a745;
+    animation: slideIn 0.3s ease forwards;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+  }
+  .toast-message.error { border-left-color: #dc3545; }
+  .toast-message.warning { border-left-color: #ffc107; }
+  .toast-message.info { border-left-color: #17a2b8; }
+  .toast-message i { font-size: 20px; }
+  .toast-message .close-toast {
+    margin-left: auto;
+    cursor: pointer;
+    font-weight: bold;
+    color: #999;
+  }
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+
   @media (max-width: 768px) {
     .admin-sidebar {
       transform: translateX(-100%);
@@ -147,7 +182,6 @@
     <a class="nav-link" href="{% url 'dashboard_admin' %}">
       <i class="fas fa-tachometer-alt"></i> Dashboard
     </a>
-    <!-- All admin links now open in a new tab so the dashboard remains -->
     <a class="nav-link" href="{% url 'admin:studentsApp_student_changelist' %}" target="_blank">
       <i class="fas fa-user-graduate"></i> Pupils
     </a>
@@ -174,9 +208,13 @@
     <a class="nav-link" href="{% url 'admin:attendanceApp_attendance_changelist' %}" target="_blank">
       <i class="fas fa-calendar-check"></i> Attendance
     </a>
-    <!-- Messages link – keep as is (opens the custom admin inbox) -->
+    <!-- Messages link – custom admin inbox -->
     <a class="nav-link" href="/admin-inbox/">
       <i class="fas fa-envelope"></i> Messages
+    </a>
+    <!-- ─── NEW: Send Message link ─── -->
+    <a class="nav-link" href="{% url 'send_message_to_any' %}">
+      <i class="fas fa-paper-plane"></i> Send Message
     </a>
     <a class="nav-link" href="{% url 'admin:parentsApp_parent_changelist' %}" target="_blank">
       <i class="fas fa-users"></i> Parents
@@ -262,8 +300,49 @@
   </div>
 </div>
 
+<!-- ─── TOAST CONTAINER ─── -->
+<div id="toast-container" class="toast-container"></div>
+
 <script>
   (function() {
+    // ─── Toast system ───
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+      const toast = document.createElement('div');
+      toast.className = `toast-message ${type}`;
+      let icon = 'fa-check-circle';
+      if (type === 'error') icon = 'fa-exclamation-circle';
+      else if (type === 'warning') icon = 'fa-exclamation-triangle';
+      else if (type === 'info') icon = 'fa-info-circle';
+      toast.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${message}</span>
+        <span class="close-toast">&times;</span>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => { toast.remove(); }, 4000);
+      toast.querySelector('.close-toast').addEventListener('click', function() {
+        toast.remove();
+      });
+    }
+
+    // ─── Show any Django messages as toasts ───
+    const msgContainer = document.getElementById('django-messages');
+    if (msgContainer) {
+      const msgs = msgContainer.querySelectorAll('ul.messagelist li, .alert');
+      msgs.forEach(el => {
+        let type = 'success';
+        if (el.classList.contains('error') || el.classList.contains('danger')) type = 'error';
+        else if (el.classList.contains('warning')) type = 'warning';
+        else if (el.classList.contains('info')) type = 'info';
+        showToast(el.textContent.trim(), type);
+        el.remove();
+      });
+      if (msgContainer.children.length === 0) msgContainer.remove();
+    }
+
+    // ─── Sidebar toggle for mobile ───
     const toggleBtn = document.getElementById('mobileSidebarToggle');
     const sidebar = document.getElementById('adminSidebar');
     if (toggleBtn) {
@@ -280,6 +359,7 @@
       });
     }
 
+    // ─── Active link highlighting ───
     const currentPath = window.location.pathname;
     let activeLink = null;
     document.querySelectorAll('.admin-sidebar .nav-link').forEach(link => {
