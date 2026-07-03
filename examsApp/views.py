@@ -10,6 +10,7 @@ from .forms import ExamForm
 from teachersApp.models import Teacher
 from classesApp.models import ClassRoom, Subjects
 
+# ─── Admin Views ───
 class AdminExamList(AdminRequiredMixin, ListView):
     model = Exam
     template_name = 'examsApp/admin_exam_list.html'
@@ -23,7 +24,7 @@ class AdminExamCreate(AdminRequiredMixin, CreateView):
     success_url = reverse_lazy('admin_exams_list')
 
     def form_valid(self, form):
-        messages.success(self, "Exam created.")
+        messages.success(self.request, "Exam created.")
         return super().form_valid(form)
 
 class AdminExamUpdate(AdminRequiredMixin, UpdateView):
@@ -33,7 +34,7 @@ class AdminExamUpdate(AdminRequiredMixin, UpdateView):
     success_url = reverse_lazy('admin_exams_list')
 
     def form_valid(self, form):
-        messages.success(self, "Exam updated.")
+        messages.success(self.request, "Exam updated.")
         return super().form_valid(form)
 
 class AdminExamDelete(AdminRequiredMixin, DeleteView):
@@ -42,9 +43,10 @@ class AdminExamDelete(AdminRequiredMixin, DeleteView):
     success_url = reverse_lazy('admin_exams_list')
 
     def delete(self, request, *args, **kwargs):
-        messages.success(self, "Exam deleted.")
+        messages.success(self.request, "Exam deleted.")
         return super().delete(request, *args, **kwargs)
 
+# ─── Teacher Views ───
 class TeacherExamList(ListView):
     model = Exam
     template_name = 'examsApp/teacher_exam_list.html'
@@ -59,15 +61,15 @@ class TeacherExamList(ListView):
 
     def get_queryset(self):
         teacher = self.request.user.teacher
-        classes = teacher.assigned_class.all()
+        # Use correct field name: class_assigned
+        classes = teacher.class_assigned.all() if hasattr(teacher, 'class_assigned') else []
         return Exam.objects.filter(class_room__in=classes).select_related('subject', 'class_room').order_by('exam_date')
 
-# ─── NEW: Teacher exam creation ───
 class TeacherExamCreate(CreateView):
     model = Exam
     form_class = ExamForm
     template_name = 'examsApp/teacher_exam_form.html'
-    success_url = reverse_lazy('teacher_exam_list')
+    success_url = reverse_lazy('teacher_exams_list')
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -75,34 +77,27 @@ class TeacherExamCreate(CreateView):
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        # Optionally pass the teacher to the form to filter subjects/classes
-        return kwargs
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         teacher = self.request.user.teacher
         context['teacher'] = teacher
-        # Get classes assigned to this teacher
-        context['classes'] = teacher.assigned_class.all() if hasattr(teacher, 'assigned_class') else []
-        # Get subjects assigned to this teacher (assuming ManyToManyField on Teacher model)
+        # Use correct field names
+        context['classes'] = teacher.class_assigned.all() if hasattr(teacher, 'class_assigned') else []
         context['subjects'] = teacher.subject.all() if hasattr(teacher, 'subject') else []
         return context
 
     def form_valid(self, form):
-        # Ensure the class and subject belong to the teacher
         teacher = self.request.user.teacher
-        class_id = form.cleaned_data.get('class_room').id
-        subject_id = form.cleaned_data.get('subject').id
-        # Check if teacher is assigned to that class and subject
-        if class_id not in [c.id for c in teacher.assigned_class.all()]:
+        # Validate class and subject belong to the teacher
+        class_room = form.cleaned_data.get('class_room')
+        subject = form.cleaned_data.get('subject')
+        if class_room not in teacher.class_assigned.all():
             messages.error(self.request, "You are not assigned to this class.")
-            return redirect('teacher_exam_list')
-        if subject_id not in [s.id for s in teacher.subject.all()]:
+            return redirect('teacher_exams_list')
+        if subject not in teacher.subject.all():
             messages.error(self.request, "You are not assigned to this subject.")
-            return redirect('teacher_exam_list')
-        # Save the exam
+            return redirect('teacher_exams_list')
+        # Save exam
         response = super().form_valid(form)
         messages.success(self.request, "Exam created successfully.")
         return response
