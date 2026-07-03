@@ -34,20 +34,19 @@ urlpatterns = [
     path('change-password/', views.change_password, name='change_password'),
     path('enroll/', enrollment_request, name='enroll'),
     path('enroll/success/', enrollment_success, name='enrollment_success'),
-
-    # Messaging URLs (direct)
+    # Messaging URLs
     path('inbox/', user_inbox, name='inbox'),
     path('conversation/<int:user_id>/', conversation, name='conversation'),
     path('parent/message/', parent_send_message, name='parent_send_message'),
     path('admin-inbox/', admin_message_list, name='admin_message_list'),
     path('admin/message/<int:pk>/', admin_message_detail, name='admin_message_detail'),
-
-    # ---- API endpoints (needed for AJAX) ----
+    # API endpoints
     path('api/recent-messages/', get_recent_messages, name='get_recent_messages'),
     path('api/conversation/<int:user_id>/', get_conversation_api, name='get_conversation_api'),
     path('api/send-message/<int:user_id>/', send_message_api, name='send_message_api'),
     path('api/typing/', typing_indicator, name='typing_indicator'),
     path('api/delete-message/', delete_message, name='delete_message'),
-
+    # Exams app
+    path('exams/', include('examsApp.urls')),   # <-- THIS IS THE KEY LINE
     path('fees/', include('feesApp.urls')),
 ]

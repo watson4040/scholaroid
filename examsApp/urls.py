@@ -6,6 +6,7 @@ urlpatterns = [
     path('admin/exams/create/', views.AdminExamCreate.as_view(), name='admin_exam_create'),
     path('admin/exams/<int:pk>/edit/', views.AdminExamUpdate.as_view(), name='admin_exam_edit'),
     path('admin/exams/<int:pk>/delete/', views.AdminExamDelete.as_view(), name='admin_exam_delete'),
+    # Teacher URLs – notice the name is 'teacher_exams_list' (matches the sidebar)
     path('teacher/exams/', views.TeacherExamList.as_view(), name='teacher_exams_list'),
     path('teacher/exams/create/', views.TeacherExamCreate.as_view(), name='teacher_exam_create'),
 ]
