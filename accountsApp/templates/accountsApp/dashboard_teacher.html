@@ -145,7 +145,6 @@
     .stat-number { font-size: 1.5rem; }
   }
 
-  /* ─── Toast notification ─── */
   .toast-container {
     position: fixed;
     top: 80px;
@@ -202,7 +201,7 @@
     <a class="nav-link" href="#classes"><i class="fas fa-building"></i> My Classes</a>
     <a class="nav-link" href="#attendance"><i class="fas fa-calendar-check"></i> Attendance</a>
     <a class="nav-link" href="#exams"><i class="fas fa-file-alt"></i> Exams</a>
-    <!-- ─── NEW: Manage Exams link ─── -->
+    <!-- ─── NEW LINK ─── -->
     <a class="nav-link" href="{% url 'teacher_exams_list' %}"><i class="fas fa-list-ul"></i> Manage Exams</a>
     <a class="nav-link" href="{% url 'inbox' %}"><i class="fas fa-envelope"></i> Messages</a>
     <a class="nav-link" href="#notices"><i class="fas fa-bell"></i> Notices</a>
@@ -228,19 +227,19 @@
       <div class="col-md-4 col-6">
         <div class="stat-card">
           <p class="stat-label">My Classes</p>
-          <h3 class="stat-number">{{ classes|length }}</h3>
+          <h3 class="stat-number">{{ classes|length|default:0 }}</h3>
         </div>
       </div>
       <div class="col-md-4 col-6">
         <div class="stat-card">
           <p class="stat-label">Total Students</p>
-          <h3 class="stat-number">{{ students_count }}</h3>
+          <h3 class="stat-number">{{ students_count|default:0 }}</h3>
         </div>
       </div>
       <div class="col-md-4 col-6">
         <div class="stat-card">
           <p class="stat-label">Upcoming Exams</p>
-          <h3 class="stat-number">{{ recent_exams|length }}</h3>
+          <h3 class="stat-number">{{ recent_exams|length|default:0 }}</h3>
         </div>
       </div>
     </div>

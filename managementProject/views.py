@@ -16,6 +16,9 @@ from classesApp.models import ClassRoom
 from attendanceApp.models import Attendance
 from examsApp.models import Exam, ExamResult
 from messagingApp.models import Message
+import logging
+
+logger = logging.getLogger(__name__)
 
 def home(request):
     return render(request, 'home.html')
@@ -166,23 +169,41 @@ def dashboard_student(request):
 
 @login_required
 def dashboard_teacher(request):
-    teacher = get_object_or_404(Teacher, user=request.user)
-    classes = teacher.class_assigned.all() if hasattr(teacher, 'class_assigned') else []
-    students_count = sum(c.students.count() for c in classes)
-    recent_exams = Exam.objects.filter(class_room__in=classes).order_by('exam_date')[:5]
-    recent_attendance = Attendance.objects.filter(student__class_room__in=classes).order_by('-date')[:10]
-    notices = Notice.objects.order_by('-created_at')[:5]
-    
-    # Simple, reliable context without resources
-    context = {
-        'teacher': teacher,
-        'classes': classes,
-        'students_count': students_count,
-        'recent_exams': recent_exams,
-        'recent_attendance': recent_attendance,
-        'notices': notices,
-    }
-    return render(request, 'accountsApp/dashboard_teacher.html', context)
+    try:
+        teacher = get_object_or_404(Teacher, user=request.user)
+        # Safely get classes – try different possible field names
+        classes = []
+        if hasattr(teacher, 'class_assigned'):
+            classes = teacher.class_assigned.all()
+        elif hasattr(teacher, 'classes'):
+            classes = teacher.classes.all()
+        elif hasattr(teacher, 'assigned_class'):
+            classes = teacher.assigned_class.all()
+        else:
+            # If no field found, log and return empty
+            logger.warning(f"Teacher {teacher.user.email} has no class field.")
+        
+        students_count = 0
+        for c in classes:
+            students_count += c.students.count()
+        recent_exams = Exam.objects.filter(class_room__in=classes).order_by('exam_date')[:5]
+        recent_attendance = Attendance.objects.filter(student__class_room__in=classes).order_by('-date')[:10]
+        notices = Notice.objects.order_by('-created_at')[:5]
+        
+        context = {
+            'teacher': teacher,
+            'classes': classes,
+            'students_count': students_count,
+            'recent_exams': recent_exams,
+            'recent_attendance': recent_attendance,
+            'notices': notices,
+            'resources': [],  # Keep for safety
+        }
+        return render(request, 'accountsApp/dashboard_teacher.html', context)
+    except Exception as e:
+        logger.error(f"Teacher dashboard error: {e}")
+        messages.error(request, "An error occurred loading the teacher dashboard. Please contact support.")
+        return redirect('home')
 
 @login_required
 def dashboard_parent(request):
@@ -199,7 +220,6 @@ def dashboard_parent(request):
         })
     notices = Notice.objects.order_by('-created_at')[:5]
 
-    # Get recent messages for this parent (where parent is sender or recipient)
     recent_messages = Message.objects.filter(
         Q(sender=parent.user) | Q(recipient=parent.user)
     ).order_by('-created_at')[:5]
