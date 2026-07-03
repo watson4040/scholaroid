@@ -199,7 +199,7 @@ def delete_message(request):
         return JsonResponse({'status': 'ok'})
     return JsonResponse({'error': 'POST required'}, status=400)
 
-# ---- NEW: Clear entire conversation ----
+# ---- Clear conversation ----
 @login_required
 def clear_conversation_api(request, user_id):
     """Delete all messages between the current user and another user."""
@@ -208,10 +208,38 @@ def clear_conversation_api(request, user_id):
     if request.method != 'POST':
         return JsonResponse({'error': 'POST required'}, status=400)
     other = get_object_or_404(User, id=user_id)
-    # Delete all messages between the two users
     messages_to_delete = Message.objects.filter(
         (Q(sender=request.user, recipient=other) | Q(sender=other, recipient=request.user))
     )
     count = messages_to_delete.count()
     messages_to_delete.delete()
     return JsonResponse({'status': 'ok', 'deleted_count': count})
+
+# ---- NEW: Send message to any user ----
+@login_required
+def send_message_to_any(request):
+    """Allow any user to send a message to any other user."""
+    if request.method == 'POST':
+        recipient_id = request.POST.get('recipient')
+        subject = request.POST.get('subject')
+        body = request.POST.get('body')
+        if not recipient_id or not subject or not body:
+            messages.error(request, "Please fill in all fields.")
+            return redirect('send_message_to_any')
+        recipient = get_object_or_404(User, id=recipient_id)
+        if recipient == request.user:
+            messages.error(request, "You cannot send a message to yourself.")
+            return redirect('send_message_to_any')
+        msg = Message.objects.create(
+            sender=request.user,
+            recipient=recipient,
+            subject=subject,
+            body=body,
+            message_type='other'
+        )
+        messages.success(request, f"Message sent to {recipient.get_full_name() or recipient.username}.")
+        return redirect('inbox')
+    # Get all users except the current user
+    users = User.objects.exclude(id=request.user.id)
+    context = {'users': users}
+    return render(request, 'messagingApp/send_message.html', context)

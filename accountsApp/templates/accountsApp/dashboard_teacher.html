@@ -201,9 +201,10 @@
     <a class="nav-link" href="#classes"><i class="fas fa-building"></i> My Classes</a>
     <a class="nav-link" href="#attendance"><i class="fas fa-calendar-check"></i> Attendance</a>
     <a class="nav-link" href="#exams"><i class="fas fa-file-alt"></i> Exams</a>
-    <!-- ─── NEW LINK ─── -->
     <a class="nav-link" href="{% url 'teacher_exams_list' %}"><i class="fas fa-list-ul"></i> Manage Exams</a>
     <a class="nav-link" href="{% url 'inbox' %}"><i class="fas fa-envelope"></i> Messages</a>
+    <!-- ─── NEW: Send Message link ─── -->
+    <a class="nav-link" href="{% url 'send_message_to_any' %}"><i class="fas fa-paper-plane"></i> Send Message</a>
     <a class="nav-link" href="#notices"><i class="fas fa-bell"></i> Notices</a>
     <a class="nav-link" href="{% url 'profile' %}"><i class="fas fa-user-circle"></i> My Profile</a>
   </nav>
@@ -256,7 +257,7 @@
         </ul>
         <div class="mt-3">
           <a href="{% url 'inbox' %}" class="btn btn-primary btn-sm">Go to Inbox</a>
-          <a href="{% url 'parent_send_message' %}" class="btn btn-outline-primary btn-sm">Send Message</a>
+          <a href="{% url 'send_message_to_any' %}" class="btn btn-outline-primary btn-sm">Send Message</a>
         </div>
       </div>
     </div>
