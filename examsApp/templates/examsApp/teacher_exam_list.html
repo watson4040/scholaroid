@@ -1,32 +1,74 @@
-{% extends 'base.html' %}
-{% block title %}My Exams{% endblock %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2>Exams (Your Classes)</h2>
-</div>
-<div class="card p-0">
-  <div class="table-responsive">
-    <table class="table table-modern table-hover align-middle mb-0">
-      <thead>
-        <tr><th>Subject</th><th>Class</th><th>Date</th><th>Max Marks</th></tr>
-      </thead>
-      <tbody>
-        {% for e in object_list %}
-        <tr>
-          <td>{{ e.subject.subject }}</td>
-          <td>{{ e.class_room.name }}-{{ e.class_room.section }}</td>
-          <td>{{ e.exam_date }}</td>
-          <td>{{ e.max_marks }}</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="4" class="text-center">No exams scheduled.</td></tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-<div class="d-flex gap-2 mt-4">
-  <a class="role-btn" href="{% url 'dashboard_teacher' %}"><span>← Back</span></a>
-</div>
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Manage Exams{% endblock %}
+
+{% block extra_css %}
+<style>
+  .exam-card {
+    transition: transform 0.2s;
+  }
+  .exam-card:hover {
+    transform: translateY(-3px);
+  }
+  .btn-create {
+    background: linear-gradient(135deg, #28a745, #218838);
+    color: white;
+    border: none;
+  }
+  .btn-create:hover {
+    background: linear-gradient(135deg, #218838, #1e7e34);
+    color: white;
+  }
+</style>
 {% endblock %}
 
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2><i class="fas fa-file-alt me-2 text-primary"></i> My Exams</h2>
+        <a href="{% url 'teacher_exam_create' %}" class="btn btn-create px-4 py-2 rounded-pill">
+            <i class="fas fa-plus me-2"></i> Create Exam
+        </a>
+    </div>
+
+    {% if object_list %}
+        <div class="row g-4">
+            {% for exam in object_list %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card exam-card shadow-sm border-0 rounded-4 h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <h5 class="card-title mb-1">{{ exam.subject.subject }}</h5>
+                            <span class="badge bg-info">{{ exam.get_term_display }}</span>
+                        </div>
+                        <p class="text-muted small mb-2">{{ exam.class_room.name }} - {{ exam.class_room.section|default:"N/A" }}</p>
+                        <div class="mb-2">
+                            <span class="badge bg-secondary">Max Marks: {{ exam.max_marks }}</span>
+                            <span class="badge bg-light text-dark ms-2">{{ exam.exam_date|date:"d M Y" }}</span>
+                        </div>
+                        {% if exam.description %}
+                        <p class="small text-muted mb-0">{{ exam.description|truncatechars:60 }}</p>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-white border-0 pt-0">
+                        <a href="/admin/examsApp/exam/{{ exam.id }}/change/" class="btn btn-sm btn-outline-primary" target="_blank">Edit</a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-file-alt fa-4x text-muted mb-3"></i>
+                <p class="lead">No exams found for your classes.</p>
+                <a href="{% url 'teacher_exam_create' %}" class="btn btn-primary rounded-pill px-4">Create Your First Exam</a>
+            </div>
+        </div>
+    {% endif %}
+    
+    <div class="d-flex gap-2 mt-4">
+        <a class="btn btn-outline-secondary" href="{% url 'dashboard_teacher' %}">← Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
