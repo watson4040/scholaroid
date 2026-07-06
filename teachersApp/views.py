@@ -53,7 +53,11 @@ class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
 
 @login_required
 def dashboard_teacher(request):
-    teacher = Teacher.objects.get(user=request.user)
+    # Auto‑create Teacher profile if missing (fixes the redirect problem)
+    teacher, created = Teacher.objects.get_or_create(user=request.user)
+    if created:
+        messages.info(request, "Teacher profile created automatically.")
+    
     classes = teacher.assigned_class.all()
     subjects = teacher.subject.all()
     exams = Exam.objects.filter(class_room__in=classes).order_by('exam_date')
@@ -78,9 +82,8 @@ def dashboard_teacher(request):
 @login_required
 def teacher_class_detail(request, class_id):
     classroom = get_object_or_404(ClassRoom, id=class_id)
-    teacher = request.user.teacher
+    teacher = request.user.teacher  # This will now exist because we created it above
 
-    # Only allow if this class is assigned to the teacher
     if classroom not in teacher.assigned_class.all():
         return redirect("dashboard_teacher")
 
@@ -98,7 +101,6 @@ def teacher_class_detail(request, class_id):
                 )
         return redirect("teacher_class_detail", class_id=classroom.id)
 
-    # Load today's attendance if already marked
     attendance_records = Attendance.objects.filter(
         student__in=students,
         date=today
