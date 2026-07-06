@@ -53,11 +53,9 @@ class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
 
 @login_required
 def dashboard_teacher(request):
-    # Auto‑create Teacher profile if missing (fixes the redirect problem)
     teacher, created = Teacher.objects.get_or_create(user=request.user)
     if created:
         messages.info(request, "Teacher profile created automatically.")
-    
     classes = teacher.assigned_class.all()
     subjects = teacher.subject.all()
     exams = Exam.objects.filter(class_room__in=classes).order_by('exam_date')
@@ -79,21 +77,24 @@ def dashboard_teacher(request):
     }
     return render(request, "teachersApp/dashboard.html", context)
 
+
 @login_required
 def teacher_class_detail(request, class_id):
     classroom = get_object_or_404(ClassRoom, id=class_id)
-    teacher = request.user.teacher  # This will now exist because we created it above
+    teacher = get_object_or_404(Teacher, user=request.user)
 
+    # Authorize: teacher must be assigned to this class
     if classroom not in teacher.assigned_class.all():
         return redirect("dashboard_teacher")
 
     students = Student.objects.filter(class_room=classroom)
     today = now().date()
 
+    # If POST, save attendance
     if request.method == "POST":
         for student in students:
             status = request.POST.get(f"status_{student.id}")
-            if status:
+            if status in dict(Attendance.STATUS_CHOICES):  # Validate
                 Attendance.objects.update_or_create(
                     student=student,
                     date=today,
@@ -101,15 +102,20 @@ def teacher_class_detail(request, class_id):
                 )
         return redirect("teacher_class_detail", class_id=classroom.id)
 
+    # Get today's attendance records
     attendance_records = Attendance.objects.filter(
         student__in=students,
         date=today
     )
+    # Create a mapping: student.id -> status
     attendance_map = {record.student.id: record.status for record in attendance_records}
+
+    # Attach today's status directly to each student object
+    for student in students:
+        student.today_status = attendance_map.get(student.id, "")
 
     return render(request, "teachersApp/class_detail.html", {
         "classroom": classroom,
         "students": students,
-        "attendance_map": attendance_map,
         "today": today,
     })

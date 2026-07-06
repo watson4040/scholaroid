@@ -23,9 +23,9 @@
                         <td class="max-w-180">
                             <select name="status_{{ student.id }}" class="form-select">
                                 <option value="">-- Select --</option>
-                                <option value="present" {% if attendance_map.student.id == "present" %}selected{% endif %}>Present</option>
-                                <option value="absent" {% if attendance_map.student.id == "absent" %}selected{% endif %}>Absent</option>
-                                <option value="late" {% if attendance_map.student.id == "late" %}selected{% endif %}>Late</option>
+                                <option value="present" {% if student.today_status == "present" %}selected{% endif %}>Present</option>
+                                <option value="absent" {% if student.today_status == "absent" %}selected{% endif %}>Absent</option>
+                                <option value="late" {% if student.today_status == "late" %}selected{% endif %}>Late</option>
                             </select>
                         </td>
                         <td>
