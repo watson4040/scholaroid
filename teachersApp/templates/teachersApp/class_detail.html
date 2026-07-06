@@ -19,7 +19,10 @@
                 <tbody>
                     {% for student in students %}
                     <tr>
-                        <td>{% include 'partials/user_avatar_name.html' with user_obj=student.user size=32 %}</td>
+                        <td>
+                            {{ student.user.get_full_name|default:student.user.username }}
+                            {% if student.user.role == 'student' %}<span class="badge bg-info">Student</span>{% endif %}
+                        </td>
                         <td class="max-w-180">
                             <select name="status_{{ student.id }}" class="form-select">
                                 <option value="">-- Select --</option>
@@ -29,7 +32,7 @@
                             </select>
                         </td>
                         <td>
-                            {% if student.parent %}
+                            {% if student.parent and student.parent.user %}
                                 <a href="{% url 'conversation' student.parent.user.id %}" class="role-btn">
                                     <span><i class="bi bi-chat-dots"></i> Message Parent</span>
                                 </a>
