@@ -56,14 +56,15 @@ class TeacherExamList(ListView):
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         if not hasattr(request.user, 'teacher'):
-            return redirect('dashboard_teacher') if request.user.role == 'teacher' else redirect('home')
+            return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         teacher = self.request.user.teacher
-        # Use correct field name: class_assigned
-        classes = teacher.class_assigned.all() if hasattr(teacher, 'class_assigned') else []
+        # CORRECTED: use assigned_class (ManyToManyField)
+        classes = teacher.assigned_class.all()
         return Exam.objects.filter(class_room__in=classes).select_related('subject', 'class_room').order_by('exam_date')
+
 
 class TeacherExamCreate(CreateView):
     model = Exam
@@ -77,27 +78,23 @@ class TeacherExamCreate(CreateView):
             return redirect('home')
         return super().dispatch(request, *args, **kwargs)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        teacher = self.request.user.teacher
-        context['teacher'] = teacher
-        # Use correct field names
-        context['classes'] = teacher.class_assigned.all() if hasattr(teacher, 'class_assigned') else []
-        context['subjects'] = teacher.subject.all() if hasattr(teacher, 'subject') else []
-        return context
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        # Pass the teacher to the form to filter choices
+        kwargs['teacher'] = self.request.user.teacher
+        return kwargs
 
     def form_valid(self, form):
         teacher = self.request.user.teacher
-        # Validate class and subject belong to the teacher
         class_room = form.cleaned_data.get('class_room')
         subject = form.cleaned_data.get('subject')
-        if class_room not in teacher.class_assigned.all():
+        # Validate that class and subject belong to teacher
+        if class_room not in teacher.assigned_class.all():
             messages.error(self.request, "You are not assigned to this class.")
             return redirect('teacher_exams_list')
         if subject not in teacher.subject.all():
             messages.error(self.request, "You are not assigned to this subject.")
             return redirect('teacher_exams_list')
-        # Save exam
         response = super().form_valid(form)
         messages.success(self.request, "Exam created successfully.")
         return response
