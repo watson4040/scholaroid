@@ -13,8 +13,10 @@ from messagingApp.views import (
     send_message_api,
     typing_indicator,
     delete_message,
-    send_message_to_any,   # <-- ADD THIS IMPORT
+    send_message_to_any,
 )
+# --- NEW IMPORT ---
+from teachersApp.views import teacher_class_detail  # <-- ADD THIS
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,6 +30,8 @@ urlpatterns = [
     path('logout/', views.logout_user, name='logout'),
     path('dashboard/admin/', views.dashboard_admin, name='dashboard_admin'),
     path('dashboard/teacher/', views.dashboard_teacher, name='dashboard_teacher'),
+    # --- NEW URL for class detail ---
+    path('dashboard/teacher/class/<int:class_id>/', teacher_class_detail, name='teacher_class_detail'),
     path('dashboard/student/', views.dashboard_student, name='dashboard_student'),
     path('dashboard/parent/', views.dashboard_parent, name='dashboard_parent'),
     path("notices/", views.notice_list, name="notice_list"),
@@ -41,7 +45,6 @@ urlpatterns = [
     path('parent/message/', parent_send_message, name='parent_send_message'),
     path('admin-inbox/', admin_message_list, name='admin_message_list'),
     path('admin/message/<int:pk>/', admin_message_detail, name='admin_message_detail'),
-    # ─── NEW: Send message to any user ───
     path('send/', send_message_to_any, name='send_message_to_any'),
     # API endpoints
     path('api/recent-messages/', get_recent_messages, name='get_recent_messages'),
