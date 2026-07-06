@@ -3,12 +3,10 @@ from django.urls import reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect
 from accountsApp.mixins import AdminRequiredMixin
 from .models import Exam
 from .forms import ExamForm
-from teachersApp.models import Teacher
-from classesApp.models import ClassRoom, Subjects
 
 # ─── Admin Views ───
 class AdminExamList(AdminRequiredMixin, ListView):
@@ -61,7 +59,7 @@ class TeacherExamList(ListView):
 
     def get_queryset(self):
         teacher = self.request.user.teacher
-        # CORRECTED: use assigned_class (ManyToManyField)
+        # CORRECT FIELD NAME: assigned_class (not class_assigned)
         classes = teacher.assigned_class.all()
         return Exam.objects.filter(class_room__in=classes).select_related('subject', 'class_room').order_by('exam_date')
 
@@ -80,15 +78,23 @@ class TeacherExamCreate(CreateView):
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        # Pass the teacher to the form to filter choices
         kwargs['teacher'] = self.request.user.teacher
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        teacher = self.request.user.teacher
+        # CORRECT FIELD NAMES
+        context['teacher'] = teacher
+        context['classes'] = teacher.assigned_class.all()
+        context['subjects'] = teacher.subject.all()
+        return context
 
     def form_valid(self, form):
         teacher = self.request.user.teacher
         class_room = form.cleaned_data.get('class_room')
         subject = form.cleaned_data.get('subject')
-        # Validate that class and subject belong to teacher
+        # Validate
         if class_room not in teacher.assigned_class.all():
             messages.error(self.request, "You are not assigned to this class.")
             return redirect('teacher_exams_list')

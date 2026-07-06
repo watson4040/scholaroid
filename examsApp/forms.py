@@ -1,6 +1,6 @@
 from django import forms
 from .models import Exam
-from classesApp.models import ClassRoom, Subjects   # Needed for filtering
+from classesApp.models import ClassRoom, Subjects
 
 class ExamForm(forms.ModelForm):
     class Meta:
@@ -16,11 +16,10 @@ class ExamForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # Accept optional 'teacher' parameter
         teacher = kwargs.pop('teacher', None)
         super().__init__(*args, **kwargs)
         if teacher:
-            # For teacher: limit choices to their assigned classes & subjects
+            # Limit choices to teacher's assigned classes/subjects
             self.fields['class_room'].queryset = teacher.assigned_class.all()
             self.fields['subject'].queryset = teacher.subject.all()
         else:
