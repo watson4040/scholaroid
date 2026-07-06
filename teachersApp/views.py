@@ -80,11 +80,16 @@ def dashboard_teacher(request):
 
 @login_required
 def teacher_class_detail(request, class_id):
+    # Ensure teacher exists
+    teacher, created = Teacher.objects.get_or_create(user=request.user)
+    if created:
+        messages.info(request, "Teacher profile created automatically.")
+
     classroom = get_object_or_404(ClassRoom, id=class_id)
-    teacher = get_object_or_404(Teacher, user=request.user)
 
     # Authorize: teacher must be assigned to this class
     if classroom not in teacher.assigned_class.all():
+        messages.error(request, "You are not assigned to this class.")
         return redirect("dashboard_teacher")
 
     students = Student.objects.filter(class_room=classroom)
@@ -94,12 +99,13 @@ def teacher_class_detail(request, class_id):
     if request.method == "POST":
         for student in students:
             status = request.POST.get(f"status_{student.id}")
-            if status in dict(Attendance.STATUS_CHOICES):  # Validate
+            if status:  # Only save if a status is selected
                 Attendance.objects.update_or_create(
                     student=student,
                     date=today,
                     defaults={"status": status, "teacher": teacher}
                 )
+        messages.success(request, "Attendance saved.")
         return redirect("teacher_class_detail", class_id=classroom.id)
 
     # Get today's attendance records
@@ -107,15 +113,18 @@ def teacher_class_detail(request, class_id):
         student__in=students,
         date=today
     )
-    # Create a mapping: student.id -> status
     attendance_map = {record.student.id: record.status for record in attendance_records}
 
-    # Attach today's status directly to each student object
+    # Build a list of student data with status
+    student_data = []
     for student in students:
-        student.today_status = attendance_map.get(student.id, "")
+        student_data.append({
+            'student': student,
+            'today_status': attendance_map.get(student.id, ''),
+        })
 
     return render(request, "teachersApp/class_detail.html", {
         "classroom": classroom,
-        "students": students,
+        "student_data": student_data,
         "today": today,
     })

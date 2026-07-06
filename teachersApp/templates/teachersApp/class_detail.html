@@ -17,23 +17,23 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for student in students %}
+                    {% for item in student_data %}
                     <tr>
                         <td>
-                            {{ student.user.get_full_name|default:student.user.username }}
-                            {% if student.user.role == 'student' %}<span class="badge bg-info">Student</span>{% endif %}
+                            {{ item.student.user.get_full_name|default:item.student.user.username }}
+                            <span class="badge bg-info">Student</span>
                         </td>
                         <td class="max-w-180">
-                            <select name="status_{{ student.id }}" class="form-select">
+                            <select name="status_{{ item.student.id }}" class="form-select">
                                 <option value="">-- Select --</option>
-                                <option value="present" {% if student.today_status == "present" %}selected{% endif %}>Present</option>
-                                <option value="absent" {% if student.today_status == "absent" %}selected{% endif %}>Absent</option>
-                                <option value="late" {% if student.today_status == "late" %}selected{% endif %}>Late</option>
+                                <option value="present" {% if item.today_status == "present" %}selected{% endif %}>Present</option>
+                                <option value="absent" {% if item.today_status == "absent" %}selected{% endif %}>Absent</option>
+                                <option value="late" {% if item.today_status == "late" %}selected{% endif %}>Late</option>
                             </select>
                         </td>
                         <td>
-                            {% if student.parent and student.parent.user %}
-                                <a href="{% url 'conversation' student.parent.user.id %}" class="role-btn">
+                            {% if item.student.parent and item.student.parent.user %}
+                                <a href="{% url 'conversation' item.student.parent.user.id %}" class="role-btn">
                                     <span><i class="bi bi-chat-dots"></i> Message Parent</span>
                                 </a>
                             {% else %}
@@ -41,7 +41,7 @@
                             {% endif %}
                         </td>
                         <td class="text-end">
-                            <a href="{% url 'student_attendance_history' student.id %}" class="role-btn">
+                            <a href="{% url 'student_attendance_history' item.student.id %}" class="role-btn">
                                 <span><i class="bi bi-clock-history"></i> History</span>
                             </a>
                         </td>
