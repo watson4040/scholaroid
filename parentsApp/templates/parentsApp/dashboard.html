@@ -89,7 +89,7 @@
         <div class="col-12">
           <div class="card section-card">
             <div class="card-header bg-primary text-white">
-              <span><i class="bi bi-file-earmark-text"></i> Submitted Reports from Teachers</span>
+              <span><i class="bi bi-file-earmark-text"></i> Submitted Reports from Teachers ({{ reports_count }})</span>
             </div>
             <div class="card-body p-0">
               {% if reports %}
@@ -118,7 +118,12 @@
                   </table>
                 </div>
               {% else %}
-                <div class="p-3 text-muted small">No reports have been submitted for your children yet.</div>
+                <div class="p-3 text-muted small">
+                  No submitted reports yet. 
+                  {% if reports_count == 0 %}
+                    (Debug: {{ reports_count }} reports found. Check that a teacher has submitted a report for your child and that the child is linked to your account.)
+                  {% endif %}
+                </div>
               {% endif %}
             </div>
           </div>

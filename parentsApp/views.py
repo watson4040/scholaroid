@@ -1,3 +1,4 @@
+import logging
 from django.shortcuts import render, redirect
 from studentsApp.models import Student
 from accountsApp.models import Notice
@@ -6,7 +7,9 @@ from attendanceApp.models import Attendance
 from django.utils.timezone import now
 from django.contrib import messages
 from .forms import LinkChildForm
-from teachersApp.models import PupilReport  # <-- imported
+from teachersApp.models import PupilReport
+
+logger = logging.getLogger(__name__)
 
 @login_required
 def dashboard_parent(request):
@@ -35,6 +38,11 @@ def dashboard_parent(request):
         is_submitted=True
     ).select_related('pupil', 'teacher', 'teacher__user').order_by('-updated_at')
 
+    # 🔍 Debug logging
+    child_ids = [child.id for child in children]
+    logger.info(f"Parent {parent.user.id} has children: {child_ids}")
+    logger.info(f"Found {reports.count()} submitted reports for these children.")
+
     stats = {
         'children': children.count(),
         'avg_attendance_pct': avg_attendance_pct,
@@ -47,7 +55,8 @@ def dashboard_parent(request):
         "notices": notices,
         "attendance_map": attendance_map,
         "stats": stats,
-        "reports": reports,  # <-- added
+        "reports": reports,
+        "reports_count": reports.count(),  # <-- added for template
     }
     return render(request, "parentsApp/dashboard.html", context)
 
