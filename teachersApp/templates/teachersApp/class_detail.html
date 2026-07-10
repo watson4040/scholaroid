@@ -10,7 +10,7 @@
             <table class="table table-modern table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th>Student</th>
+                        <th>Pupil</th>
                         <th>Status</th>
                         <th>Parent Contact</th>
                         <th class="text-end">Actions</th>
@@ -21,7 +21,7 @@
                     <tr>
                         <td>
                             {{ item.student.user.get_full_name|default:item.student.user.username }}
-                            <span class="badge bg-info">Student</span>
+                            <span class="badge bg-info">Pupil</span>
                         </td>
                         <td class="max-w-180">
                             <select name="status_{{ item.student.id }}" class="form-select">
@@ -32,8 +32,8 @@
                             </select>
                         </td>
                         <td>
-                            {% if item.student.parent and item.student.parent.user %}
-                                <a href="{% url 'conversation' item.student.parent.user.id %}" class="role-btn">
+                            {% if item.parent_user %}
+                                <a href="{% url 'conversation' item.parent_user.id %}" class="role-btn">
                                     <span><i class="bi bi-chat-dots"></i> Message Parent</span>
                                 </a>
                             {% else %}
