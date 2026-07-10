@@ -6,18 +6,18 @@ from attendanceApp.models import Attendance
 from django.utils.timezone import now
 from django.contrib import messages
 from .forms import LinkChildForm
-from teachersApp.models import PupilReport  # <-- ADD THIS IMPORT
+from teachersApp.models import PupilReport  # <-- imported
 
 @login_required
 def dashboard_parent(request):
-    parent = request.user.parent  # OneToOne relation
+    parent = request.user.parent
     children = Student.objects.filter(parent=parent)
     notices = Notice.objects.order_by('-created_at')[:5]
     today = now().date()
     attendance_records = Attendance.objects.filter(student__in=children, date=today)
     attendance_map = {rec.student.id: rec.status for rec in attendance_records}
 
-    # overall attendance percentage (average across children)
+    # attendance percentage
     total_present = 0
     total_marked = 0
     for child in children:
@@ -29,7 +29,7 @@ def dashboard_parent(request):
             total_marked += 1
     avg_attendance_pct = round(total_present / total_marked, 1) if total_marked else 0
 
-    # ----- NEW: Get submitted reports for children -----
+    # ----- REPORTS -----
     reports = PupilReport.objects.filter(
         pupil__in=children,
         is_submitted=True
@@ -47,11 +47,11 @@ def dashboard_parent(request):
         "notices": notices,
         "attendance_map": attendance_map,
         "stats": stats,
-        "reports": reports,  # <-- ADD THIS
+        "reports": reports,  # <-- added
     }
     return render(request, "parentsApp/dashboard.html", context)
 
-# New view to link a child (student) to the logged-in parent using student email
+# Link child view remains unchanged
 @login_required
 def link_child(request):
     parent = request.user.parent
@@ -64,7 +64,6 @@ def link_child(request):
             except Student.DoesNotExist:
                 form.add_error('email', 'This email is not registered as a student.')
             else:
-                # ensure target user has student role
                 if getattr(student.user, 'role', '') != 'student':
                     form.add_error('email', 'This account is not registered with a student role.')
                 elif student.parent and student.parent != parent:
@@ -73,7 +72,6 @@ def link_child(request):
                     messages.info(request, 'This student is already linked to your account.')
                     return redirect('dashboard_parent')
                 else:
-                    # attach student to this parent
                     student.parent = parent
                     student.save()
                     messages.success(request, f"Successfully linked {student.user.get_full_name() or student.user.username}.")
