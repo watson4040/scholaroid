@@ -41,11 +41,8 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'student_attendance_history' item.student.id %}" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-clock-history"></i> History
-                            </a>
-                            <!-- Optional: Report link if you added it -->
-                            <!-- <a href="{% url 'pupil_report' item.student.id %}" class="btn btn-sm btn-outline-info">Report</a> -->
+                            <!-- Removed broken 'student_attendance_history' link -->
+                            <span class="text-muted">History (coming soon)</span>
                         </td>
                     </tr>
                     {% endfor %}
