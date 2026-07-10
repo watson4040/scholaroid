@@ -4,7 +4,7 @@ from django.views.generic import ListView, DetailView, UpdateView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from accountsApp.mixins import AdminRequiredMixin
-from .forms import TeacherAdminForm, PupilReportForm          # Added PupilReportForm
+from .forms import TeacherAdminForm, PupilReportForm
 from classesApp.models import ClassRoom, Subjects
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -12,7 +12,7 @@ from django.utils.timezone import now
 from studentsApp.models import Student
 from attendanceApp.models import Attendance
 from examsApp.models import Exam
-from .models import Teacher, PupilReport                     # Added PupilReport
+from .models import Teacher, PupilReport
 from accountsApp.models import Notice
 
 logger = logging.getLogger(__name__)
@@ -44,7 +44,6 @@ class AdminTeacherDetail(AdminRequiredMixin, DetailView):
     def get_queryset(self):
         return Teacher.objects.select_related('user').prefetch_related('subject', 'assigned_class')
 
-
 class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
     model = Teacher
     form_class = TeacherAdminForm
@@ -53,7 +52,6 @@ class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
     def get_success_url(self):
         messages.success(self.request, "Teacher updated.")
         return reverse_lazy('admin_teacher_detail', kwargs={'pk': self.object.pk})
-
 
 # ---- Teacher Dashboard ----
 @login_required
@@ -82,18 +80,15 @@ def dashboard_teacher(request):
     }
     return render(request, "teachersApp/dashboard.html", context)
 
-
-# ---- Attendance Page with Detailed Error Logging ----
+# ---- Attendance Page ----
 @login_required
 def teacher_class_detail(request, class_id):
     try:
         logger.info(f"Starting teacher_class_detail for class_id: {class_id}, user: {request.user.id}")
-
         teacher, created = Teacher.objects.get_or_create(user=request.user)
         if created:
             messages.info(request, "Teacher profile created automatically.")
         logger.info(f"Teacher: {teacher.id}, created: {created}")
-
         classroom = get_object_or_404(ClassRoom, id=class_id)
         logger.info(f"Classroom found: {classroom.id} - {classroom.name}")
 
@@ -104,10 +99,6 @@ def teacher_class_detail(request, class_id):
 
         students = Student.objects.filter(class_room=classroom).select_related('parent', 'parent__user', 'user')
         logger.info(f"Found {students.count()} students in class {class_id}")
-
-        for student in students:
-            logger.info(f"Student: {student.id} - {student.user.username}, parent: {student.parent_id}, parent_user: {student.parent.user_id if student.parent else 'None'}")
-
         today = now().date()
 
         if request.method == "POST":
@@ -141,59 +132,64 @@ def teacher_class_detail(request, class_id):
             "student_data": student_data,
             "today": today,
         })
-
     except Exception as e:
         logger.error(f"ERROR in teacher_class_detail for class {class_id}: {str(e)}", exc_info=True)
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect("dashboard_teacher")
 
-
-# ==========================================================
-#  NEW: Pupil Report View (Teacher Comments)
-# ==========================================================
+# ---- Report View ----
 @login_required
 def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
-    logger.info(f"Report view called for pupil {pupil_id}, user {request.user.id}")
-    teacher = get_object_or_404(Teacher, user=request.user)
-    pupil = get_object_or_404(Student, id=pupil_id)
+    try:
+        logger.info(f"Report view called for pupil {pupil_id}, user {request.user.id}")
+        teacher = get_object_or_404(Teacher, user=request.user)
+        pupil = get_object_or_404(Student, id=pupil_id)
 
-    if pupil.class_room not in teacher.assigned_class.all():
-        logger.warning(f"Pupil {pupil_id} not in teacher's classes")
-        messages.error(request, "You are not allowed to report on this pupil.")
-        return redirect('dashboard_teacher')
+        if pupil.class_room not in teacher.assigned_class.all():
+            logger.warning(f"Pupil {pupil_id} not in teacher's classes")
+            messages.error(request, "You are not allowed to report on this pupil.")
+            return redirect('dashboard_teacher')
 
-    if term is None:
-        term = '1'
-    if year is None:
-        import datetime
-        current_year = datetime.date.today().year
-        year = f"{current_year}/{current_year+1}"
+        if term is None:
+            term = '1'
+        if year is None:
+            import datetime
+            current_year = datetime.date.today().year
+            year = f"{current_year}/{current_year+1}"
 
-    report, created = PupilReport.objects.get_or_create(
-        pupil=pupil,
-        term=term,
-        academic_year=year,
-        defaults={'teacher': teacher}
-    )
+        logger.info(f"Attempting to get/create report for pupil {pupil_id}, term {term}, year {year}")
+        report, created = PupilReport.objects.get_or_create(
+            pupil=pupil,
+            term=term,
+            academic_year=year,
+            defaults={'teacher': teacher}
+        )
+        logger.info(f"Report {'created' if created else 'retrieved'} with id {report.id}")
 
-    if request.method == 'POST':
-        form = PupilReportForm(request.POST, instance=report)
-        if form.is_valid():
-            report = form.save(commit=False)
-            report.teacher = teacher
-            report.save()
-            messages.success(request, f"Report for {pupil.user.get_full_name()} saved.")
-            if report.is_submitted:
-                messages.info(request, "Report has been submitted to the parent.")
-            return redirect('teacher_class_detail', class_id=pupil.class_room.id)
+        if request.method == 'POST':
+            form = PupilReportForm(request.POST, instance=report)
+            if form.is_valid():
+                report = form.save(commit=False)
+                report.teacher = teacher
+                report.save()
+                logger.info(f"Report {report.id} saved successfully")
+                messages.success(request, f"Report for {pupil.user.get_full_name()} saved.")
+                if report.is_submitted:
+                    messages.info(request, "Report has been submitted to the parent.")
+                return redirect('teacher_class_detail', class_id=pupil.class_room.id)
+            else:
+                logger.warning(f"Form invalid: {form.errors}")
+                messages.error(request, "Please correct the errors below.")
         else:
-            messages.error(request, "Please correct the errors below.")
-    else:
-        form = PupilReportForm(instance=report)
+            form = PupilReportForm(instance=report)
 
-    return render(request, 'teachersApp/report_form.html', {
-        'form': form,
-        'pupil': pupil,
-        'report': report,
-        'classroom': pupil.class_room,
-    })
+        return render(request, 'teachersApp/report_form.html', {
+            'form': form,
+            'pupil': pupil,
+            'report': report,
+            'classroom': pupil.class_room,
+        })
+    except Exception as e:
+        logger.error(f"CRITICAL ERROR in pupil_report_create_or_edit: {str(e)}", exc_info=True)
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect('dashboard_teacher')

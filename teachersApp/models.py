@@ -4,7 +4,6 @@ from django.dispatch import receiver
 from accountsApp.models import User
 from classesApp.models import ClassRoom, Subjects
 
-
 class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'})
     subject = models.ManyToManyField(Subjects, related_name='assigned_subjects')
@@ -14,11 +13,11 @@ class Teacher(models.Model):
     def __str__(self):
         return self.user.username
 
-
 @receiver(post_save, sender=User)
 def create_teacher_profile(sender, instance, created, **kwargs):
     if created and instance.role == 'teacher':
         Teacher.objects.get_or_create(user=instance)
+
 class PupilReport(models.Model):
     TERM_CHOICES = [
         ('1', 'Term 1'),
@@ -35,7 +34,7 @@ class PupilReport(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('pupil', 'term', 'academic_year')  # one report per pupil per term
+        unique_together = ('pupil', 'term', 'academic_year')
 
     def __str__(self):
-        return f"{self.pupil.user.username} - Term {self.term} ({self.academic_year})"    
+        return f"{self.pupil.user.username} - Term {self.term} ({self.academic_year})"
