@@ -1,19 +1,16 @@
 from django import forms
 from .models import Teacher, PupilReport
-from classesApp.models import ClassRoom, Subjects
 
-# ---- Admin Teacher Form ----
 class TeacherAdminForm(forms.ModelForm):
     class Meta:
         model = Teacher
-        fields = ['user', 'subject', 'assigned_class']   # removed 'hire_date'
+        fields = ['user', 'subject', 'assigned_class']
         widgets = {
             'user': forms.Select(attrs={'class': 'form-select'}),
             'subject': forms.SelectMultiple(attrs={'class': 'form-select'}),
             'assigned_class': forms.SelectMultiple(attrs={'class': 'form-select'}),
         }
 
-# ---- Pupil Report Form (for teacher comments) ----
 class PupilReportForm(forms.ModelForm):
     class Meta:
         model = PupilReport
