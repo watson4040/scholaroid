@@ -13,6 +13,7 @@
       <a class="nav-link active" href="{% url 'dashboard_parent' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
       <a class="nav-link" href="#children"><i class="bi bi-people"></i> Children</a>
       <a class="nav-link" href="#attendance"><i class="bi bi-clipboard-check"></i> Attendance</a>
+      <a class="nav-link" href="#reports"><i class="bi bi-file-earmark-text"></i> Reports</a>
       <a class="nav-link" href="#notices"><i class="bi bi-bell"></i> Notices</a>
       <a class="nav-link" href="#messages"><i class="bi bi-chat-dots"></i> Messages</a>
     </div>
@@ -25,11 +26,13 @@
           <h3 class="mb-0">Welcome {{ parent.user.first_name }}!</h3>
         </div>
       </div>
+      <!-- Stats -->
       <div class="row g-3 mb-4">
         <div class="col-sm-6 col-lg-4"><div class="p-stat bg-grad-a"><div><h3>{{ stats.children|default:0 }}</h3><h6>Children</h6></div><div class="icon"><i class="fa-solid fa-children"></i></div></div></div>
         <div class="col-sm-6 col-lg-4"><div class="p-stat bg-grad-c"><div><h3>{{ stats.avg_attendance_pct|default:0 }}%</h3><h6>Avg Attendance</h6></div><div class="icon"><i class="fa-solid fa-user-check"></i></div></div></div>
         <div class="col-sm-6 col-lg-4"><div class="p-stat bg-grad-d"><div><h3>{{ stats.notices|default:0 }}</h3><h6>Notices</h6></div><div class="icon"><i class="fa-solid fa-bell"></i></div></div></div>
       </div>
+      <!-- Children & Attendance -->
       <div class="row g-4">
         <div class="col-xl-6" id="children">
           <div class="card section-card h-100">
@@ -83,6 +86,47 @@
           </div>
         </div>
       </div>
+      <!-- Reports Section -->
+      <div class="row g-4 mt-1" id="reports">
+        <div class="col-12">
+          <div class="card section-card">
+            <div class="card-header bg-primary text-white">
+              <span><i class="bi bi-file-earmark-text"></i> Submitted Reports from Teachers</span>
+            </div>
+            <div class="card-body p-0">
+              {% if reports %}
+                <div class="table-responsive">
+                  <table class="table table-hover table-striped mb-0">
+                    <thead>
+                      <tr>
+                        <th>Child</th>
+                        <th>Term</th>
+                        <th>Academic Year</th>
+                        <th>Teacher's Comment</th>
+                        <th>Submitted On</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {% for report in reports %}
+                        <tr>
+                          <td>{{ report.pupil.user.get_full_name }}</td>
+                          <td>Term {{ report.term }}</td>
+                          <td>{{ report.academic_year }}</td>
+                          <td>{{ report.comment|truncatechars:80 }}</td>
+                          <td>{{ report.updated_at|date:"d M Y" }}</td>
+                        </tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <div class="p-3 text-muted small">No reports have been submitted for your children yet.</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Notices & Messages -->
       <div class="row g-4 mt-1">
         <div class="col-lg-7" id="notices">
           <div class="card section-card h-100">

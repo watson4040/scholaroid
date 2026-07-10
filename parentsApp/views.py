@@ -6,6 +6,7 @@ from attendanceApp.models import Attendance
 from django.utils.timezone import now
 from django.contrib import messages
 from .forms import LinkChildForm
+from teachersApp.models import PupilReport  # <-- ADD THIS IMPORT
 
 @login_required
 def dashboard_parent(request):
@@ -15,6 +16,7 @@ def dashboard_parent(request):
     today = now().date()
     attendance_records = Attendance.objects.filter(student__in=children, date=today)
     attendance_map = {rec.student.id: rec.status for rec in attendance_records}
+
     # overall attendance percentage (average across children)
     total_present = 0
     total_marked = 0
@@ -26,17 +28,26 @@ def dashboard_parent(request):
             total_present += (child_present / child_total) * 100
             total_marked += 1
     avg_attendance_pct = round(total_present / total_marked, 1) if total_marked else 0
+
+    # ----- NEW: Get submitted reports for children -----
+    reports = PupilReport.objects.filter(
+        pupil__in=children,
+        is_submitted=True
+    ).select_related('pupil', 'teacher', 'teacher__user').order_by('-updated_at')
+
     stats = {
         'children': children.count(),
         'avg_attendance_pct': avg_attendance_pct,
         'notices': notices.count(),
     }
+
     context = {
         "parent": parent,
         "children": children,
         "notices": notices,
         "attendance_map": attendance_map,
         "stats": stats,
+        "reports": reports,  # <-- ADD THIS
     }
     return render(request, "parentsApp/dashboard.html", context)
 
