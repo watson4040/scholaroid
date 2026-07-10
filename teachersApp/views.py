@@ -4,7 +4,7 @@ from django.views.generic import ListView, DetailView, UpdateView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from accountsApp.mixins import AdminRequiredMixin
-from .forms import TeacherAdminForm
+from .forms import TeacherAdminForm, PupilReportForm          # Added PupilReportForm
 from classesApp.models import ClassRoom, Subjects
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -12,12 +12,12 @@ from django.utils.timezone import now
 from studentsApp.models import Student
 from attendanceApp.models import Attendance
 from examsApp.models import Exam
-from .models import Teacher
+from .models import Teacher, PupilReport                     # Added PupilReport
 from accountsApp.models import Notice
 
 logger = logging.getLogger(__name__)
 
-# ---- Admin views (keep as is) ----
+# ---- Admin views ----
 class AdminTeacherList(AdminRequiredMixin, ListView):
     model = Teacher
     template_name = 'teachersApp/admin_teacher_list.html'
@@ -89,7 +89,6 @@ def teacher_class_detail(request, class_id):
     try:
         logger.info(f"Starting teacher_class_detail for class_id: {class_id}, user: {request.user.id}")
 
-        # Ensure teacher exists
         teacher, created = Teacher.objects.get_or_create(user=request.user)
         if created:
             messages.info(request, "Teacher profile created automatically.")
@@ -98,7 +97,6 @@ def teacher_class_detail(request, class_id):
         classroom = get_object_or_404(ClassRoom, id=class_id)
         logger.info(f"Classroom found: {classroom.id} - {classroom.name}")
 
-        # Authorize
         if classroom not in teacher.assigned_class.all():
             logger.warning(f"Teacher {teacher.id} not assigned to class {class_id}")
             messages.error(request, "You are not assigned to this class.")
@@ -107,13 +105,11 @@ def teacher_class_detail(request, class_id):
         students = Student.objects.filter(class_room=classroom).select_related('parent', 'parent__user', 'user')
         logger.info(f"Found {students.count()} students in class {class_id}")
 
-        # Log each student to see if any have broken relations
         for student in students:
             logger.info(f"Student: {student.id} - {student.user.username}, parent: {student.parent_id}, parent_user: {student.parent.user_id if student.parent else 'None'}")
 
         today = now().date()
 
-        # POST: save attendance
         if request.method == "POST":
             for student in students:
                 status = request.POST.get(f"status_{student.id}")
@@ -126,11 +122,9 @@ def teacher_class_detail(request, class_id):
             messages.success(request, "Attendance saved.")
             return redirect("teacher_class_detail", class_id=classroom.id)
 
-        # GET: load existing attendance
         attendance_records = Attendance.objects.filter(student__in=students, date=today)
         attendance_map = {record.student.id: record.status for record in attendance_records}
 
-        # Build safe student data
         student_data = []
         for student in students:
             parent_user = None
@@ -152,3 +146,54 @@ def teacher_class_detail(request, class_id):
         logger.error(f"ERROR in teacher_class_detail for class {class_id}: {str(e)}", exc_info=True)
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect("dashboard_teacher")
+
+
+# ==========================================================
+#  NEW: Pupil Report View (Teacher Comments)
+# ==========================================================
+@login_required
+def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
+    logger.info(f"Report view called for pupil {pupil_id}, user {request.user.id}")
+    teacher = get_object_or_404(Teacher, user=request.user)
+    pupil = get_object_or_404(Student, id=pupil_id)
+
+    if pupil.class_room not in teacher.assigned_class.all():
+        logger.warning(f"Pupil {pupil_id} not in teacher's classes")
+        messages.error(request, "You are not allowed to report on this pupil.")
+        return redirect('dashboard_teacher')
+
+    if term is None:
+        term = '1'
+    if year is None:
+        import datetime
+        current_year = datetime.date.today().year
+        year = f"{current_year}/{current_year+1}"
+
+    report, created = PupilReport.objects.get_or_create(
+        pupil=pupil,
+        term=term,
+        academic_year=year,
+        defaults={'teacher': teacher}
+    )
+
+    if request.method == 'POST':
+        form = PupilReportForm(request.POST, instance=report)
+        if form.is_valid():
+            report = form.save(commit=False)
+            report.teacher = teacher
+            report.save()
+            messages.success(request, f"Report for {pupil.user.get_full_name()} saved.")
+            if report.is_submitted:
+                messages.info(request, "Report has been submitted to the parent.")
+            return redirect('teacher_class_detail', class_id=pupil.class_room.id)
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = PupilReportForm(instance=report)
+
+    return render(request, 'teachersApp/report_form.html', {
+        'form': form,
+        'pupil': pupil,
+        'report': report,
+        'classroom': pupil.class_room,
+    })
