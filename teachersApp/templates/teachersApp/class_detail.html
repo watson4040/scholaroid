@@ -1,19 +1,20 @@
 {% extends "base.html" %}
 {% block title %}{{ classroom.name }} - Attendance{% endblock %}
 {% block content %}
-    <h3 class="mb-3">{{ classroom.name }} {{ classroom.section }}</h3>
-    <p class="text-muted mb-4">Mark attendance for <strong>{{ today }}</strong></p>
+<div class="container mt-3">
+    <h3>{{ classroom.name }} {{ classroom.section }}</h3>
+    <p class="text-muted">Mark attendance for <strong>{{ today }}</strong></p>
 
     <form method="POST">
         {% csrf_token %}
         <div class="table-responsive">
-            <table class="table table-modern table-hover align-middle mb-0">
-                <thead>
+            <table class="table table-bordered table-hover">
+                <thead class="table-light">
                     <tr>
                         <th>Pupil</th>
                         <th>Status</th>
                         <th>Parent Contact</th>
-                        <th class="text-end">Actions</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -21,9 +22,8 @@
                     <tr>
                         <td>
                             {{ item.student.user.get_full_name|default:item.student.user.username }}
-                            <span class="badge bg-info">Pupil</span>
                         </td>
-                        <td class="max-w-180">
+                        <td>
                             <select name="status_{{ item.student.id }}" class="form-select">
                                 <option value="">-- Select --</option>
                                 <option value="present" {% if item.today_status == "present" %}selected{% endif %}>Present</option>
@@ -33,28 +33,31 @@
                         </td>
                         <td>
                             {% if item.parent_user %}
-                                <a href="{% url 'conversation' item.parent_user.id %}" class="role-btn">
-                                    <span><i class="bi bi-chat-dots"></i> Message Parent</span>
+                                <a href="{% url 'conversation' item.parent_user.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-chat-dots"></i> Message
                                 </a>
                             {% else %}
-                                <span class="text-muted">No parent linked</span>
+                                <span class="text-muted">No parent</span>
                             {% endif %}
                         </td>
-                        <td class="text-end">
-                            <a href="{% url 'student_attendance_history' item.student.id %}" class="role-btn">
-                                <span><i class="bi bi-clock-history"></i> History</span>
+                        <td>
+                            <a href="{% url 'student_attendance_history' item.student.id %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-clock-history"></i> History
                             </a>
+                            <!-- Optional: Report link if you added it -->
+                            <!-- <a href="{% url 'pupil_report' item.student.id %}" class="btn btn-sm btn-outline-info">Report</a> -->
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-        <div class="d-flex gap-2 mt-4 justify-content-end">
-            <button type="submit" class="role-btn"><span>
-                <i class="bi bi-check2-circle"></i><i class="bi bi-check2-all"></i> Save</span>
+        <div class="d-flex gap-2 mt-3">
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check2-all"></i> Save Attendance
             </button>
-            <a class="role-btn" href="{% url 'dashboard_teacher' %}"><span>← Back</span></a>
+            <a href="{% url 'dashboard_teacher' %}" class="btn btn-secondary">← Back to Dashboard</a>
         </div>
     </form>
+</div>
 {% endblock %}
