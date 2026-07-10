@@ -6,7 +6,10 @@ app_name = 'teachersApp'
 urlpatterns = [
     # Teacher dashboard
     path('', views.dashboard_teacher, name='dashboard_teacher'),
-    # Class attendance page – IMPORTANT: name must be 'teacher_class_detail'
+    # Class attendance page
     path('class/<int:class_id>/', views.teacher_class_detail, name='teacher_class_detail'),
-    # Add other routes if needed (e.g., report, etc.)
+    # Pupil report (teacher comment)
+    path('report/<int:pupil_id>/', views.pupil_report_create_or_edit, name='pupil_report'),
+    # Optional: report with explicit term and year
+    path('report/<int:pupil_id>/<str:term>/<str:year>/', views.pupil_report_create_or_edit, name='pupil_report_with_term'),
 ]

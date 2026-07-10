@@ -41,8 +41,12 @@
                             {% endif %}
                         </td>
                         <td>
-                            <!-- Removed broken 'student_attendance_history' link -->
-                            <span class="text-muted">History (coming soon)</span>
+                            <!-- REPORT BUTTON -->
+                            <a href="{% url 'pupil_report' item.student.id %}" class="btn btn-sm btn-outline-info">
+                                <i class="bi bi-file-earmark-text"></i> Report
+                            </a>
+                            <!-- History (disabled) -->
+                            <span class="text-muted">History</span>
                         </td>
                     </tr>
                     {% endfor %}
