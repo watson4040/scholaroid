@@ -6,19 +6,24 @@ from django.contrib.messages import constants as messages
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = config("SECRET_KEY")
+# ---------- SECURITY ----------
+SECRET_KEY = config("SECRET_KEY", default="django-insecure-temp-key-for-local-dev")
 DEBUG = config("DEBUG", default=False, cast=bool)
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
-CSRF_TRUSTED_ORIGINS = config("CSRF_TRUSTED_ORIGINS", default="").split(",")
+
+# ---------- CSRF: Filter out empty strings ----------
+CSRF_TRUSTED_ORIGINS = [origin for origin in config("CSRF_TRUSTED_ORIGINS", default="").split(",") if origin]
 
 RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
 if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
     ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
     CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
 
+# ---------- CUSTOM USER ----------
 AUTH_USER_MODEL = "accountsApp.User"
 SITE_ID = 1
 
+# ---------- INSTALLED APPS ----------
 INSTALLED_APPS = [
     "jazzmin",
     "cloudinary",
@@ -56,8 +61,7 @@ MIDDLEWARE = [
     "social_django.middleware.SocialAuthExceptionMiddleware",
 ]
 
-ROOT_URLCONF = "managementProject.urls"   # <--- CRITICAL: added this line
-
+ROOT_URLCONF = "managementProject.urls"
 WSGI_APPLICATION = "managementProject.wsgi.application"
 ASGI_APPLICATION = "managementProject.asgi.application"
 
@@ -78,27 +82,28 @@ TEMPLATES = [
     }
 ]
 
+# ---------- DATABASE: Local SQLite, Production PostgreSQL ----------
 DATABASE_URL = config("DATABASE_URL", default=None)
 if DATABASE_URL:
+    # If DATABASE_URL is set (e.g., on Render or local with sqlite), use it
     DATABASES = {"default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
 else:
+    # Fallback to SQLite for local development (no PostgreSQL needed)
     DATABASES = {
         "default": {
-            "ENGINE": "django.db.backends.postgresql",
-            "NAME": config("DB_NAME", default="furaxpark_db"),
-            "USER": config("DB_USER", default="postgres"),
-            "PASSWORD": config("DB_PASSWORD", default="watson"),
-            "HOST": config("DB_HOST", default="localhost"),
-            "PORT": config("DB_PORT", default="5432"),
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
         }
     }
 
+# ---------- CHANNELS ----------
 REDIS_URL = config("REDIS_URL", default=None)
 if REDIS_URL:
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels_redis.core.RedisChannelLayer", "CONFIG": {"hosts": [REDIS_URL]}}}
 else:
     CHANNEL_LAYERS = {"default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}}
 
+# ---------- AUTH ----------
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -117,6 +122,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config("GOOGLE_OAUTH_CLIENT_ID", default="")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config("GOOGLE_OAUTH_CLIENT_SECRET", default="")
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {"prompt": "select_account"}
 
+# ---------- MESSAGE TAGS ----------
 MESSAGE_TAGS = {
     messages.DEBUG: "secondary",
     messages.INFO: "info",
@@ -125,11 +131,13 @@ MESSAGE_TAGS = {
     messages.ERROR: "danger",
 }
 
+# ---------- INTERNATIONALIZATION ----------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# ---------- STATIC / MEDIA ----------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
@@ -137,6 +145,7 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# ---------- OTHER ----------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 WEBSOCKETS_ENABLED = config("WEBSOCKETS_ENABLED", default=True, cast=bool)
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
@@ -145,6 +154,7 @@ CLOUDINARY_URL = config("CLOUDINARY_URL", default="")
 if CLOUDINARY_URL:
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
+# ---------- EMAIL ----------
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Scholaroid <noreply@scholaroid.com>")
 EMAIL_HOST = config("EMAIL_HOST", default="")
@@ -153,6 +163,7 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 
+# ---------- PRODUCTION SECURITY ----------
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
@@ -167,43 +178,26 @@ if not DEBUG:
 
 USE_X_FORWARDED_HOST = True
 
-# ============================================================================
-# JAZZMIN ADMIN THEME SETTINGS
-# ============================================================================
-
+# ---------- JAZZMIN ----------
 JAZZMIN_SETTINGS = {
     "site_title": "Scholaroid Admin",
     "site_header": "Scholaroid",
     "site_brand": "Scholaroid School Management",
     "welcome_sign": "Welcome to Scholaroid Admin",
     "copyright": "Scholaroid Ltd",
-
     "show_sidebar": True,
     "navigation_expanded": True,
-
     "sidebar_fixed": True,
     "navbar_fixed": True,
     "footer_fixed": False,
-
     "navigation_sticky": True,
     "navbar_sticky": True,
-
     "related_modal_active": True,
     "changeform_format": "horizontal_tabs",
-
     "topmenu_links": [
-        {
-            "name": "Dashboard",
-            "url": "/dashboard/admin/",
-            "permissions": ["auth.view_user"]
-        },
-        {
-            "name": "Home",
-            "url": "admin:index",
-            "permissions": ["auth.view_user"]
-        }
+        {"name": "Dashboard", "url": "/dashboard/admin/", "permissions": ["auth.view_user"]},
+        {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]}
     ],
-
     "icons": {
         "auth": "fas fa-users-cog",
         "accountsApp.User": "fas fa-user",
