@@ -17,7 +17,7 @@ from accountsApp.models import Notice
 
 logger = logging.getLogger(__name__)
 
-# ---- Admin views (unchanged) ----
+# ---- Admin views (keep as is) ----
 class AdminTeacherList(AdminRequiredMixin, ListView):
     model = Teacher
     template_name = 'teachersApp/admin_teacher_list.html'
@@ -83,55 +83,72 @@ def dashboard_teacher(request):
     return render(request, "teachersApp/dashboard.html", context)
 
 
-# ---- Attendance Page ----
+# ---- Attendance Page with Detailed Error Logging ----
 @login_required
 def teacher_class_detail(request, class_id):
-    # Ensure teacher exists
-    teacher, created = Teacher.objects.get_or_create(user=request.user)
-    if created:
-        messages.info(request, "Teacher profile created automatically.")
+    try:
+        logger.info(f"Starting teacher_class_detail for class_id: {class_id}, user: {request.user.id}")
 
-    classroom = get_object_or_404(ClassRoom, id=class_id)
+        # Ensure teacher exists
+        teacher, created = Teacher.objects.get_or_create(user=request.user)
+        if created:
+            messages.info(request, "Teacher profile created automatically.")
+        logger.info(f"Teacher: {teacher.id}, created: {created}")
 
-    # Authorize
-    if classroom not in teacher.assigned_class.all():
-        messages.error(request, "You are not assigned to this class.")
-        return redirect("dashboard_teacher")
+        classroom = get_object_or_404(ClassRoom, id=class_id)
+        logger.info(f"Classroom found: {classroom.id} - {classroom.name}")
 
-    students = Student.objects.filter(class_room=classroom).select_related('parent', 'parent__user', 'user')
-    today = now().date()
+        # Authorize
+        if classroom not in teacher.assigned_class.all():
+            logger.warning(f"Teacher {teacher.id} not assigned to class {class_id}")
+            messages.error(request, "You are not assigned to this class.")
+            return redirect("dashboard_teacher")
 
-    # POST: save attendance
-    if request.method == "POST":
+        students = Student.objects.filter(class_room=classroom).select_related('parent', 'parent__user', 'user')
+        logger.info(f"Found {students.count()} students in class {class_id}")
+
+        # Log each student to see if any have broken relations
         for student in students:
-            status = request.POST.get(f"status_{student.id}")
-            if status:
-                Attendance.objects.update_or_create(
-                    student=student,
-                    date=today,
-                    defaults={"status": status, "teacher": teacher}
-                )
-        messages.success(request, "Attendance saved.")
-        return redirect("teacher_class_detail", class_id=classroom.id)
+            logger.info(f"Student: {student.id} - {student.user.username}, parent: {student.parent_id}, parent_user: {student.parent.user_id if student.parent else 'None'}")
 
-    # GET: load existing attendance
-    attendance_records = Attendance.objects.filter(student__in=students, date=today)
-    attendance_map = {record.student.id: record.status for record in attendance_records}
+        today = now().date()
 
-    # Build safe student data
-    student_data = []
-    for student in students:
-        parent_user = None
-        if student.parent and student.parent.user:
-            parent_user = student.parent.user
-        student_data.append({
-            'student': student,
-            'today_status': attendance_map.get(student.id, ''),
-            'parent_user': parent_user,
+        # POST: save attendance
+        if request.method == "POST":
+            for student in students:
+                status = request.POST.get(f"status_{student.id}")
+                if status:
+                    Attendance.objects.update_or_create(
+                        student=student,
+                        date=today,
+                        defaults={"status": status, "teacher": teacher}
+                    )
+            messages.success(request, "Attendance saved.")
+            return redirect("teacher_class_detail", class_id=classroom.id)
+
+        # GET: load existing attendance
+        attendance_records = Attendance.objects.filter(student__in=students, date=today)
+        attendance_map = {record.student.id: record.status for record in attendance_records}
+
+        # Build safe student data
+        student_data = []
+        for student in students:
+            parent_user = None
+            if student.parent and student.parent.user:
+                parent_user = student.parent.user
+            student_data.append({
+                'student': student,
+                'today_status': attendance_map.get(student.id, ''),
+                'parent_user': parent_user,
+            })
+
+        return render(request, "teachersApp/class_detail.html", {
+            "classroom": classroom,
+            "student_data": student_data,
+            "today": today,
         })
 
-    return render(request, "teachersApp/class_detail.html", {
-        "classroom": classroom,
-        "student_data": student_data,
-        "today": today,
-    })
+    except Exception as e:
+        logger.error(f"ERROR in teacher_class_detail for class {class_id}: {str(e)}", exc_info=True)
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect("dashboard_teacher")
