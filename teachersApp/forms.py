@@ -6,12 +6,11 @@ from classesApp.models import ClassRoom, Subjects
 class TeacherAdminForm(forms.ModelForm):
     class Meta:
         model = Teacher
-        fields = ['user', 'subject', 'assigned_class', 'hire_date']
+        fields = ['user', 'subject', 'assigned_class']   # removed 'hire_date'
         widgets = {
             'user': forms.Select(attrs={'class': 'form-select'}),
             'subject': forms.SelectMultiple(attrs={'class': 'form-select'}),
             'assigned_class': forms.SelectMultiple(attrs={'class': 'form-select'}),
-            'hire_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
 
 # ---- Pupil Report Form (for teacher comments) ----
