@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Student Dashboard{% endblock %}
+{% block title %}Pupil Dashboard{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -39,7 +39,7 @@
 <div class="student-sidebar" id="studentSidebar">
   <div class="sidebar-header text-center">
     <i class="fas fa-user-graduate fa-2x text-white mb-2"></i>
-    <h4>Scholaroid Student</h4>
+    <h4>Green Apple Academy Student</h4>
     <p>Your learning hub</p>
   </div>
   <nav>
@@ -56,7 +56,7 @@
 <div class="main-content">
   <div class="sticky-dashboard-header">
     <div class="d-flex justify-content-between align-items-center flex-wrap">
-      <h2 class="fw-semibold mb-0">Student Dashboard</h2>
+      <h2 class="fw-semibold mb-0">Pupils Dashboard</h2>
       <div class="mt-2 mt-sm-0">
         <span class="badge bg-success fs-6 px-3 py-2 rounded-pill">
           {{ student.user.get_full_name|default:student.user.username }}

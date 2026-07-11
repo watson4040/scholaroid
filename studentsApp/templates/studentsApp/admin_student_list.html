@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}Students{% endblock %}
+{% block title %}Pupils{% endblock %}
 {% block content %}
-<h2 class="mb-4">Students</h2>
+<h2 class="mb-4">Pupils</h2>
 
 <form class="row g-2 mb-3" method="get">
   <div class="col-sm-8">
@@ -37,7 +37,7 @@
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6" class="text-center">No students found.</td></tr>
+        <tr><td colspan="6" class="text-center">No Pupils found.</td></tr>
         {% endfor %}
       </tbody>
     </table>
