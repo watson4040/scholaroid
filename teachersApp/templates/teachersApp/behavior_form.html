@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Add Behavior Note for {{ pupil.user.get_full_name }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-clipboard2-pulse"></i> Behavior Note for {{ pupil.user.get_full_name }}</h4>
+                    <small>Class: {{ pupil.class_room.name }} {{ pupil.class_room.section }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save"></i> Save Note
+                            </button>
+                            <a href="{% url 'teacher_class_detail' pupil.class_room.id %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Class
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
