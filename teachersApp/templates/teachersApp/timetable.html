@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}My Timetable{% endblock %}
+{% block extra_css %}
+<style>
+    .timetable-card {
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        padding: 20px;
+        background: white;
+    }
+    .timetable-table th {
+        background: #f8f9fa;
+        text-align: center;
+        vertical-align: middle;
+    }
+    .timetable-table td {
+        text-align: center;
+        vertical-align: middle;
+        min-height: 70px;
+        padding: 10px 5px;
+    }
+    .time-slot {
+        background: #e9ecef;
+        font-weight: 500;
+    }
+    .entry-subject {
+        font-weight: 600;
+        color: #0d6efd;
+    }
+    .entry-class {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    .empty-slot {
+        color: #adb5bd;
+        font-style: italic;
+    }
+    @media (max-width: 768px) {
+        .timetable-table td, .timetable-table th {
+            font-size: 0.8rem;
+            padding: 5px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2><i class="bi bi-calendar-week"></i> My Teaching Timetable</h2>
+    <p class="text-muted">Your assigned classes and subjects for the week.</p>
+
+    <div class="timetable-card table-responsive">
+        <table class="table timetable-table table-bordered">
+            <thead>
+                <tr>
+                    <th>Time / Day</th>
+                    <th>Monday</th>
+                    <th>Tuesday</th>
+                    <th>Wednesday</th>
+                    <th>Thursday</th>
+                    <th>Friday</th>
+                    <th>Saturday</th>
+                    <th>Sunday</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for day, entries in timetable.items %}
+                <tr>
+                    <td class="time-slot">{{ day }}</td>
+                    {% for day2, entries2 in timetable.items %}
+                        {% if day2 == day %}
+                            {% for entry in entries2 %}
+                                <td>
+                                    <div class="entry-subject">{{ entry.subject.subject }}</div>
+                                    <div class="entry-class">{{ entry.class_room.name }} ({{ entry.class_room.section }})</div>
+                                    <small class="text-muted">{{ entry.start_time|time:"H:i" }} - {{ entry.end_time|time:"H:i" }}</small>
+                                </td>
+                            {% empty %}
+                                <td class="empty-slot">—</td>
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center text-muted">No timetable entries found. Please contact admin.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-3">
+        <a href="{% url 'dashboard_teacher' %}" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
