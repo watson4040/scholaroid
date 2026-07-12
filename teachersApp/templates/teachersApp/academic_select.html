@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Enter Marks - Select Class & Subject{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Enter Academic Marks</h4>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Select a class and subject to enter marks (CA, Test, Exam).</p>
+                    <form method="GET" action="{% url 'teacher_academic_entry' 0 0 %}">
+                        <div class="mb-3">
+                            <label for="class_id" class="form-label">Class</label>
+                            <select name="class_id" id="class_id" class="form-select" required>
+                                <option value="">-- Select Class --</option>
+                                {% for class in classes %}
+                                    <option value="{{ class.id }}">{{ class.name }} {{ class.section }}</option>
+                                {% empty %}
+                                    <option value="">No classes assigned</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subject_id" class="form-label">Subject</label>
+                            <select name="subject_id" id="subject_id" class="form-select" required>
+                                <option value="">-- Select Subject --</option>
+                                {% for subject in subjects %}
+                                    <option value="{{ subject.id }}">{{ subject.subject }}</option>
+                                {% empty %}
+                                    <option value="">No subjects assigned</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-arrow-right"></i> Proceed
+                            </button>
+                            <a href="{% url 'dashboard_teacher' %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
