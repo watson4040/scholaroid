@@ -19,7 +19,6 @@ from .models import Teacher, PupilReport, AcademicRecord, Assignment, BehaviorLo
 from accountsApp.models import Notice
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from weasyprint import HTML  # Optional – for PDF generation, but we'll skip for simplicity
 import datetime
 
 logger = logging.getLogger(__name__)
@@ -206,7 +205,6 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
 def teacher_timetable(request):
     teacher = get_object_or_404(Teacher, user=request.user)
     timetable_entries = Timetable.objects.filter(teacher=teacher).select_related('class_room', 'subject')
-    # Group by day
     days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     timetable = {day: [] for day in days}
     for entry in timetable_entries:
@@ -238,7 +236,6 @@ def teacher_assignment_create(request):
             return redirect('teacher_assignments')
     else:
         form = AssignmentForm()
-        # Limit choices to teacher's classes and subjects
         form.fields['class_room'].queryset = teacher.assigned_class.all()
         form.fields['subject'].queryset = teacher.subject.all()
     return render(request, 'teachersApp/assignment_form.html', {'form': form, 'teacher': teacher})
@@ -286,7 +283,6 @@ def teacher_academic(request, class_id=None, subject_id=None):
         }
         return render(request, 'teachersApp/academic.html', context)
     else:
-        # Show selection form
         classes = teacher.assigned_class.all()
         subjects = teacher.subject.all()
         return render(request, 'teachersApp/academic_select.html', {
@@ -319,7 +315,6 @@ def teacher_behavior(request, pupil_id=None):
             form.fields['pupil'].widget = forms.HiddenInput()
         return render(request, 'teachersApp/behavior_form.html', {'form': form, 'pupil': pupil, 'teacher': teacher})
     else:
-        # List behavior logs for teacher's classes
         logs = BehaviorLog.objects.filter(teacher=teacher).select_related('pupil').order_by('-date')
         return render(request, 'teachersApp/behavior_list.html', {'logs': logs, 'teacher': teacher})
 
