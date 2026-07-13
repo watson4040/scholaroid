@@ -203,18 +203,22 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
 # ---------- Timetable ----------
 @login_required
 def teacher_timetable(request):
-    teacher = get_object_or_404(Teacher, user=request.user)
-    timetable_entries = Timetable.objects.filter(teacher=teacher).select_related('class_room', 'subject')
-    days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    timetable = {day: [] for day in days}
-    for entry in timetable_entries:
-        timetable[entry.day].append(entry)
-    context = {
-        'teacher': teacher,
-        'timetable': timetable,
-        'days': days,
-    }
-    return render(request, 'teachersApp/timetable.html', context)
+    try:
+        teacher = get_object_or_404(Teacher, user=request.user)
+        timetable_entries = Timetable.objects.filter(teacher=teacher).select_related('class_room', 'subject')
+        days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        timetable = {day: [] for day in days}
+        for entry in timetable_entries:
+            timetable[entry.day].append(entry)
+        context = {
+            'teacher': teacher,
+            'timetable': timetable,
+            'days': days,
+        }
+        return render(request, 'teachersApp/timetable.html', context)
+    except Exception as e:
+        logger.error(f"Error in teacher_timetable: {e}", exc_info=True)
+        return HttpResponse(f"Error: {e}", status=500)
 
 
 # ---------- Assignments ----------
