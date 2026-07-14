@@ -144,7 +144,7 @@ def teacher_class_detail(request, class_id):
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect("dashboard_final")
 
-# ---- Pupil Report ----
+# ---- Pupil Report (fixed redirect) ----
 @login_required
 def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
     try:
@@ -196,7 +196,7 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect('dashboard_final')
 
-# ---- New features ----
+# ---- New features (all redirects fixed) ----
 @login_required
 def teacher_timetable(request):
     try:

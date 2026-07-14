@@ -27,7 +27,7 @@ urlpatterns = [
     path('login/', views.login_user, name='login'),
     path('logout/', views.logout_user, name='logout'),
     path('dashboard/admin/', views.dashboard_admin, name='dashboard_admin'),
-    # ---- Includes all teacher URLs (including new features) ----
+    # ---- TEACHER APP (all teacher URLs) ----
     path('dashboard/teacher/', include('teachersApp.urls')),
     path('dashboard/student/', views.dashboard_student, name='dashboard_student'),
     path('dashboard/parent/', views.dashboard_parent, name='dashboard_parent'),
