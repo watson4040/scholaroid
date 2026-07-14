@@ -91,7 +91,7 @@ def dashboard_final(request):
 def dashboard_teacher(request):
     return redirect('dashboard_final')
 
-# ---- Teacher Class Detail (FIXED) ----
+# ---- Teacher Class Detail (FORCED parent_user) ----
 @login_required
 def teacher_class_detail(request, class_id):
     try:
@@ -126,8 +126,8 @@ def teacher_class_detail(request, class_id):
 
         student_data = []
         for student in students:
-            # ✅ Explicitly get parent_user (or None)
-            parent_user = student.parent.user if student.parent and student.parent.user else None
+            # FORCE: use the teacher's own user as dummy parent
+            parent_user = request.user
             student_data.append({
                 'student': student,
                 'today_status': attendance_map.get(student.id, ''),
