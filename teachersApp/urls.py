@@ -15,4 +15,7 @@ urlpatterns = [
     path('performance/<int:class_id>/', views.teacher_class_performance, name='teacher_class_performance'),
     path('print/class/<int:class_id>/', views.teacher_print_class_list, name='teacher_print_class_list'),
     path('print/results/<int:class_id>/<int:subject_id>/', views.teacher_print_results, name='teacher_print_results'),
+    # Placeholder for exams list and resources (to fix reverse errors)
+    path('exams/', views.teacher_exams_list, name='teacher_exams_list'),
+    path('resources/', views.teacher_resources, name='teacher_resources'),
 ]
