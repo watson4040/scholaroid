@@ -20,7 +20,7 @@ import datetime
 
 logger = logging.getLogger(__name__)
 
-# ---- Admin views (unchanged) ----
+# ---- Admin views ----
 class AdminTeacherList(AdminRequiredMixin, ListView):
     model = Teacher
     template_name = 'teachersApp/admin_teacher_list.html'
@@ -56,7 +56,7 @@ class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
         messages.success(self.request, "Teacher updated.")
         return reverse_lazy('admin_teacher_detail', kwargs={'pk': self.object.pk})
 
-# ---- The NEW dashboard view (uses a fresh template name) ----
+# ---- Dashboard final ----
 @login_required
 def dashboard_final(request):
     try:
@@ -82,18 +82,16 @@ def dashboard_final(request):
                 "upcoming_exams": exams.count(),
             }
         }
-        # ***** BRAND NEW TEMPLATE NAME *****
         return render(request, "teachersApp/dashboard_final.html", context)
     except Exception as e:
         logger.error(f"Dashboard error: {e}", exc_info=True)
         return HttpResponse(f"Dashboard Error: {e}", status=500)
 
-# ---- Redirect old dashboard to new one ----
 @login_required
 def dashboard_teacher(request):
     return redirect('dashboard_final')
 
-# ---- Attendance (unchanged) ----
+# ---- Attendance ----
 @login_required
 def teacher_class_detail(request, class_id):
     try:
@@ -150,7 +148,7 @@ def teacher_class_detail(request, class_id):
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect("dashboard_teacher")
 
-# ---- Pupil Report (unchanged) ----
+# ---- Pupil Report ----
 @login_required
 def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
     try:
@@ -202,10 +200,7 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect('dashboard_teacher')
 
-# ==========================================================
-#  NEW TEACHER FEATURES (all existing)
-# ==========================================================
-
+# ---- New features ----
 @login_required
 def teacher_timetable(request):
     try:
@@ -422,10 +417,5 @@ def teacher_resources(request):
         messages.error(request, "Could not load resources.")
         return redirect('dashboard_teacher')
 
-# ---------- Test view ----------
-def dashboard_new_test(request):
-    return HttpResponse("""
-        <h1 style="color:green;">NEW VIEW WORKS!</h1>
-        <p>If you see this, the new code is running.</p>
-        <p><a href='/dashboard/teacher/final/'>Go to new dashboard</a></p>
-    """)
+def final_test(request):
+    return HttpResponse("FINAL TEST WORKS! The new code is running.")
