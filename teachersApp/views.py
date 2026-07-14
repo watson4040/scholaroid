@@ -82,7 +82,7 @@ def dashboard_teacher(request):
                 "upcoming_exams": exams.count(),
             }
         }
-        # ***** THIS IS THE KEY CHANGE *****
+        # ***** THE FIX *****
         return render(request, "teachersApp/dashboard_new.html", context)
     except Exception as e:
         logger.error(f"Dashboard error: {e}", exc_info=True)
