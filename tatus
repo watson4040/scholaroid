@@ -1,0 +1,10 @@
+[33mcommit 1c37bb79584364f5b834622b517645030389d43e[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: S & T Baber Lounge <147267845+watson4040@users.noreply.github.com>
+Date:   Mon Jul 13 12:05:40 2026 +0200
+
+    Add all teacher feature templates and updates
+
+teachersApp/__pycache__/admin.cpython-313.pyc
+teachersApp/__pycache__/forms.cpython-313.pyc
+teachersApp/__pycache__/views.cpython-313.pyc
+teachersApp/templatetags/__pycache__/teacher_extras.cpython-313.pyc

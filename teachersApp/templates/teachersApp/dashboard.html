@@ -9,13 +9,14 @@
   <nav id="teacherSidebar" class="teacher-sidebar">
     <div class="nav flex-column">
       <div class="px-3 pt-2 pb-1 text-uppercase small text-muted">Menu</div>
+      <!-- Active dashboard -->
       <a class="nav-link active" href="{% url 'dashboard_teacher' %}"><i class="bi bi-speedometer2"></i> Dashboard</a>
-      <!-- OLD FEATURES -->
+      <!-- ===== OLD FEATURES (RESTORED) ===== -->
       <a class="nav-link" href="{% url 'inbox' %}"><i class="bi bi-chat-dots"></i> Inbox</a>
       <a class="nav-link" href="{% url 'teacher_exams_list' %}"><i class="bi bi-journal-check"></i> Exams</a>
       <a class="nav-link" href="{% url 'notice_list' %}"><i class="bi bi-bell"></i> Notices</a>
       <a class="nav-link" href="{% url 'teacher_resources' %}"><i class="bi bi-folder"></i> Resources</a>
-      <!-- NEW FEATURES -->
+      <!-- ===== NEW FEATURES ===== -->
       <a class="nav-link" href="{% url 'teacher_timetable' %}"><i class="bi bi-calendar3"></i> Timetable</a>
       <a class="nav-link" href="{% url 'teacher_assignments' %}"><i class="bi bi-pencil-square"></i> Assignments</a>
       <a class="nav-link" href="{% url 'teacher_academic' %}"><i class="bi bi-file-earmark-text"></i> Academic</a>
@@ -43,42 +44,10 @@
 
       <!-- Quick Action Cards for New Features -->
       <div class="row g-3 mb-4">
-        <div class="col-md-3">
-          <div class="card text-center h-100">
-            <div class="card-body">
-              <i class="bi bi-calendar3 fs-1 text-primary"></i>
-              <h5 class="card-title mt-2">Timetable</h5>
-              <a href="{% url 'teacher_timetable' %}" class="btn btn-sm btn-outline-primary">View</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center h-100">
-            <div class="card-body">
-              <i class="bi bi-pencil-square fs-1 text-success"></i>
-              <h5 class="card-title mt-2">Assignments</h5>
-              <a href="{% url 'teacher_assignments' %}" class="btn btn-sm btn-outline-success">Manage</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center h-100">
-            <div class="card-body">
-              <i class="bi bi-file-earmark-text fs-1 text-warning"></i>
-              <h5 class="card-title mt-2">Academic</h5>
-              <a href="{% url 'teacher_academic' %}" class="btn btn-sm btn-outline-warning">Enter Marks</a>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-3">
-          <div class="card text-center h-100">
-            <div class="card-body">
-              <i class="bi bi-clipboard2-pulse fs-1 text-danger"></i>
-              <h5 class="card-title mt-2">Behavior</h5>
-              <a href="{% url 'teacher_behavior' %}" class="btn btn-sm btn-outline-danger">Log</a>
-            </div>
-          </div>
-        </div>
+        <div class="col-md-3"><div class="card text-center h-100"><div class="card-body"><i class="bi bi-calendar3 fs-1 text-primary"></i><h5 class="card-title mt-2">Timetable</h5><a href="{% url 'teacher_timetable' %}" class="btn btn-sm btn-outline-primary">View</a></div></div></div>
+        <div class="col-md-3"><div class="card text-center h-100"><div class="card-body"><i class="bi bi-pencil-square fs-1 text-success"></i><h5 class="card-title mt-2">Assignments</h5><a href="{% url 'teacher_assignments' %}" class="btn btn-sm btn-outline-success">Manage</a></div></div></div>
+        <div class="col-md-3"><div class="card text-center h-100"><div class="card-body"><i class="bi bi-file-earmark-text fs-1 text-warning"></i><h5 class="card-title mt-2">Academic</h5><a href="{% url 'teacher_academic' %}" class="btn btn-sm btn-outline-warning">Enter Marks</a></div></div></div>
+        <div class="col-md-3"><div class="card text-center h-100"><div class="card-body"><i class="bi bi-clipboard2-pulse fs-1 text-danger"></i><h5 class="card-title mt-2">Behavior</h5><a href="{% url 'teacher_behavior' %}" class="btn btn-sm btn-outline-danger">Log</a></div></div></div>
       </div>
 
       <!-- Existing Cards -->
