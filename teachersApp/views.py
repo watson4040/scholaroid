@@ -14,8 +14,7 @@ from attendanceApp.models import Attendance
 from examsApp.models import Exam
 from .models import Teacher, PupilReport, AcademicRecord, Assignment, BehaviorLog, Timetable
 from accountsApp.models import Notice
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse
+from django.http import HttpResponse
 import datetime
 
 logger = logging.getLogger(__name__)
@@ -197,25 +196,8 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
         return redirect('dashboard_teacher')
 
 # ==========================================================
-#  NEW TEACHER FEATURES
+#  NEW TEACHER FEATURES (without exams/resources placeholders)
 # ==========================================================
-
-# ---------- Placeholder for Exams List (to fix reverse error) ----------
-@login_required
-def teacher_exams_list(request):
-    # Redirect to the exams app teacher list if available, else dashboard
-    try:
-        from django.urls import reverse
-        return HttpResponseRedirect(reverse('teacher_exams_list'))  # this would loop, so better:
-    except:
-        messages.info(request, "Exams feature coming soon.")
-        return redirect('dashboard_teacher')
-
-# ---------- Placeholder for Resources ----------
-@login_required
-def teacher_resources(request):
-    messages.info(request, "Resources feature coming soon.")
-    return redirect('dashboard_teacher')
 
 # ---------- Timetable ----------
 @login_required
