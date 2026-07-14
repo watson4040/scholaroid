@@ -91,7 +91,7 @@ def dashboard_final(request):
 def dashboard_teacher(request):
     return redirect('dashboard_final')
 
-# ---- Attendance ----
+# ---- Teacher Class Detail (FIXED) ----
 @login_required
 def teacher_class_detail(request, class_id):
     try:
@@ -99,17 +99,14 @@ def teacher_class_detail(request, class_id):
         teacher, created = Teacher.objects.get_or_create(user=request.user)
         if created:
             messages.info(request, "Teacher profile created automatically.")
-        logger.info(f"Teacher: {teacher.id}, created: {created}")
         classroom = get_object_or_404(ClassRoom, id=class_id)
-        logger.info(f"Classroom found: {classroom.id} - {classroom.name}")
 
         if classroom not in teacher.assigned_class.all():
             logger.warning(f"Teacher {teacher.id} not assigned to class {class_id}")
             messages.error(request, "You are not assigned to this class.")
-            return redirect("dashboard_teacher")
+            return redirect("dashboard_final")
 
         students = Student.objects.filter(class_room=classroom).select_related('parent', 'parent__user', 'user')
-        logger.info(f"Found {students.count()} students in class {class_id}")
         today = now().date()
 
         if request.method == "POST":
@@ -129,9 +126,8 @@ def teacher_class_detail(request, class_id):
 
         student_data = []
         for student in students:
-            parent_user = None
-            if student.parent and student.parent.user:
-                parent_user = student.parent.user
+            # ✅ Explicitly get parent_user (or None)
+            parent_user = student.parent.user if student.parent and student.parent.user else None
             student_data.append({
                 'student': student,
                 'today_status': attendance_map.get(student.id, ''),
@@ -146,7 +142,7 @@ def teacher_class_detail(request, class_id):
     except Exception as e:
         logger.error(f"ERROR in teacher_class_detail for class {class_id}: {str(e)}", exc_info=True)
         messages.error(request, f"An error occurred: {str(e)}")
-        return redirect("dashboard_teacher")
+        return redirect("dashboard_final")
 
 # ---- Pupil Report ----
 @login_required
@@ -159,7 +155,7 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
         if pupil.class_room not in teacher.assigned_class.all():
             logger.warning(f"Pupil {pupil_id} not in teacher's classes")
             messages.error(request, "You are not allowed to report on this pupil.")
-            return redirect('dashboard_teacher')
+            return redirect('dashboard_final')
 
         if term is None:
             term = '1'
@@ -198,7 +194,7 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
     except Exception as e:
         logger.error(f"CRITICAL ERROR in pupil_report_create_or_edit: {str(e)}", exc_info=True)
         messages.error(request, f"An error occurred: {str(e)}")
-        return redirect('dashboard_teacher')
+        return redirect('dashboard_final')
 
 # ---- New features ----
 @login_required
@@ -250,7 +246,7 @@ def teacher_academic(request, class_id=None, subject_id=None):
         subject = get_object_or_404(Subjects, id=subject_id)
         if classroom not in teacher.assigned_class.all() or subject not in teacher.subject.all():
             messages.error(request, "You are not assigned to this class or subject.")
-            return redirect('dashboard_teacher')
+            return redirect('dashboard_final')
         students = Student.objects.filter(class_room=classroom)
         if request.method == 'POST':
             for student in students:
@@ -298,7 +294,7 @@ def teacher_behavior(request, pupil_id=None):
         pupil = get_object_or_404(Student, id=pupil_id)
         if pupil.class_room not in teacher.assigned_class.all():
             messages.error(request, "You are not assigned to this pupil's class.")
-            return redirect('dashboard_teacher')
+            return redirect('dashboard_final')
         if request.method == 'POST':
             form = BehaviorLogForm(request.POST)
             if form.is_valid():
@@ -322,7 +318,7 @@ def teacher_class_performance(request, class_id):
     classroom = get_object_or_404(ClassRoom, id=class_id)
     if classroom not in teacher.assigned_class.all():
         messages.error(request, "You are not assigned to this class.")
-        return redirect('dashboard_teacher')
+        return redirect('dashboard_final')
     students = Student.objects.filter(class_room=classroom)
     subjects = teacher.subject.all()
     performance_data = []
@@ -353,7 +349,7 @@ def teacher_print_class_list(request, class_id):
     classroom = get_object_or_404(ClassRoom, id=class_id)
     if classroom not in teacher.assigned_class.all():
         messages.error(request, "You are not assigned to this class.")
-        return redirect('dashboard_teacher')
+        return redirect('dashboard_final')
     students = Student.objects.filter(class_room=classroom).select_related('user')
     context = {
         'classroom': classroom,
@@ -370,7 +366,7 @@ def teacher_print_results(request, class_id, subject_id):
     subject = get_object_or_404(Subjects, id=subject_id)
     if classroom not in teacher.assigned_class.all() or subject not in teacher.subject.all():
         messages.error(request, "You are not assigned to this class or subject.")
-        return redirect('dashboard_teacher')
+        return redirect('dashboard_final')
     students = Student.objects.filter(class_room=classroom).select_related('user')
     results = []
     for student in students:
@@ -415,7 +411,7 @@ def teacher_resources(request):
     except Exception as e:
         logger.error(f"Error in teacher_resources: {e}", exc_info=True)
         messages.error(request, "Could not load resources.")
-        return redirect('dashboard_teacher')
+        return redirect('dashboard_final')
 
 def final_test(request):
     return HttpResponse("FINAL TEST WORKS! The new code is running.")
