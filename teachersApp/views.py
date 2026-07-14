@@ -12,6 +12,7 @@ from django.utils.timezone import now
 from studentsApp.models import Student
 from attendanceApp.models import Attendance
 from examsApp.models import Exam
+from resourcesApp.models import Resource  # <-- make sure this import works
 from .models import Teacher, PupilReport, AcademicRecord, Assignment, BehaviorLog, Timetable
 from accountsApp.models import Notice
 from django.http import HttpResponse
@@ -19,7 +20,7 @@ import datetime
 
 logger = logging.getLogger(__name__)
 
-# ---- Admin views (unchanged) ----
+# ---- Admin views ----
 class AdminTeacherList(AdminRequiredMixin, ListView):
     model = Teacher
     template_name = 'teachersApp/admin_teacher_list.html'
@@ -55,7 +56,7 @@ class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
         messages.success(self.request, "Teacher updated.")
         return reverse_lazy('admin_teacher_detail', kwargs={'pk': self.object.pk})
 
-# ---- Teacher Dashboard with error handling ----
+# ---- Teacher Dashboard ----
 @login_required
 def dashboard_teacher(request):
     try:
@@ -86,7 +87,7 @@ def dashboard_teacher(request):
         logger.error(f"Dashboard error: {e}", exc_info=True)
         return HttpResponse(f"Dashboard Error: {e}", status=500)
 
-# ---- Attendance Page ----
+# ---- Attendance ----
 @login_required
 def teacher_class_detail(request, class_id):
     try:
@@ -196,7 +197,7 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
         return redirect('dashboard_teacher')
 
 # ==========================================================
-#  NEW TEACHER FEATURES (without exams/resources placeholders)
+#  NEW TEACHER FEATURES
 # ==========================================================
 
 # ---------- Timetable ----------
@@ -404,3 +405,20 @@ def teacher_print_results(request, class_id, subject_id):
         'today': now().date(),
     }
     return render(request, 'teachersApp/print_results.html', context)
+
+# ---------- Resources ----------
+@login_required
+def teacher_resources(request):
+    try:
+        teacher = get_object_or_404(Teacher, user=request.user)
+        classes = teacher.assigned_class.all()
+        resources = Resource.objects.filter(class_room__in=classes).select_related('subject', 'teacher').order_by('-created_at')
+        context = {
+            'teacher': teacher,
+            'resources': resources,
+        }
+        return render(request, 'teachersApp/resources.html', context)
+    except Exception as e:
+        logger.error(f"Error in teacher_resources: {e}", exc_info=True)
+        messages.error(request, "Could not load resources.")
+        return redirect('dashboard_teacher')
