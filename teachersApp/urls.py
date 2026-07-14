@@ -15,5 +15,6 @@ urlpatterns = [
     path('performance/<int:class_id>/', views.teacher_class_performance, name='teacher_class_performance'),
     path('print/class/<int:class_id>/', views.teacher_print_class_list, name='teacher_print_class_list'),
     path('print/results/<int:class_id>/<int:subject_id>/', views.teacher_print_results, name='teacher_print_results'),
-    path('resources/', views.teacher_resources, name='teacher_resources'),   # <-- added
+    path('resources/', views.teacher_resources, name='teacher_resources'),
+    path('test/', views.dashboard_new_test, name='dashboard_new_test'),   # <-- test URL
 ]

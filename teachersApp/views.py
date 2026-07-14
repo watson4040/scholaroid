@@ -12,7 +12,7 @@ from django.utils.timezone import now
 from studentsApp.models import Student
 from attendanceApp.models import Attendance
 from examsApp.models import Exam
-from resourcesApp.models import Resource  # <-- make sure this import works
+from resourcesApp.models import Resource
 from .models import Teacher, PupilReport, AcademicRecord, Assignment, BehaviorLog, Timetable
 from accountsApp.models import Notice
 from django.http import HttpResponse
@@ -56,7 +56,7 @@ class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
         messages.success(self.request, "Teacher updated.")
         return reverse_lazy('admin_teacher_detail', kwargs={'pk': self.object.pk})
 
-# ---- Teacher Dashboard ----
+# ---- Teacher Dashboard (now uses dashboard_new.html) ----
 @login_required
 def dashboard_teacher(request):
     try:
@@ -82,7 +82,8 @@ def dashboard_teacher(request):
                 "upcoming_exams": exams.count(),
             }
         }
-        return render(request, "teachersApp/dashboard.html", context)
+        # Use new template name to bypass cache
+        return render(request, "teachersApp/dashboard_new.html", context)
     except Exception as e:
         logger.error(f"Dashboard error: {e}", exc_info=True)
         return HttpResponse(f"Dashboard Error: {e}", status=500)
@@ -422,3 +423,11 @@ def teacher_resources(request):
         logger.error(f"Error in teacher_resources: {e}", exc_info=True)
         messages.error(request, "Could not load resources.")
         return redirect('dashboard_teacher')
+
+# ---------- TEST VIEW TO CONFIRM DEPLOYMENT ----------
+def dashboard_new_test(request):
+    return HttpResponse("""
+        <h1 style="color:green;">NEW VIEW WORKS!</h1>
+        <p>If you see this, the new code is running.</p>
+        <p><a href='/dashboard/teacher/'>Go to real dashboard</a></p>
+    """)
