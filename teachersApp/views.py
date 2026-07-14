@@ -20,7 +20,7 @@ import datetime
 
 logger = logging.getLogger(__name__)
 
-# ---- Admin views ----
+# ---- Admin views (unchanged) ----
 class AdminTeacherList(AdminRequiredMixin, ListView):
     model = Teacher
     template_name = 'teachersApp/admin_teacher_list.html'
@@ -56,9 +56,9 @@ class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
         messages.success(self.request, "Teacher updated.")
         return reverse_lazy('admin_teacher_detail', kwargs={'pk': self.object.pk})
 
-# ---- Teacher Dashboard (now uses dashboard_new.html) ----
+# ---- The NEW dashboard view (uses a fresh template name) ----
 @login_required
-def dashboard_teacher(request):
+def dashboard_final(request):
     try:
         teacher, created = Teacher.objects.get_or_create(user=request.user)
         if created:
@@ -82,13 +82,18 @@ def dashboard_teacher(request):
                 "upcoming_exams": exams.count(),
             }
         }
-        # ***** THE FIX *****
-        return render(request, "teachersApp/dashboard_new.html", context)
+        # ***** BRAND NEW TEMPLATE NAME *****
+        return render(request, "teachersApp/dashboard_final.html", context)
     except Exception as e:
         logger.error(f"Dashboard error: {e}", exc_info=True)
         return HttpResponse(f"Dashboard Error: {e}", status=500)
 
-# ---- Attendance ----
+# ---- Redirect old dashboard to new one ----
+@login_required
+def dashboard_teacher(request):
+    return redirect('dashboard_final')
+
+# ---- Attendance (unchanged) ----
 @login_required
 def teacher_class_detail(request, class_id):
     try:
@@ -145,7 +150,7 @@ def teacher_class_detail(request, class_id):
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect("dashboard_teacher")
 
-# ---- Pupil Report ----
+# ---- Pupil Report (unchanged) ----
 @login_required
 def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
     try:
@@ -198,10 +203,9 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
         return redirect('dashboard_teacher')
 
 # ==========================================================
-#  NEW TEACHER FEATURES
+#  NEW TEACHER FEATURES (all existing)
 # ==========================================================
 
-# ---------- Timetable ----------
 @login_required
 def teacher_timetable(request):
     try:
@@ -221,7 +225,6 @@ def teacher_timetable(request):
         logger.error(f"Error in teacher_timetable: {e}", exc_info=True)
         return HttpResponse(f"Error: {e}", status=500)
 
-# ---------- Assignments ----------
 @login_required
 def teacher_assignments(request):
     teacher = get_object_or_404(Teacher, user=request.user)
@@ -244,7 +247,6 @@ def teacher_assignment_create(request):
         form.fields['subject'].queryset = teacher.subject.all()
     return render(request, 'teachersApp/assignment_form.html', {'form': form, 'teacher': teacher})
 
-# ---------- Academic ----------
 @login_required
 def teacher_academic(request, class_id=None, subject_id=None):
     teacher = get_object_or_404(Teacher, user=request.user)
@@ -294,7 +296,6 @@ def teacher_academic(request, class_id=None, subject_id=None):
             'teacher': teacher,
         })
 
-# ---------- Behavior ----------
 @login_required
 def teacher_behavior(request, pupil_id=None):
     teacher = get_object_or_404(Teacher, user=request.user)
@@ -320,7 +321,6 @@ def teacher_behavior(request, pupil_id=None):
         logs = BehaviorLog.objects.filter(teacher=teacher).select_related('pupil').order_by('-date')
         return render(request, 'teachersApp/behavior_list.html', {'logs': logs, 'teacher': teacher})
 
-# ---------- Performance ----------
 @login_required
 def teacher_class_performance(request, class_id):
     teacher = get_object_or_404(Teacher, user=request.user)
@@ -352,7 +352,6 @@ def teacher_class_performance(request, class_id):
     }
     return render(request, 'teachersApp/class_performance.html', context)
 
-# ---------- Print ----------
 @login_required
 def teacher_print_class_list(request, class_id):
     teacher = get_object_or_404(Teacher, user=request.user)
@@ -407,7 +406,6 @@ def teacher_print_results(request, class_id, subject_id):
     }
     return render(request, 'teachersApp/print_results.html', context)
 
-# ---------- Resources ----------
 @login_required
 def teacher_resources(request):
     try:
@@ -429,5 +427,5 @@ def dashboard_new_test(request):
     return HttpResponse("""
         <h1 style="color:green;">NEW VIEW WORKS!</h1>
         <p>If you see this, the new code is running.</p>
-        <p><a href='/dashboard/teacher/'>Go to real dashboard</a></p>
+        <p><a href='/dashboard/teacher/final/'>Go to new dashboard</a></p>
     """)

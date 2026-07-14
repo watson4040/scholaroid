@@ -2,7 +2,9 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    # Old dashboard redirects to the new one
     path('', views.dashboard_teacher, name='dashboard_teacher'),
+    path('final/', views.dashboard_final, name='dashboard_final'),   # <-- NEW URL
     path('class/<int:class_id>/', views.teacher_class_detail, name='teacher_class_detail'),
     path('report/<int:pupil_id>/', views.pupil_report_create_or_edit, name='pupil_report'),
     path('timetable/', views.teacher_timetable, name='teacher_timetable'),
