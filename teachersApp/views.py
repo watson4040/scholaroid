@@ -82,7 +82,7 @@ def dashboard_teacher(request):
                 "upcoming_exams": exams.count(),
             }
         }
-        # Use new template name to bypass cache
+        # ***** THIS IS THE KEY CHANGE *****
         return render(request, "teachersApp/dashboard_new.html", context)
     except Exception as e:
         logger.error(f"Dashboard error: {e}", exc_info=True)
@@ -424,7 +424,7 @@ def teacher_resources(request):
         messages.error(request, "Could not load resources.")
         return redirect('dashboard_teacher')
 
-# ---------- TEST VIEW TO CONFIRM DEPLOYMENT ----------
+# ---------- Test view ----------
 def dashboard_new_test(request):
     return HttpResponse("""
         <h1 style="color:green;">NEW VIEW WORKS!</h1>
