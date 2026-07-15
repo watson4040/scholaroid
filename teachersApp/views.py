@@ -91,7 +91,7 @@ def dashboard_final(request):
 def dashboard_teacher(request):
     return redirect('dashboard_final')
 
-# ---- Teacher Class Detail (FORCED parent_user) ----
+# ---- Teacher Class Detail (FORCES parent_user) ----
 @login_required
 def teacher_class_detail(request, class_id):
     try:
@@ -144,7 +144,7 @@ def teacher_class_detail(request, class_id):
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect("dashboard_final")
 
-# ---- Pupil Report (fixed redirect) ----
+# ---- Pupil Report ----
 @login_required
 def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
     try:
@@ -196,7 +196,7 @@ def pupil_report_create_or_edit(request, pupil_id, term=None, year=None):
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect('dashboard_final')
 
-# ---- New features (all redirects fixed) ----
+# ---- New features ----
 @login_required
 def teacher_timetable(request):
     try:
