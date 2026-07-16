@@ -237,7 +237,7 @@ def teacher_assignment_create(request):
         form.fields['subject'].queryset = teacher.subject.all()
     return render(request, 'teachersApp/assignment_form.html', {'form': form, 'teacher': teacher})
 
-# ---------- ACADEMIC: Test + Exam only (NO CA) with DEBUG LOGGING ----------
+# ---------- ACADEMIC: Test + Exam only (NO CA) ----------
 @login_required
 def teacher_academic(request, class_id=None, subject_id=None):
     try:
@@ -277,10 +277,6 @@ def teacher_academic(request, class_id=None, subject_id=None):
             term = request.POST.get('term')
             academic_year = request.POST.get('academic_year')
 
-            # Debug: log what we received
-            logger.info(f"POST data: term={term}, academic_year={academic_year}")
-            logger.info(f"Students: {[s.id for s in students]}")
-
             if not term or not academic_year:
                 messages.error(request, "Please select a term and enter an academic year.")
                 return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
@@ -289,8 +285,6 @@ def teacher_academic(request, class_id=None, subject_id=None):
                 test_marks = request.POST.get(f'test_{student.id}')
                 exam_marks = request.POST.get(f'exam_{student.id}')
                 max_marks = request.POST.get(f'max_marks_{student.id}')
-
-                logger.info(f"Student {student.id}: test={test_marks}, exam={exam_marks}")
 
                 if test_marks and test_marks.strip():
                     try:
@@ -307,9 +301,8 @@ def teacher_academic(request, class_id=None, subject_id=None):
                                 'teacher': teacher,
                             }
                         )
-                        logger.info(f"Saved TEST mark for student {student.id}: {test_marks}")
-                    except ValueError as e:
-                        messages.error(request, f"Invalid test mark for {student.user.get_full_name()}: {e}")
+                    except ValueError:
+                        messages.error(request, f"Invalid test mark for {student.user.get_full_name()}.")
                         return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
 
                 if exam_marks and exam_marks.strip():
@@ -327,9 +320,8 @@ def teacher_academic(request, class_id=None, subject_id=None):
                                 'teacher': teacher,
                             }
                         )
-                        logger.info(f"Saved EXAM mark for student {student.id}: {exam_marks}")
-                    except ValueError as e:
-                        messages.error(request, f"Invalid exam mark for {student.user.get_full_name()}: {e}")
+                    except ValueError:
+                        messages.error(request, f"Invalid exam mark for {student.user.get_full_name()}.")
                         return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
 
             messages.success(request, "Marks saved successfully.")
