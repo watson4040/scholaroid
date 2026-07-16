@@ -6,6 +6,8 @@ from django.http import JsonResponse
 from .models import Message, UserTypingStatus
 from .forms import ParentMessageForm
 from accountsApp.models import User
+from studentsApp.models import Student
+from parentsApp.models import Parent
 import json
 import logging
 
@@ -98,7 +100,6 @@ def admin_message_detail(request, pk):
     return redirect('conversation', user_id=msg.sender.id)
 
 # ---- API endpoints ----
-
 @login_required
 def get_recent_messages(request):
     messages_qs = Message.objects.filter(recipient=request.user).order_by('-created_at')[:5]
@@ -192,17 +193,14 @@ def delete_message(request):
         if not message_id:
             return JsonResponse({'error': 'Message ID required'}, status=400)
         msg = get_object_or_404(Message, id=message_id)
-        # Allow sender or staff to delete
         if msg.sender != request.user and not request.user.is_staff:
             return JsonResponse({'error': 'Permission denied'}, status=403)
         msg.delete()
         return JsonResponse({'status': 'ok'})
     return JsonResponse({'error': 'POST required'}, status=400)
 
-# ---- Clear conversation ----
 @login_required
 def clear_conversation_api(request, user_id):
-    """Delete all messages between the current user and another user."""
     if not request.user.is_staff:
         return JsonResponse({'error': 'Permission denied. Only admins can clear conversations.'}, status=403)
     if request.method != 'POST':
@@ -215,10 +213,9 @@ def clear_conversation_api(request, user_id):
     messages_to_delete.delete()
     return JsonResponse({'status': 'ok', 'deleted_count': count})
 
-# ---- NEW: Send message to any user ----
+# ---- NEW: Send message to any user (with grouped recipients & student exclusion) ----
 @login_required
 def send_message_to_any(request):
-    """Allow any user to send a message to any other user."""
     if request.method == 'POST':
         recipient_id = request.POST.get('recipient')
         subject = request.POST.get('subject')
@@ -239,7 +236,29 @@ def send_message_to_any(request):
         )
         messages.success(request, f"Message sent to {recipient.get_full_name() or recipient.username}.")
         return redirect('inbox')
-    # Get all users except the current user
-    users = User.objects.exclude(id=request.user.id)
-    context = {'users': users}
-    return render(request, 'messagingApp/send_message.html', context)
+
+    # --- GET: Build grouped recipient lists (exclude students) ---
+    # Admins (staff or superuser) – exclude students
+    admin_users = User.objects.filter(is_staff=True) | User.objects.filter(is_superuser=True)
+    admin_users = admin_users.exclude(id=request.user.id).exclude(role='student')
+
+    # Teachers – exclude students and self
+    teacher_users = User.objects.filter(role='teacher')
+    teacher_users = teacher_users.exclude(id=request.user.id).exclude(role='student')
+
+    # Parents of pupils in the teacher's classes – exclude students
+    parent_users = User.objects.none()
+    if hasattr(request.user, 'teacher'):
+        teacher_obj = request.user.teacher
+        classes = teacher_obj.assigned_class.all()
+        students = Student.objects.filter(class_room__in=classes)
+        parent_ids = students.values_list('parent_id', flat=True).distinct()
+        parent_users = User.objects.filter(parent__in=Parent.objects.filter(id__in=parent_ids))
+        parent_users = parent_users.exclude(id=request.user.id).exclude(role='student')
+
+    context = {
+        'admin_users': admin_users,
+        'teacher_users': teacher_users,
+        'parent_users': parent_users,
+    }
+    return render(request, 'messagingApp/compose_message.html', context)
