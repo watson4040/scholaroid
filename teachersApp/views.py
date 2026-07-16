@@ -91,7 +91,7 @@ def dashboard_final(request):
 def dashboard_teacher(request):
     return redirect('dashboard_final')
 
-# ---- Teacher Class Detail (FORCES parent_user) ----
+# ---- Teacher Class Detail ----
 @login_required
 def teacher_class_detail(request, class_id):
     try:
@@ -126,8 +126,7 @@ def teacher_class_detail(request, class_id):
 
         student_data = []
         for student in students:
-            # FORCE: use the teacher's own user as dummy parent
-            parent_user = request.user
+            parent_user = student.parent.user if student.parent and student.parent.user else None
             student_data.append({
                 'student': student,
                 'today_status': attendance_map.get(student.id, ''),
@@ -238,39 +237,78 @@ def teacher_assignment_create(request):
         form.fields['subject'].queryset = teacher.subject.all()
     return render(request, 'teachersApp/assignment_form.html', {'form': form, 'teacher': teacher})
 
+# ---------- FIXED: Academic (Test + Exam only) ----------
 @login_required
 def teacher_academic(request, class_id=None, subject_id=None):
     teacher = get_object_or_404(Teacher, user=request.user)
+
+    # If path params are 0/None, try to get them from query string
+    if not class_id or class_id == 0:
+        class_id = request.GET.get('class_id')
+    if not subject_id or subject_id == 0:
+        subject_id = request.GET.get('subject_id')
+
+    if class_id:
+        class_id = int(class_id)
+    if subject_id:
+        subject_id = int(subject_id)
+
     if class_id and subject_id:
         classroom = get_object_or_404(ClassRoom, id=class_id)
         subject = get_object_or_404(Subjects, id=subject_id)
+
         if classroom not in teacher.assigned_class.all() or subject not in teacher.subject.all():
             messages.error(request, "You are not assigned to this class or subject.")
             return redirect('dashboard_final')
+
         students = Student.objects.filter(class_room=classroom)
+
         if request.method == 'POST':
+            term = request.POST.get('term')
+            academic_year = request.POST.get('academic_year')
+
             for student in students:
-                marks = request.POST.get(f'marks_{student.id}')
+                # Get Test mark
+                test_marks = request.POST.get(f'test_{student.id}')
+                # Get Exam mark
+                exam_marks = request.POST.get(f'exam_{student.id}')
                 max_marks = request.POST.get(f'max_marks_{student.id}')
-                exam_type = request.POST.get('exam_type')
-                term = request.POST.get('term')
-                academic_year = request.POST.get('academic_year')
-                if marks and max_marks and exam_type and term and academic_year:
+
+                # Save Test
+                if test_marks and term and academic_year:
                     AcademicRecord.objects.update_or_create(
                         pupil=student,
                         subject=subject,
                         class_room=classroom,
                         term=term,
                         academic_year=academic_year,
-                        exam_type=exam_type,
+                        exam_type='TEST',
                         defaults={
-                            'marks': float(marks),
-                            'max_marks': float(max_marks),
+                            'marks': float(test_marks),
+                            'max_marks': float(max_marks) if max_marks else 30,
                             'teacher': teacher,
                         }
                     )
+
+                # Save Exam
+                if exam_marks and term and academic_year:
+                    AcademicRecord.objects.update_or_create(
+                        pupil=student,
+                        subject=subject,
+                        class_room=classroom,
+                        term=term,
+                        academic_year=academic_year,
+                        exam_type='EXAM',
+                        defaults={
+                            'marks': float(exam_marks),
+                            'max_marks': float(max_marks) if max_marks else 50,
+                            'teacher': teacher,
+                        }
+                    )
+
             messages.success(request, "Marks saved successfully.")
             return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+
         context = {
             'classroom': classroom,
             'subject': subject,
@@ -278,7 +316,9 @@ def teacher_academic(request, class_id=None, subject_id=None):
             'teacher': teacher,
         }
         return render(request, 'teachersApp/academic.html', context)
+
     else:
+        # Show selection form
         classes = teacher.assigned_class.all()
         subjects = teacher.subject.all()
         return render(request, 'teachersApp/academic_select.html', {
@@ -371,22 +411,18 @@ def teacher_print_results(request, class_id, subject_id):
     results = []
     for student in students:
         records = AcademicRecord.objects.filter(pupil=student, subject=subject, class_room=classroom)
-        ca = records.filter(exam_type='CA').first()
         test = records.filter(exam_type='TEST').first()
         exam = records.filter(exam_type='EXAM').first()
         total = 0
-        if ca:
-            total += ca.marks
         if test:
             total += test.marks
         if exam:
             total += exam.marks
         results.append({
             'student': student,
-            'ca': ca.marks if ca else '-',
             'test': test.marks if test else '-',
             'exam': exam.marks if exam else '-',
-            'total': total if (ca or test or exam) else '-',
+            'total': total if (test or exam) else '-',
         })
     context = {
         'classroom': classroom,
