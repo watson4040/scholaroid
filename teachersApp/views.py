@@ -237,7 +237,7 @@ def teacher_assignment_create(request):
         form.fields['subject'].queryset = teacher.subject.all()
     return render(request, 'teachersApp/assignment_form.html', {'form': form, 'teacher': teacher})
 
-# ---------- ACADEMIC: Test + Exam only (NO CA) ----------
+# ---------- ACADEMIC: Test + Exam only (NO CA) with extra debugging ----------
 @login_required
 def teacher_academic(request, class_id=None, subject_id=None):
     try:
@@ -288,7 +288,7 @@ def teacher_academic(request, class_id=None, subject_id=None):
 
                 if test_marks and test_marks.strip():
                     try:
-                        AcademicRecord.objects.update_or_create(
+                        obj, created = AcademicRecord.objects.update_or_create(
                             pupil=student,
                             subject=subject,
                             class_room=classroom,
@@ -307,7 +307,7 @@ def teacher_academic(request, class_id=None, subject_id=None):
 
                 if exam_marks and exam_marks.strip():
                     try:
-                        AcademicRecord.objects.update_or_create(
+                        obj, created = AcademicRecord.objects.update_or_create(
                             pupil=student,
                             subject=subject,
                             class_room=classroom,
