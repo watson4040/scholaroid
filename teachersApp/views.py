@@ -272,9 +272,6 @@ def teacher_academic(request, class_id=None, subject_id=None):
             return redirect('dashboard_final')
 
         students = Student.objects.filter(class_room=classroom).select_related('user')
-        
-        # Debug: Log if students exist
-        logger.info(f"Found {students.count()} students in class {classroom.name}")
 
         if request.method == 'POST':
             term = request.POST.get('term')
@@ -282,7 +279,7 @@ def teacher_academic(request, class_id=None, subject_id=None):
 
             if not term or not academic_year:
                 messages.error(request, "Please select a term and enter an academic year.")
-                return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+                return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
 
             for student in students:
                 test_marks = request.POST.get(f'test_{student.id}')
@@ -306,7 +303,7 @@ def teacher_academic(request, class_id=None, subject_id=None):
                         )
                     except ValueError:
                         messages.error(request, f"Invalid test mark for {student.user.get_full_name()}.")
-                        return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+                        return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
 
                 if exam_marks and exam_marks.strip():
                     try:
@@ -325,10 +322,10 @@ def teacher_academic(request, class_id=None, subject_id=None):
                         )
                     except ValueError:
                         messages.error(request, f"Invalid exam mark for {student.user.get_full_name()}.")
-                        return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+                        return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
 
             messages.success(request, "Marks saved successfully.")
-            return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+            return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
 
         context = {
             'classroom': classroom,
