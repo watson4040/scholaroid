@@ -29,9 +29,9 @@ class PupilReport(models.Model):
     ]
     pupil = models.ForeignKey('studentsApp.Student', on_delete=models.CASCADE, related_name='reports')
     term = models.CharField(max_length=1, choices=TERM_CHOICES, default='1')
-    academic_year = models.CharField(max_length=9)  # e.g., "2025/2026"
+    academic_year = models.CharField(max_length=9)
     teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True)
-    comment = models.TextField(blank=True, help_text="Teacher's comment on pupil progress")
+    comment = models.TextField(blank=True)
     is_submitted = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -43,11 +43,8 @@ class PupilReport(models.Model):
         return f"{self.pupil.user.username} - Term {self.term} ({self.academic_year})"
 
 
-# ---------- NEW MODELS ----------
-
 class AcademicRecord(models.Model):
     EXAM_TYPES = [
-        ('CA', 'Continuous Assessment'),
         ('TEST', 'Test'),
         ('EXAM', 'Exam'),
     ]
@@ -57,15 +54,14 @@ class AcademicRecord(models.Model):
     term = models.CharField(max_length=1, choices=PupilReport.TERM_CHOICES, default='1')
     academic_year = models.CharField(max_length=9)
     exam_type = models.CharField(max_length=10, choices=EXAM_TYPES)
-    marks = models.DecimalField(max_digits=5, decimal_places=2)
+    marks = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     max_marks = models.DecimalField(max_digits=5, decimal_places=2, default=100)
-    remark = models.TextField(blank=True, help_text="Teacher's remark on this assessment")
+    remark = models.TextField(blank=True)
     teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True)
     date_recorded = models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('pupil', 'subject', 'term', 'academic_year', 'exam_type')
         ordering = ['-date_recorded']
 
     def __str__(self):
@@ -95,9 +91,9 @@ class BehaviorLog(models.Model):
     pupil = models.ForeignKey('studentsApp.Student', on_delete=models.CASCADE, related_name='behavior_logs')
     teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
     category = models.CharField(max_length=10, choices=BEHAVIOR_TYPES, default='positive')
-    note = models.TextField(help_text="Detailed behavior note")
-    conduct_remark = models.TextField(blank=True, help_text="For report card use")
-    is_report_card_remark = models.BooleanField(default=False, help_text="Include in report card?")
+    note = models.TextField()
+    conduct_remark = models.TextField(blank=True)
+    is_report_card_remark = models.BooleanField(default=False)
     date = models.DateField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

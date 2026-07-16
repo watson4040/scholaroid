@@ -4,7 +4,7 @@ from django.views.generic import ListView, DetailView, UpdateView
 from django.urls import reverse_lazy
 from django.contrib import messages
 from accountsApp.mixins import AdminRequiredMixin
-from .forms import TeacherAdminForm, PupilReportForm, AcademicRecordForm, AssignmentForm, BehaviorLogForm
+from .forms import TeacherAdminForm, PupilReportForm, AssignmentForm, BehaviorLogForm
 from classesApp.models import ClassRoom, Subjects
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, get_object_or_404, redirect
@@ -237,7 +237,7 @@ def teacher_assignment_create(request):
         form.fields['subject'].queryset = teacher.subject.all()
     return render(request, 'teachersApp/assignment_form.html', {'form': form, 'teacher': teacher})
 
-# ---------- ACADEMIC: Test + Exam only (NO CA) with extra debugging ----------
+# ---------- ACADEMIC: DIRECT SAVE (NO FORMS) ----------
 @login_required
 def teacher_academic(request, class_id=None, subject_id=None):
     try:
@@ -288,41 +288,35 @@ def teacher_academic(request, class_id=None, subject_id=None):
 
                 if test_marks and test_marks.strip():
                     try:
-                        obj, created = AcademicRecord.objects.update_or_create(
+                        AcademicRecord.objects.create(
                             pupil=student,
                             subject=subject,
                             class_room=classroom,
                             term=term,
                             academic_year=academic_year,
                             exam_type='TEST',
-                            defaults={
-                                'marks': float(test_marks),
-                                'max_marks': float(max_marks) if max_marks else 30,
-                                'teacher': teacher,
-                            }
+                            marks=float(test_marks),
+                            max_marks=float(max_marks) if max_marks else 30,
+                            teacher=teacher,
                         )
-                    except ValueError:
-                        messages.error(request, f"Invalid test mark for {student.user.get_full_name()}.")
-                        return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
+                    except Exception as e:
+                        logger.error(f"Error saving TEST mark for student {student.id}: {e}")
 
                 if exam_marks and exam_marks.strip():
                     try:
-                        obj, created = AcademicRecord.objects.update_or_create(
+                        AcademicRecord.objects.create(
                             pupil=student,
                             subject=subject,
                             class_room=classroom,
                             term=term,
                             academic_year=academic_year,
                             exam_type='EXAM',
-                            defaults={
-                                'marks': float(exam_marks),
-                                'max_marks': float(max_marks) if max_marks else 50,
-                                'teacher': teacher,
-                            }
+                            marks=float(exam_marks),
+                            max_marks=float(max_marks) if max_marks else 50,
+                            teacher=teacher,
                         )
-                    except ValueError:
-                        messages.error(request, f"Invalid exam mark for {student.user.get_full_name()}.")
-                        return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
+                    except Exception as e:
+                        logger.error(f"Error saving EXAM mark for student {student.id}: {e}")
 
             messages.success(request, "Marks saved successfully.")
             return redirect('teacher_academic_entry', class_id=classroom.id, subject_id=subject.id)
@@ -340,6 +334,7 @@ def teacher_academic(request, class_id=None, subject_id=None):
         messages.error(request, f"An error occurred: {str(e)}")
         return redirect('dashboard_final')
 
+# ---------- BEHAVIOR: DIRECT SAVE (NO FORMS) ----------
 @login_required
 def teacher_behavior(request, pupil_id=None):
     teacher = get_object_or_404(Teacher, user=request.user)
@@ -349,14 +344,24 @@ def teacher_behavior(request, pupil_id=None):
             messages.error(request, "You are not assigned to this pupil's class.")
             return redirect('dashboard_final')
         if request.method == 'POST':
-            form = BehaviorLogForm(request.POST)
-            if form.is_valid():
-                log = form.save(commit=False)
-                log.teacher = teacher
-                log.pupil = pupil
-                log.save()
+            category = request.POST.get('category')
+            note = request.POST.get('note')
+            conduct_remark = request.POST.get('conduct_remark')
+            is_report_card_remark = request.POST.get('is_report_card_remark') == 'on'
+
+            if category and note:
+                BehaviorLog.objects.create(
+                    pupil=pupil,
+                    teacher=teacher,
+                    category=category,
+                    note=note,
+                    conduct_remark=conduct_remark or '',
+                    is_report_card_remark=is_report_card_remark,
+                )
                 messages.success(request, "Behavior log added.")
                 return redirect('teacher_class_detail', class_id=pupil.class_room.id)
+            else:
+                messages.error(request, "Please fill in all required fields.")
         else:
             form = BehaviorLogForm(initial={'pupil': pupil})
             form.fields['pupil'].widget = forms.HiddenInput()

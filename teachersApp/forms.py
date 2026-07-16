@@ -26,8 +26,6 @@ class PupilReportForm(forms.ModelForm):
         }
 
 
-# ---------- NEW FORMS ----------
-
 class AcademicRecordForm(forms.ModelForm):
     class Meta:
         model = AcademicRecord
