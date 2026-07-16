@@ -11,7 +11,7 @@
                 </div>
                 <div class="card-body">
                     <p class="text-muted">Select a class and subject to enter marks (CA, Test, Exam).</p>
-                    <form method="GET" action="{% url 'teacher_academic_entry' 0 0 %}">
+                    <form method="GET" id="academic-form">
                         <div class="mb-3">
                             <label for="class_id" class="form-label">Class</label>
                             <select name="class_id" id="class_id" class="form-select" required>
@@ -35,7 +35,7 @@
                             </select>
                         </div>
                         <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-success">
+                            <button type="submit" class="btn btn-success" id="proceed-btn">
                                 <i class="bi bi-arrow-right"></i> Proceed
                             </button>
                             <a href="{% url 'dashboard_teacher' %}" class="btn btn-secondary">
@@ -48,4 +48,19 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.getElementById('proceed-btn').addEventListener('click', function(e) {
+        e.preventDefault();
+        const classId = document.getElementById('class_id').value;
+        const subjectId = document.getElementById('subject_id').value;
+        if (!classId || !subjectId) {
+            alert('Please select both a class and a subject.');
+            return;
+        }
+        const form = document.getElementById('academic-form');
+        form.action = "{% url 'teacher_academic_entry' 0 0 %}".replace('0/0', classId + '/' + subjectId);
+        form.submit();
+    });
+</script>
 {% endblock %}
