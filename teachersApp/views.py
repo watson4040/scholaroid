@@ -267,6 +267,11 @@ def teacher_academic(request, class_id=None, subject_id=None):
             term = request.POST.get('term')
             academic_year = request.POST.get('academic_year')
 
+            # Validate required fields
+            if not term or not academic_year:
+                messages.error(request, "Please select a term and enter an academic year.")
+                return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+
             for student in students:
                 # Get Test mark
                 test_marks = request.POST.get(f'test_{student.id}')
@@ -275,36 +280,44 @@ def teacher_academic(request, class_id=None, subject_id=None):
                 max_marks = request.POST.get(f'max_marks_{student.id}')
 
                 # Save Test
-                if test_marks and term and academic_year:
-                    AcademicRecord.objects.update_or_create(
-                        pupil=student,
-                        subject=subject,
-                        class_room=classroom,
-                        term=term,
-                        academic_year=academic_year,
-                        exam_type='TEST',
-                        defaults={
-                            'marks': float(test_marks),
-                            'max_marks': float(max_marks) if max_marks else 30,
-                            'teacher': teacher,
-                        }
-                    )
+                if test_marks and test_marks.strip():
+                    try:
+                        AcademicRecord.objects.update_or_create(
+                            pupil=student,
+                            subject=subject,
+                            class_room=classroom,
+                            term=term,
+                            academic_year=academic_year,
+                            exam_type='TEST',
+                            defaults={
+                                'marks': float(test_marks),
+                                'max_marks': float(max_marks) if max_marks else 30,
+                                'teacher': teacher,
+                            }
+                        )
+                    except ValueError:
+                        messages.error(request, f"Invalid test mark for {student.user.get_full_name()}.")
+                        return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
 
                 # Save Exam
-                if exam_marks and term and academic_year:
-                    AcademicRecord.objects.update_or_create(
-                        pupil=student,
-                        subject=subject,
-                        class_room=classroom,
-                        term=term,
-                        academic_year=academic_year,
-                        exam_type='EXAM',
-                        defaults={
-                            'marks': float(exam_marks),
-                            'max_marks': float(max_marks) if max_marks else 50,
-                            'teacher': teacher,
-                        }
-                    )
+                if exam_marks and exam_marks.strip():
+                    try:
+                        AcademicRecord.objects.update_or_create(
+                            pupil=student,
+                            subject=subject,
+                            class_room=classroom,
+                            term=term,
+                            academic_year=academic_year,
+                            exam_type='EXAM',
+                            defaults={
+                                'marks': float(exam_marks),
+                                'max_marks': float(max_marks) if max_marks else 50,
+                                'teacher': teacher,
+                            }
+                        )
+                    except ValueError:
+                        messages.error(request, f"Invalid exam mark for {student.user.get_full_name()}.")
+                        return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
 
             messages.success(request, "Marks saved successfully.")
             return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
