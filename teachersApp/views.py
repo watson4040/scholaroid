@@ -237,7 +237,7 @@ def teacher_assignment_create(request):
         form.fields['subject'].queryset = teacher.subject.all()
     return render(request, 'teachersApp/assignment_form.html', {'form': form, 'teacher': teacher})
 
-# ---------- FIXED: Academic (Test + Exam only) ----------
+# ---------- ACADEMIC: Test + Exam only (NO CA) ----------
 @login_required
 def teacher_academic(request, class_id=None, subject_id=None):
     try:
@@ -254,79 +254,8 @@ def teacher_academic(request, class_id=None, subject_id=None):
         if subject_id:
             subject_id = int(subject_id)
 
-        if class_id and subject_id:
-            classroom = get_object_or_404(ClassRoom, id=class_id)
-            subject = get_object_or_404(Subjects, id=subject_id)
-
-            if classroom not in teacher.assigned_class.all() or subject not in teacher.subject.all():
-                messages.error(request, "You are not assigned to this class or subject.")
-                return redirect('dashboard_final')
-
-            students = Student.objects.filter(class_room=classroom)
-
-            if request.method == 'POST':
-                term = request.POST.get('term')
-                academic_year = request.POST.get('academic_year')
-
-                if not term or not academic_year:
-                    messages.error(request, "Please select a term and enter an academic year.")
-                    return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
-
-                for student in students:
-                    test_marks = request.POST.get(f'test_{student.id}')
-                    exam_marks = request.POST.get(f'exam_{student.id}')
-                    max_marks = request.POST.get(f'max_marks_{student.id}')
-
-                    if test_marks and test_marks.strip():
-                        try:
-                            AcademicRecord.objects.update_or_create(
-                                pupil=student,
-                                subject=subject,
-                                class_room=classroom,
-                                term=term,
-                                academic_year=academic_year,
-                                exam_type='TEST',
-                                defaults={
-                                    'marks': float(test_marks),
-                                    'max_marks': float(max_marks) if max_marks else 30,
-                                    'teacher': teacher,
-                                }
-                            )
-                        except ValueError:
-                            messages.error(request, f"Invalid test mark for {student.user.get_full_name()}.")
-                            return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
-
-                    if exam_marks and exam_marks.strip():
-                        try:
-                            AcademicRecord.objects.update_or_create(
-                                pupil=student,
-                                subject=subject,
-                                class_room=classroom,
-                                term=term,
-                                academic_year=academic_year,
-                                exam_type='EXAM',
-                                defaults={
-                                    'marks': float(exam_marks),
-                                    'max_marks': float(max_marks) if max_marks else 50,
-                                    'teacher': teacher,
-                                }
-                            )
-                        except ValueError:
-                            messages.error(request, f"Invalid exam mark for {student.user.get_full_name()}.")
-                            return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
-
-                messages.success(request, "Marks saved successfully.")
-                return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
-
-            context = {
-                'classroom': classroom,
-                'subject': subject,
-                'students': students,
-                'teacher': teacher,
-            }
-            return render(request, 'teachersApp/academic.html', context)
-
-        else:
+        # If still no class_id/subject_id, show selection page
+        if not class_id or not subject_id:
             classes = teacher.assigned_class.all()
             subjects = teacher.subject.all()
             return render(request, 'teachersApp/academic_select.html', {
@@ -334,6 +263,81 @@ def teacher_academic(request, class_id=None, subject_id=None):
                 'subjects': subjects,
                 'teacher': teacher,
             })
+
+        classroom = get_object_or_404(ClassRoom, id=class_id)
+        subject = get_object_or_404(Subjects, id=subject_id)
+
+        if classroom not in teacher.assigned_class.all() or subject not in teacher.subject.all():
+            messages.error(request, "You are not assigned to this class or subject.")
+            return redirect('dashboard_final')
+
+        students = Student.objects.filter(class_room=classroom).select_related('user')
+        
+        # Debug: Log if students exist
+        logger.info(f"Found {students.count()} students in class {classroom.name}")
+
+        if request.method == 'POST':
+            term = request.POST.get('term')
+            academic_year = request.POST.get('academic_year')
+
+            if not term or not academic_year:
+                messages.error(request, "Please select a term and enter an academic year.")
+                return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+
+            for student in students:
+                test_marks = request.POST.get(f'test_{student.id}')
+                exam_marks = request.POST.get(f'exam_{student.id}')
+                max_marks = request.POST.get(f'max_marks_{student.id}')
+
+                if test_marks and test_marks.strip():
+                    try:
+                        AcademicRecord.objects.update_or_create(
+                            pupil=student,
+                            subject=subject,
+                            class_room=classroom,
+                            term=term,
+                            academic_year=academic_year,
+                            exam_type='TEST',
+                            defaults={
+                                'marks': float(test_marks),
+                                'max_marks': float(max_marks) if max_marks else 30,
+                                'teacher': teacher,
+                            }
+                        )
+                    except ValueError:
+                        messages.error(request, f"Invalid test mark for {student.user.get_full_name()}.")
+                        return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+
+                if exam_marks and exam_marks.strip():
+                    try:
+                        AcademicRecord.objects.update_or_create(
+                            pupil=student,
+                            subject=subject,
+                            class_room=classroom,
+                            term=term,
+                            academic_year=academic_year,
+                            exam_type='EXAM',
+                            defaults={
+                                'marks': float(exam_marks),
+                                'max_marks': float(max_marks) if max_marks else 50,
+                                'teacher': teacher,
+                            }
+                        )
+                    except ValueError:
+                        messages.error(request, f"Invalid exam mark for {student.user.get_full_name()}.")
+                        return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+
+            messages.success(request, "Marks saved successfully.")
+            return redirect('teacher_academic', class_id=classroom.id, subject_id=subject.id)
+
+        context = {
+            'classroom': classroom,
+            'subject': subject,
+            'students': students,
+            'teacher': teacher,
+        }
+        return render(request, 'teachersApp/academic.html', context)
+
     except Exception as e:
         logger.error(f"CRITICAL ERROR in teacher_academic: {e}", exc_info=True)
         messages.error(request, f"An error occurred: {str(e)}")
