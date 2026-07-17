@@ -4,20 +4,21 @@ import dj_database_url
 from decouple import config
 from django.contrib.messages import constants as messages
 
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------- SECURITY ----------
-SECRET_KEY = config("SECRET_KEY", default="django-insecure-temp-key-for-local-dev")
+# Production: SECRET_KEY must be set in environment
+SECRET_KEY = config("SECRET_KEY")
 DEBUG = config("DEBUG", default=False, cast=bool)
-ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
 
-# ---------- CSRF: Filter out empty strings ----------
-CSRF_TRUSTED_ORIGINS = [origin for origin in config("CSRF_TRUSTED_ORIGINS", default="").split(",") if origin]
+# ---------- ALLOWED HOSTS (Production + Local) ----------
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1,.railway.app").split(",")
 
-RENDER_EXTERNAL_HOSTNAME = os.getenv("RENDER_EXTERNAL_HOSTNAME")
-if RENDER_EXTERNAL_HOSTNAME and RENDER_EXTERNAL_HOSTNAME not in ALLOWED_HOSTS:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
-    CSRF_TRUSTED_ORIGINS.append(f"https://{RENDER_EXTERNAL_HOSTNAME}")
+# ---------- CSRF TRUSTED ORIGINS ----------
+CSRF_TRUSTED_ORIGINS = [
+    origin for origin in config("CSRF_TRUSTED_ORIGINS", default="https://*.railway.app").split(",") if origin
+]
 
 # ---------- CUSTOM USER ----------
 AUTH_USER_MODEL = "accountsApp.User"
@@ -49,9 +50,10 @@ INSTALLED_APPS = [
     "social_django",
 ]
 
+# ---------- MIDDLEWARE (Production with Whitenoise) ----------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # Production static files
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -82,13 +84,12 @@ TEMPLATES = [
     }
 ]
 
-# ---------- DATABASE: Local SQLite, Production PostgreSQL ----------
+# ---------- DATABASE (Railway + Supabase) ----------
 DATABASE_URL = config("DATABASE_URL", default=None)
 if DATABASE_URL:
-    # If DATABASE_URL is set (e.g., on Render or local with sqlite), use it
     DATABASES = {"default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
 else:
-    # Fallback to SQLite for local development (no PostgreSQL needed)
+    # Fallback for local development only
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -137,11 +138,13 @@ TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# ---------- STATIC / MEDIA ----------
+# ---------- STATIC FILES (Production with Whitenoise) ----------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# ---------- MEDIA FILES ----------
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 

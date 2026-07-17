@@ -19,7 +19,13 @@
                         <a href="{% url 'conversation' conv.user.id %}" class="text-decoration-none flex-grow-1">
                             <div>
                                 <strong>{{ conv.user.get_full_name|default:conv.user.username }}</strong>
-                                <span class="badge bg-secondary float-end">{{ conv.user.role|title }}</span>
+                                <span class="badge bg-secondary float-end">
+                                    {% if conv.user.role == 'student' %}
+                                        Pupil
+                                    {% else %}
+                                        {{ conv.user.role|title }}
+                                    {% endif %}
+                                </span>
                             </div>
                             <div class="small text-muted">
                                 {% if conv.last_message %}
