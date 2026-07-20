@@ -4,21 +4,17 @@ import dj_database_url
 from decouple import config
 from django.contrib.messages import constants as messages
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ---------- SECURITY ----------
-# Production: SECRET_KEY must be set in environment
-SECRET_KEY = config("SECRET_KEY")
+SECRET_KEY = config("SECRET_KEY", default="django-insecure-temp-key-for-local-dev")
 DEBUG = config("DEBUG", default=False, cast=bool)
 
-# ---------- ALLOWED HOSTS (Production + Local) ----------
+# ---------- ALLOWED HOSTS ----------
 ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="localhost,127.0.0.1,.railway.app").split(",")
 
-# ---------- CSRF TRUSTED ORIGINS ----------
-CSRF_TRUSTED_ORIGINS = [
-    origin for origin in config("CSRF_TRUSTED_ORIGINS", default="https://*.railway.app").split(",") if origin
-]
+# ---------- CSRF ----------
+CSRF_TRUSTED_ORIGINS = [origin for origin in config("CSRF_TRUSTED_ORIGINS", default="https://*.railway.app").split(",") if origin]
 
 # ---------- CUSTOM USER ----------
 AUTH_USER_MODEL = "accountsApp.User"
@@ -50,10 +46,9 @@ INSTALLED_APPS = [
     "social_django",
 ]
 
-# ---------- MIDDLEWARE (Production with Whitenoise) ----------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "whitenoise.middleware.WhiteNoiseMiddleware",  # Production static files
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -89,7 +84,6 @@ DATABASE_URL = config("DATABASE_URL", default=None)
 if DATABASE_URL:
     DATABASES = {"default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
 else:
-    # Fallback for local development only
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -123,7 +117,6 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config("GOOGLE_OAUTH_CLIENT_ID", default="")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config("GOOGLE_OAUTH_CLIENT_SECRET", default="")
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {"prompt": "select_account"}
 
-# ---------- MESSAGE TAGS ----------
 MESSAGE_TAGS = {
     messages.DEBUG: "secondary",
     messages.INFO: "info",
@@ -132,23 +125,18 @@ MESSAGE_TAGS = {
     messages.ERROR: "danger",
 }
 
-# ---------- INTERNATIONALIZATION ----------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
-# ---------- STATIC FILES (Production with Whitenoise) ----------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
-
-# ---------- MEDIA FILES ----------
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# ---------- OTHER ----------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 WEBSOCKETS_ENABLED = config("WEBSOCKETS_ENABLED", default=True, cast=bool)
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
@@ -157,7 +145,6 @@ CLOUDINARY_URL = config("CLOUDINARY_URL", default="")
 if CLOUDINARY_URL:
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
-# ---------- EMAIL ----------
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Scholaroid <noreply@scholaroid.com>")
 EMAIL_HOST = config("EMAIL_HOST", default="")
@@ -166,7 +153,6 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 
-# ---------- PRODUCTION SECURITY ----------
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
@@ -181,7 +167,6 @@ if not DEBUG:
 
 USE_X_FORWARDED_HOST = True
 
-# ---------- JAZZMIN ----------
 JAZZMIN_SETTINGS = {
     "site_title": "Scholaroid Admin",
     "site_header": "Scholaroid",
