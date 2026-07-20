@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "social_django",
 ]
 
+# ---------- MIDDLEWARE ----------
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
@@ -79,11 +80,17 @@ TEMPLATES = [
     }
 ]
 
-# ---------- DATABASE (with error handling) ----------
+# ---------- DATABASE (Railway + Supabase) ----------
 DATABASE_URL = config("DATABASE_URL", default=None)
 if DATABASE_URL:
     try:
-        DATABASES = {"default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
+        DATABASES = {
+            "default": dj_database_url.config(
+                default=DATABASE_URL,
+                conn_max_age=600,
+                ssl_require=True
+            )
+        }
     except Exception as e:
         print(f"Error parsing DATABASE_URL: {e}")
         DATABASES = {
@@ -126,6 +133,7 @@ SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = config("GOOGLE_OAUTH_CLIENT_ID", default="")
 SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = config("GOOGLE_OAUTH_CLIENT_SECRET", default="")
 SOCIAL_AUTH_GOOGLE_OAUTH2_AUTH_EXTRA_ARGUMENTS = {"prompt": "select_account"}
 
+# ---------- MESSAGE TAGS ----------
 MESSAGE_TAGS = {
     messages.DEBUG: "secondary",
     messages.INFO: "info",
@@ -134,18 +142,23 @@ MESSAGE_TAGS = {
     messages.ERROR: "danger",
 }
 
+# ---------- INTERNATIONALIZATION ----------
 LANGUAGE_CODE = "en-us"
 TIME_ZONE = "UTC"
 USE_I18N = True
 USE_TZ = True
 
+# ---------- STATIC FILES ----------
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# ---------- MEDIA FILES ----------
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
+# ---------- OTHER ----------
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 WEBSOCKETS_ENABLED = config("WEBSOCKETS_ENABLED", default=True, cast=bool)
 SESSION_ENGINE = "django.contrib.sessions.backends.db"
@@ -154,6 +167,7 @@ CLOUDINARY_URL = config("CLOUDINARY_URL", default="")
 if CLOUDINARY_URL:
     DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
+# ---------- EMAIL ----------
 EMAIL_BACKEND = config("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="Scholaroid <noreply@scholaroid.com>")
 EMAIL_HOST = config("EMAIL_HOST", default="")
@@ -162,6 +176,7 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
 
+# ---------- PRODUCTION SECURITY ----------
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = True
@@ -176,6 +191,7 @@ if not DEBUG:
 
 USE_X_FORWARDED_HOST = True
 
+# ---------- JAZZMIN ----------
 JAZZMIN_SETTINGS = {
     "site_title": "Scholaroid Admin",
     "site_header": "Scholaroid",
