@@ -79,10 +79,19 @@ TEMPLATES = [
     }
 ]
 
-# ---------- DATABASE (Railway + Supabase) ----------
+# ---------- DATABASE (with error handling) ----------
 DATABASE_URL = config("DATABASE_URL", default=None)
 if DATABASE_URL:
-    DATABASES = {"default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
+    try:
+        DATABASES = {"default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)}
+    except Exception as e:
+        print(f"Error parsing DATABASE_URL: {e}")
+        DATABASES = {
+            "default": {
+                "ENGINE": "django.db.backends.sqlite3",
+                "NAME": BASE_DIR / "db.sqlite3",
+            }
+        }
 else:
     DATABASES = {
         "default": {
