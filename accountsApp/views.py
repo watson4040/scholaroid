@@ -10,10 +10,10 @@ from studentsApp.models import Student
 from teachersApp.models import Teacher
 from classesApp.models import ClassRoom
 from attendanceApp.models import Attendance
-from examsApp.models import Exam  # removed ExamResult
+from examsApp.models import Exam
 from messagingApp.models import Message
-from parentsApp.models import Parent  # added for parent count
-from accountsApp.models import Notice  # added for notifications
+from parentsApp.models import Parent
+from accountsApp.models import Notice
 from django.urls import reverse
 
 def home(request):
@@ -76,7 +76,6 @@ def register_parent(request):
         if form.is_valid():
             user = form.save()
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            # auto-link any students that pre-specified this parent's email
             try:
                 parent_profile = Parent.objects.get(user=user)
                 from studentsApp.models import Student
@@ -99,9 +98,8 @@ def register_parent(request):
         form = ParentRegistrationForm()
     return render(request, 'accountsApp/register.html', {'form': form})
 
+# ---------- FIXED: Login Redirects Superusers to Admin ----------
 def login_user(request):
-    # Handle normal and AJAX login requests. For AJAX we return JSON so the client
-    # can show the success animation and delay before performing the redirect.
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
         password = request.POST.get('password', '')
@@ -109,12 +107,15 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            # on AJAX requests return JSON with redirect URL
+            # Redirect superusers to admin panel, others to home
+            if user.is_superuser:
+                redirect_url = reverse('admin:index')
+            else:
+                redirect_url = reverse('home')
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-                return JsonResponse({'success': True, 'redirect_url': reverse('home')})
-            return redirect('home')
+                return JsonResponse({'success': True, 'redirect_url': redirect_url})
+            return redirect(redirect_url)
         else:
-            # invalid credentials
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': False, 'errors': ['Invalid credentials.']}, status=400)
             messages.error(request, "Invalid credentials. Please try again.")
@@ -124,7 +125,6 @@ def login_user(request):
 def logout_user(request):
     logout(request)
     return redirect('home')
-
 
 @login_required
 def dashboard_admin(request):
@@ -171,17 +171,15 @@ def profile_view(request):
 
     return render(request, 'accountsApp/profile.html', {'form': form})
 
-
 @login_required
 def notice_list(request):
     notices = Notice.objects.order_by('-created_at')
     return render(request, "accountsApp/notice_list.html", {"notices": notices})
 
-
 @login_required
 def notice_create(request):
     user = request.user
-    if not user.role == 'admin':  # Only admin can create
+    if not user.role == 'admin':
         return redirect("notice_list")
 
     if request.method == "POST":
@@ -195,7 +193,6 @@ def notice_create(request):
         form = NoticeForm()
 
     return render(request, "accountsApp/notice_form.html", {"form": form})
-
 
 @login_required
 def change_password(request):
