@@ -122,7 +122,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 LOGIN_URL = "login"
-# ---------- FIXED: Redirect superusers to admin panel ----------
 LOGIN_REDIRECT_URL = "/admin/"
 LOGOUT_REDIRECT_URL = "home"
 
@@ -209,7 +208,7 @@ JAZZMIN_SETTINGS = {
     "related_modal_active": True,
     "changeform_format": "horizontal_tabs",
     "topmenu_links": [
-        {"name": "Dashboard", "url": "/dashboard/admin/", "permissions": ["auth.view_user"]},
+        {"name": "Dashboard", "url": "admin:index", "permissions": ["auth.view_user"]},
         {"name": "Home", "url": "admin:index", "permissions": ["auth.view_user"]}
     ],
     "icons": {

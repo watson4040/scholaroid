@@ -98,7 +98,6 @@ def register_parent(request):
         form = ParentRegistrationForm()
     return render(request, 'accountsApp/register.html', {'form': form})
 
-# ---------- FIXED: Superusers go to /admin/, others to home ----------
 def login_user(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -107,7 +106,6 @@ def login_user(request):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            # Redirect superusers to admin panel, others to home
             if user.is_superuser:
                 redirect_url = '/admin/'
             else:
@@ -128,7 +126,7 @@ def logout_user(request):
 
 @login_required
 def dashboard_admin(request):
-    if request.user.role != 'admin':
+    if not (request.user.is_superuser or request.user.is_staff):
         return render(request, 'errors/403.html')
 
     context = {
@@ -179,7 +177,7 @@ def notice_list(request):
 @login_required
 def notice_create(request):
     user = request.user
-    if not user.role == 'admin':
+    if not (user.is_superuser or user.is_staff):
         return redirect("notice_list")
 
     if request.method == "POST":
