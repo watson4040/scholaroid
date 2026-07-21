@@ -98,7 +98,7 @@ def register_parent(request):
         form = ParentRegistrationForm()
     return render(request, 'accountsApp/register.html', {'form': form})
 
-# ---------- FIXED: Login Redirects Superusers to Admin ----------
+# ---------- FIXED: Superusers go to /admin/, others to home ----------
 def login_user(request):
     if request.method == 'POST':
         username = request.POST.get('username', '').strip()
@@ -109,9 +109,9 @@ def login_user(request):
             login(request, user)
             # Redirect superusers to admin panel, others to home
             if user.is_superuser:
-                redirect_url = reverse('admin:index')
+                redirect_url = '/admin/'
             else:
-                redirect_url = reverse('home')
+                redirect_url = '/'
             if request.headers.get('x-requested-with') == 'XMLHttpRequest':
                 return JsonResponse({'success': True, 'redirect_url': redirect_url})
             return redirect(redirect_url)
