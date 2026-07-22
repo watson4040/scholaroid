@@ -22,9 +22,10 @@ class UserAdmin(BaseUserAdmin):
     search_fields = ('username', 'email')
     ordering = ('username',)
     
+    # ---------- REMOVED profile_photo completely ----------
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('Personal info', {'fields': ('email', 'first_name', 'last_name')}),  # REMOVED profile_photo
+        ('Personal info', {'fields': ('email', 'first_name', 'last_name')}),  # profile_photo removed
         ('Role', {'fields': ('role',)}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
