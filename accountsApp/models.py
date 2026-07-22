@@ -9,7 +9,7 @@ class User(AbstractUser):
         ('parent', 'Parent'),
     )
     
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')  # Added default
     profile_photo = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
 class Notice(models.Model):
