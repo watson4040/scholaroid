@@ -6,7 +6,7 @@ from .models import User, Notice
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('username', 'email', 'role')  # Removed profile_photo
+        fields = ('username', 'email', 'role')
 
 class CustomUserChangeForm(UserChangeForm):
     class Meta(UserChangeForm.Meta):
@@ -21,9 +21,10 @@ class UserAdmin(BaseUserAdmin):
     list_filter = ('role', 'is_staff', 'is_active')
     search_fields = ('username', 'email')
     ordering = ('username',)
+    
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('Personal info', {'fields': ('email', 'first_name', 'last_name', 'profile_photo')}),
+        ('Personal info', {'fields': ('email', 'first_name', 'last_name')}),  # Removed profile_photo
         ('Role', {'fields': ('role',)}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('Important dates', {'fields': ('last_login', 'date_joined')}),
