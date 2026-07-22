@@ -6,7 +6,7 @@ from .models import User, Notice
 class CustomUserCreationForm(UserCreationForm):
     class Meta(UserCreationForm.Meta):
         model = User
-        fields = ('username', 'email', 'role', 'profile_photo')
+        fields = ('username', 'email', 'role')  # Removed profile_photo
 
 class CustomUserChangeForm(UserChangeForm):
     class Meta(UserChangeForm.Meta):
