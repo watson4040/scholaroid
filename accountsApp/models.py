@@ -5,11 +5,11 @@ class User(AbstractUser):
     ROLE_CHOICES = (
         ('admin', 'Admin'),
         ('teacher', 'Teacher'),
-        ('student', 'Student'),
+        ('pupil', 'Pupil'),        # Changed from 'student' to 'pupil'
         ('parent', 'Parent'),
     )
     
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='student')  # Added default
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='pupil')  # Changed default to 'pupil'
     profile_photo = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
 class Notice(models.Model):
