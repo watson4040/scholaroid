@@ -8,12 +8,6 @@ class CustomUserCreationForm(UserCreationForm):
         model = User
         fields = ('username', 'email', 'role')
 
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        if commit:
-            user.save()
-        return user
-
 class CustomUserChangeForm(UserChangeForm):
     class Meta(UserChangeForm.Meta):
         model = User

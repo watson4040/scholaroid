@@ -7,6 +7,7 @@ class TeacherAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'user__email', 'user__first_name', 'user__last_name')
     list_filter = ('hire_date',)
     filter_horizontal = ('subject', 'assigned_class')
+    exclude = ('hire_date',)  # Exclude auto_add_now field
 
     def get_subjects(self, obj):
         subjects = obj.subject.all()
@@ -14,7 +15,7 @@ class TeacherAdmin(admin.ModelAdmin):
     get_subjects.short_description = 'Subjects'
 
     def get_classes_assigned(self, obj):
-        classes = obj.assigned_class.all()  # CORRECTED field name
+        classes = obj.assigned_class.all()
         return ', '.join(str(cls) for cls in classes[:3]) + (' ...' if classes.count() > 3 else '')
     get_classes_assigned.short_description = 'Classes Assigned'
 
