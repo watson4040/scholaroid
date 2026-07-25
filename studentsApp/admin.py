@@ -3,10 +3,13 @@ from .models import Student, EnrollmentRequest
 from django.core.mail import send_mail
 from django.conf import settings
 
+
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('user', 'class_room', 'admission_date', 'parent')
-    search_fields = ('user__username', 'user__email')
+    list_display = ('user', 'class_room', 'admission_date', 'parent_email')  # Removed 'parent'
+    search_fields = ('user__username', 'user__email', 'parent_email')
+    list_filter = ('class_room', 'admission_date')
+
 
 @admin.register(EnrollmentRequest)
 class EnrollmentRequestAdmin(admin.ModelAdmin):
@@ -14,10 +17,12 @@ class EnrollmentRequestAdmin(admin.ModelAdmin):
     list_filter = ('status', 'pupil_class')
     actions = ['approve_enrollments']
 
+
 def approve_enrollments(self, request, queryset):
     from django.utils import timezone
     from accountsApp.models import User
     from parentsApp.models import Parent
+
     for req in queryset.filter(status='pending'):
         # Create parent user
         parent_user, created = User.objects.get_or_create(
@@ -41,19 +46,22 @@ def approve_enrollments(self, request, queryset):
         while User.objects.filter(username=username).exists():
             username = f"{base_username}{counter}"
             counter += 1
+
         pupil_user = User.objects.create_user(
             username=username,
             email=f"{username}@temp.local",
             first_name=req.pupil_name.split()[0] if ' ' in req.pupil_name else req.pupil_name,
             last_name=req.pupil_name.split()[-1] if ' ' in req.pupil_name else '',
             password=User.objects.make_random_password(),
-            role='student'
+            role='pupil'  # Changed from 'student' to 'pupil'
         )
+
         Student.objects.create(
             user=pupil_user,
             class_room=req.pupil_class,
-            parent=parent_user.parent if hasattr(parent_user, 'parent') else None
+            parent_email=req.parent_email  # Store parent email instead of parent object
         )
+
         req.status = 'approved'
         req.approved_at = timezone.now()
         req.approved_by = request.user
@@ -84,4 +92,5 @@ Scholaroid School
             recipient_list=[parent_user.email],
             fail_silently=False,
         )
+
     self.message_user(request, f"{queryset.count()} enrollment(s) approved.")
