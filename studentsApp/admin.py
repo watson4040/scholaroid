@@ -6,7 +6,7 @@ from django.conf import settings
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
-    list_display = ('user', 'class_room', 'admission_date', 'parent_email')  # Removed 'parent'
+    list_display = ('user', 'class_room', 'admission_date', 'parent_email')
     search_fields = ('user__username', 'user__email', 'parent_email')
     list_filter = ('class_room', 'admission_date')
 
@@ -53,13 +53,13 @@ def approve_enrollments(self, request, queryset):
             first_name=req.pupil_name.split()[0] if ' ' in req.pupil_name else req.pupil_name,
             last_name=req.pupil_name.split()[-1] if ' ' in req.pupil_name else '',
             password=User.objects.make_random_password(),
-            role='pupil'  # Changed from 'student' to 'pupil'
+            role='pupil'
         )
 
         Student.objects.create(
             user=pupil_user,
             class_room=req.pupil_class,
-            parent_email=req.parent_email  # Store parent email instead of parent object
+            parent_email=req.parent_email
         )
 
         req.status = 'approved'
@@ -67,7 +67,6 @@ def approve_enrollments(self, request, queryset):
         req.approved_by = request.user
         req.save()
 
-        # Send email notification
         send_mail(
             subject='Enrollment Approved – Scholaroid',
             message=f"""
@@ -77,13 +76,13 @@ Your child {pupil_user.first_name} has been officially enrolled.
 
 Parent login details:
 Username: {parent_user.username}
-Password: (the one you set during registration, or use 'Forgot Password')
+Password: (use 'Forgot Password' to set one)
 
-Student login details:
+Pupil login details:
 Username: {pupil_user.username}
-Password: (ask the admin to set a password)
+Password: (ask admin to set one)
 
-Please log in at https://yourdomain.com to view your child's progress.
+Log in at https://yourdomain.com
 
 Thank you,
 Scholaroid School
