@@ -20,7 +20,7 @@ CSRF_TRUSTED_ORIGINS = [origin for origin in config("CSRF_TRUSTED_ORIGINS", defa
 AUTH_USER_MODEL = "accountsApp.User"
 SITE_ID = 1
 
-# ---------- INSTALLED APPS ----------
+# ---------- INSTALLED APPS (Correct Order) ----------
 INSTALLED_APPS = [
     "jazzmin",
     "cloudinary",
@@ -33,16 +33,17 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "channels",
-    "accountsApp",
-    "feesApp",
-    "attendanceApp",
-    "classesApp",
-    "examsApp",
-    "messagingApp",
-    "studentsApp",
-    "teachersApp",
-    "parentsApp",
-    "resourcesApp",
+    # Custom apps in correct dependency order
+    "accountsApp",      # Must come first (User model)
+    "classesApp",       # Classes before students
+    "studentsApp",      # Students before teachers
+    "teachersApp",      # Teachers depends on students
+    "parentsApp",       # Parents depends on students
+    "attendanceApp",    # Attendance depends on students + teachers
+    "examsApp",         # Exams depends on classes + students
+    "messagingApp",     # Messaging depends on users
+    "feesApp",          # Fees depends on students
+    "resourcesApp",     # Resources depends on classes + teachers
     "social_django",
 ]
 
