@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 @receiver(post_save, sender=User)
 def create_role_profile(sender, instance, created, **kwargs):
     """
-    Automatically creates the appropriate profile for a newly created user.
+    Automatically creates the correct profile whenever a new user is created.
 
     Roles:
         - admin
@@ -41,12 +41,11 @@ def create_role_profile(sender, instance, created, **kwargs):
             # Pupil
             # -----------------------------
             elif instance.role == "pupil":
-
                 Student.objects.get_or_create(
                     user=instance,
                     defaults={
-                        "parent_email": ""
-                    }
+                        "parent_email": "",
+                    },
                 )
 
             # -----------------------------
@@ -54,24 +53,22 @@ def create_role_profile(sender, instance, created, **kwargs):
             # -----------------------------
             elif instance.role == "parent":
 
-                parent_profile, created_parent = Parent.objects.get_or_create(
+                parent_profile, _ = Parent.objects.get_or_create(
                     user=instance,
                     defaults={
-                        "phone_number": ""
-                    }
+                        "phone_number": "",
+                    },
                 )
 
-                # Automatically connect pupils waiting for this parent
+                # Automatically link pupils waiting for this parent.
                 if instance.email:
 
                     waiting_pupils = Student.objects.filter(
                         parent__isnull=True,
-                        parent_email__iexact=instance.email
+                        parent_email__iexact=instance.email,
                     )
 
-                    for pupil in waiting_pupils:
-                        pupil.parent = parent_profile
-                        pupil.save(update_fields=["parent"])
+                    waiting_pupils.update(parent=parent_profile)
 
     except Exception:
         logger.exception(
@@ -79,13 +76,15 @@ def create_role_profile(sender, instance, created, **kwargs):
             instance.username,
             instance.role,
         )
-        raise
+        # Do NOT re-raise.
+        # The user account has already been created successfully.
+        # Logging the error is sufficient.
 
 
 @receiver(post_save, sender=Notice)
 def send_notice_email(sender, instance, created, **kwargs):
     """
-    Sends a notice email to every user that has an email address.
+    Send a newly created notice to all users with email addresses.
     """
 
     if not created:
@@ -108,26 +107,20 @@ def send_notice_email(sender, instance, created, **kwargs):
     )
 
     try:
-
         connection = get_connection(fail_silently=False)
 
-        emails = []
-
-        for user in recipients:
-
-            personalised_body = (
-                f"Hello {user.first_name or user.username},\n\n"
-                f"{body}"
+        emails = [
+            EmailMessage(
+                subject=subject,
+                body=(
+                    f"Hello {user.first_name or user.username},\n\n"
+                    f"{body}"
+                ),
+                to=[user.email],
+                connection=connection,
             )
-
-            emails.append(
-                EmailMessage(
-                    subject=subject,
-                    body=personalised_body,
-                    to=[user.email],
-                    connection=connection,
-                )
-            )
+            for user in recipients
+        ]
 
         connection.send_messages(emails)
 
