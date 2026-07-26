@@ -1,12 +1,14 @@
 from django.db import models
 from accountsApp.models import User
 from classesApp.models import ClassRoom
+from parentsApp.models import Parent
 
 
 class Student(models.Model):
     """
     Pupil profile.
-    The model name remains Student for compatibility,
+
+    Internally the model is named Student for compatibility,
     but everywhere in the UI it is displayed as Pupil.
     """
 
@@ -15,6 +17,15 @@ class Student(models.Model):
         on_delete=models.CASCADE,
         limit_choices_to={"role": "pupil"},
         related_name="student_profile",
+    )
+
+    parent = models.ForeignKey(
+        Parent,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="pupils",
+        help_text="Parent or guardian linked to this pupil.",
     )
 
     class_room = models.ForeignKey(
