@@ -9,7 +9,7 @@ class Teacher(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'})
     subject = models.ManyToManyField(Subjects, related_name='assigned_subjects')
     assigned_class = models.ManyToManyField(ClassRoom, related_name='assigned_teachers')
-    hire_date = models.DateField(auto_now_add=True)
+    hire_date = models.DateField(auto_now_add=True, null=True, blank=True)  # <-- FIXED
 
     def __str__(self):
         return self.user.username
