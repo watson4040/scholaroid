@@ -4,10 +4,26 @@ from django.db import models
 from django.utils import timezone
 
 
+# ==========================================================
+# DEFAULT FUNCTIONS
+# ==========================================================
+
+def default_subscription_expiry():
+    """
+    Default subscription expiry date.
+    Creates a 1 year subscription from today.
+    """
+    return date.today() + timedelta(days=365)
+
+
+# ==========================================================
+# SCHOOL SETTINGS
+# ==========================================================
+
 class SchoolSettings(models.Model):
     """
     Main school profile.
-    Only one record should normally exist.
+    Normally only one record should exist.
     """
 
     school_name = models.CharField(
@@ -68,9 +84,13 @@ class SchoolSettings(models.Model):
         default="Term 1"
     )
 
-    reception_enabled = models.BooleanField(default=True)
+    reception_enabled = models.BooleanField(
+        default=True
+    )
 
-    pre_grade_enabled = models.BooleanField(default=True)
+    pre_grade_enabled = models.BooleanField(
+        default=True
+    )
 
     school_open = models.TimeField(
         default="07:00"
@@ -98,13 +118,20 @@ class SchoolSettings(models.Model):
         auto_now=True
     )
 
+
     class Meta:
         verbose_name = "School Settings"
         verbose_name_plural = "School Settings"
 
+
     def __str__(self):
         return self.school_name
 
+
+
+# ==========================================================
+# SUBSCRIPTION
+# ==========================================================
 
 class Subscription(models.Model):
 
@@ -112,15 +139,18 @@ class Subscription(models.Model):
     PROFESSIONAL = "Professional"
     ENTERPRISE = "Enterprise"
 
+
     PLAN_CHOICES = [
         (STARTER, "Starter"),
         (PROFESSIONAL, "Professional"),
         (ENTERPRISE, "Enterprise"),
     ]
 
+
     ACTIVE = "Active"
     EXPIRED = "Expired"
     SUSPENDED = "Suspended"
+
 
     STATUS_CHOICES = [
         (ACTIVE, "Active"),
@@ -128,11 +158,13 @@ class Subscription(models.Model):
         (SUSPENDED, "Suspended"),
     ]
 
+
     school = models.OneToOneField(
         SchoolSettings,
         on_delete=models.CASCADE,
         related_name="subscription"
     )
+
 
     plan = models.CharField(
         max_length=30,
@@ -140,13 +172,16 @@ class Subscription(models.Model):
         default=STARTER
     )
 
+
     start_date = models.DateField(
         default=timezone.now
     )
 
+
     expiry_date = models.DateField(
-        default=lambda: date.today() + timedelta(days=365)
+        default=default_subscription_expiry
     )
+
 
     status = models.CharField(
         max_length=20,
@@ -154,43 +189,78 @@ class Subscription(models.Model):
         default=ACTIVE
     )
 
+
     max_users = models.PositiveIntegerField(
         default=100
     )
+
 
     max_pupils = models.PositiveIntegerField(
         default=1000
     )
 
+
     notes = models.TextField(
         blank=True
     )
+
 
     created_at = models.DateTimeField(
         auto_now_add=True
     )
 
+
     updated_at = models.DateTimeField(
         auto_now=True
     )
 
+
+
     class Meta:
-        ordering = ["-expiry_date"]
+
+        ordering = [
+            "-expiry_date"
+        ]
+
         verbose_name = "Subscription"
+
         verbose_name_plural = "Subscriptions"
+
+
 
     @property
     def days_remaining(self):
-        return (self.expiry_date - date.today()).days
+
+        return (
+            self.expiry_date - date.today()
+        ).days
+
+
 
     @property
     def is_expired(self):
+
         return date.today() > self.expiry_date
 
+
+
     def save(self, *args, **kwargs):
+
         if self.expiry_date < date.today():
+
             self.status = self.EXPIRED
+
+        else:
+
+            self.status = self.ACTIVE
+
+
         super().save(*args, **kwargs)
 
+
+
     def __str__(self):
-        return f"{self.school.school_name} - {self.plan}"
+
+        return (
+            f"{self.school.school_name} - {self.plan}"
+        )
