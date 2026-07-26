@@ -1,47 +1,88 @@
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from accountsApp.models import User
 from classesApp.models import ClassRoom, Subjects
-import datetime
 
 
 class Teacher(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Removed limit_choices_to
-    subject = models.ManyToManyField(Subjects, related_name='assigned_subjects')
-    assigned_class = models.ManyToManyField(ClassRoom, related_name='assigned_teachers')
-    hire_date = models.DateField(auto_now_add=True, null=True, blank=True)
+    """
+    Teacher profile linked to a system user.
+    The profile is automatically created by accountsApp.signals.
+    """
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="teacher_profile",
+        limit_choices_to={"role": "teacher"},
+    )
+
+    subject = models.ManyToManyField(
+        Subjects,
+        related_name="assigned_teachers",
+        blank=True,
+    )
+
+    assigned_class = models.ManyToManyField(
+        ClassRoom,
+        related_name="class_teachers",
+        blank=True,
+    )
+
+    hire_date = models.DateField(
+        auto_now_add=True,
+        null=True,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["user__username"]
+        verbose_name = "Teacher"
+        verbose_name_plural = "Teachers"
 
     def __str__(self):
-        return self.user.username
-
-
-@receiver(post_save, sender=User)
-def create_teacher_profile(sender, instance, created, **kwargs):
-    if created and instance.role == 'teacher':
-        try:
-            Teacher.objects.get_or_create(user=instance)
-        except Exception as e:
-            print(f"Error creating teacher profile: {e}")
+        full_name = self.user.get_full_name().strip()
+        return full_name if full_name else self.user.username
 
 
 class PupilReport(models.Model):
     TERM_CHOICES = [
-        ('1', 'Term 1'),
-        ('2', 'Term 2'),
-        ('3', 'Term 3'),
+        ("1", "Term 1"),
+        ("2", "Term 2"),
+        ("3", "Term 3"),
     ]
-    pupil = models.ForeignKey('studentsApp.Student', on_delete=models.CASCADE, related_name='reports')
-    term = models.CharField(max_length=1, choices=TERM_CHOICES, default='1')
+
+    pupil = models.ForeignKey(
+        "studentsApp.Student",
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+
+    term = models.CharField(
+        max_length=1,
+        choices=TERM_CHOICES,
+        default="1",
+    )
+
     academic_year = models.CharField(max_length=9)
-    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True)
+
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
     comment = models.TextField(blank=True)
+
     is_submitted = models.BooleanField(default=False)
+
     created_at = models.DateTimeField(auto_now_add=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('pupil', 'term', 'academic_year')
+        unique_together = ("pupil", "term", "academic_year")
+        ordering = ["-academic_year", "term"]
 
     def __str__(self):
         return f"{self.pupil.user.username} - Term {self.term} ({self.academic_year})"
@@ -49,39 +90,110 @@ class PupilReport(models.Model):
 
 class AcademicRecord(models.Model):
     EXAM_TYPES = [
-        ('TEST', 'Test'),
-        ('EXAM', 'Exam'),
+        ("TEST", "Test"),
+        ("EXAM", "Exam"),
     ]
-    pupil = models.ForeignKey('studentsApp.Student', on_delete=models.CASCADE, related_name='academic_records')
-    subject = models.ForeignKey(Subjects, on_delete=models.CASCADE)
-    class_room = models.ForeignKey(ClassRoom, on_delete=models.CASCADE)
-    term = models.CharField(max_length=1, choices=PupilReport.TERM_CHOICES, default='1')
+
+    pupil = models.ForeignKey(
+        "studentsApp.Student",
+        on_delete=models.CASCADE,
+        related_name="academic_records",
+    )
+
+    subject = models.ForeignKey(
+        Subjects,
+        on_delete=models.CASCADE,
+    )
+
+    class_room = models.ForeignKey(
+        ClassRoom,
+        on_delete=models.CASCADE,
+    )
+
+    term = models.CharField(
+        max_length=1,
+        choices=PupilReport.TERM_CHOICES,
+        default="1",
+    )
+
     academic_year = models.CharField(max_length=9)
-    exam_type = models.CharField(max_length=10, choices=EXAM_TYPES)
-    marks = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
-    max_marks = models.DecimalField(max_digits=5, decimal_places=2, default=100)
+
+    exam_type = models.CharField(
+        max_length=10,
+        choices=EXAM_TYPES,
+    )
+
+    marks = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+
+    max_marks = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=100,
+    )
+
     remark = models.TextField(blank=True)
-    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True)
+
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+
     date_recorded = models.DateField(auto_now_add=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-date_recorded']
+        ordering = ["-date_recorded"]
 
     def __str__(self):
-        return f"{self.pupil.user.username} - {self.subject.subject} - {self.get_exam_type_display()}"
+        return (
+            f"{self.pupil.user.username} - "
+            f"{self.subject.subject} - "
+            f"{self.get_exam_type_display()}"
+        )
 
 
 class Assignment(models.Model):
     title = models.CharField(max_length=255)
+
     description = models.TextField()
-    subject = models.ForeignKey(Subjects, on_delete=models.CASCADE)
-    class_room = models.ForeignKey(ClassRoom, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+
+    subject = models.ForeignKey(
+        Subjects,
+        on_delete=models.CASCADE,
+    )
+
+    class_room = models.ForeignKey(
+        ClassRoom,
+        on_delete=models.CASCADE,
+    )
+
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE,
+    )
+
     due_date = models.DateField()
-    file_upload = models.FileField(upload_to='assignments/', blank=True, null=True)
+
+    file_upload = models.FileField(
+        upload_to="assignments/",
+        blank=True,
+        null=True,
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
+
     updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at"]
 
     def __str__(self):
         return self.title
@@ -89,46 +201,95 @@ class Assignment(models.Model):
 
 class BehaviorLog(models.Model):
     BEHAVIOR_TYPES = [
-        ('positive', 'Positive'),
-        ('negative', 'Negative'),
+        ("positive", "Positive"),
+        ("negative", "Negative"),
     ]
-    pupil = models.ForeignKey('studentsApp.Student', on_delete=models.CASCADE, related_name='behavior_logs')
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    category = models.CharField(max_length=10, choices=BEHAVIOR_TYPES, default='positive')
+
+    pupil = models.ForeignKey(
+        "studentsApp.Student",
+        on_delete=models.CASCADE,
+        related_name="behavior_logs",
+    )
+
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE,
+    )
+
+    category = models.CharField(
+        max_length=10,
+        choices=BEHAVIOR_TYPES,
+        default="positive",
+    )
+
     note = models.TextField()
+
     conduct_remark = models.TextField(blank=True)
+
     is_report_card_remark = models.BooleanField(default=False)
+
     date = models.DateField(auto_now_add=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-date']
+        ordering = ["-date"]
 
     def __str__(self):
-        return f"{self.pupil.user.username} - {self.get_category_display()} on {self.date}"
+        return (
+            f"{self.pupil.user.username} - "
+            f"{self.get_category_display()} - "
+            f"{self.date}"
+        )
 
 
 class Timetable(models.Model):
     DAYS = [
-        ('Mon', 'Monday'),
-        ('Tue', 'Tuesday'),
-        ('Wed', 'Wednesday'),
-        ('Thu', 'Thursday'),
-        ('Fri', 'Friday'),
-        ('Sat', 'Saturday'),
-        ('Sun', 'Sunday'),
+        ("Mon", "Monday"),
+        ("Tue", "Tuesday"),
+        ("Wed", "Wednesday"),
+        ("Thu", "Thursday"),
+        ("Fri", "Friday"),
+        ("Sat", "Saturday"),
+        ("Sun", "Sunday"),
     ]
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE, related_name='timetable_entries')
-    class_room = models.ForeignKey(ClassRoom, on_delete=models.CASCADE)
-    subject = models.ForeignKey(Subjects, on_delete=models.CASCADE)
-    day = models.CharField(max_length=3, choices=DAYS)
+
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.CASCADE,
+        related_name="timetable_entries",
+    )
+
+    class_room = models.ForeignKey(
+        ClassRoom,
+        on_delete=models.CASCADE,
+    )
+
+    subject = models.ForeignKey(
+        Subjects,
+        on_delete=models.CASCADE,
+    )
+
+    day = models.CharField(
+        max_length=3,
+        choices=DAYS,
+    )
+
     start_time = models.TimeField()
+
     end_time = models.TimeField()
+
     created_at = models.DateTimeField(auto_now_add=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['day', 'start_time']
+        ordering = ["day", "start_time"]
 
     def __str__(self):
-        return f"{self.teacher.user.username} - {self.subject.subject} - {self.get_day_display()} {self.start_time}-{self.end_time}"
+        return (
+            f"{self.teacher.user.username} - "
+            f"{self.subject.subject} - "
+            f"{self.get_day_display()} "
+            f"{self.start_time}-{self.end_time}"
+        )
