@@ -1,15 +1,13 @@
 from django.db import models
 from accountsApp.models import User
 from classesApp.models import ClassRoom
-from parentsApp.models import Parent
 
 
 class Student(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'student'})
     class_room = models.ForeignKey(ClassRoom, on_delete=models.SET_NULL, null=True, blank=True, related_name='students')
     admission_date = models.DateField(auto_now_add=True)
-    parent = models.ForeignKey(Parent, on_delete=models.CASCADE, null=True, blank=True, related_name='parent_contact')
-    parent_email = models.EmailField(null=True, blank=True, help_text="Parent's email for auto-linking if parent registers later")
+    parent_email = models.EmailField(null=True, blank=True, help_text="Parent's email for auto-linking")
 
     class Meta:
         verbose_name = "Pupil"
@@ -31,7 +29,7 @@ class EnrollmentRequest(models.Model):
     pupil_name = models.CharField(max_length=100)
     pupil_dob = models.DateField()
     pupil_class = models.ForeignKey(ClassRoom, on_delete=models.SET_NULL, null=True, blank=True)
-    message = models.TextField(blank=True, help_text="Any additional info from parent")
+    message = models.TextField(blank=True)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     created_at = models.DateTimeField(auto_now_add=True)
     approved_at = models.DateTimeField(null=True, blank=True)
