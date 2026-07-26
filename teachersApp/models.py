@@ -7,7 +7,7 @@ import datetime
 
 
 class Teacher(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, limit_choices_to={'role': 'teacher'})
+    user = models.OneToOneField(User, on_delete=models.CASCADE)  # Removed limit_choices_to
     subject = models.ManyToManyField(Subjects, related_name='assigned_subjects')
     assigned_class = models.ManyToManyField(ClassRoom, related_name='assigned_teachers')
     hire_date = models.DateField(auto_now_add=True, null=True, blank=True)
