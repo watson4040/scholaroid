@@ -1,22 +1,76 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 
-class User(AbstractUser):
-    ROLE_CHOICES = (
-        ('admin', 'Admin'),
-        ('teacher', 'Teacher'),
-        ('pupil', 'Pupil'),
-        ('parent', 'Parent'),
-    )
-    
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='pupil')
-    profile_photo = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
-class Notice(models.Model):
-    title = models.CharField(max_length=200)
-    message = models.TextField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+class User(AbstractUser):
+
+    ROLE_CHOICES = (
+
+        ("admin", "Admin"),
+
+        ("teacher", "Teacher"),
+
+        ("pupil", "Pupil"),
+
+        ("parent", "Parent"),
+
+    )
+
+
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default="pupil"
+    )
+
+
+    profile_photo = models.ImageField(
+        upload_to="profiles/",
+        blank=True,
+        null=True
+    )
+
+
+    # Multi-school SaaS connection
+    # nullable first because we already have users
+    school = models.ForeignKey(
+        "schoolsApp.School",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="users"
+    )
+
 
     def __str__(self):
+
+        return self.username
+
+
+
+class Notice(models.Model):
+
+    title = models.CharField(
+        max_length=200
+    )
+
+
+    message = models.TextField()
+
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+
+    def __str__(self):
+
         return self.title

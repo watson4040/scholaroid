@@ -79,6 +79,8 @@ INSTALLED_APPS = [
 
     # NEW
     "settingsApp",
+    "schoolsApp",
+    "payments",
 
     # Social Auth
     "social_django",
