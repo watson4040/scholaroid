@@ -56,41 +56,143 @@ class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
         messages.success(self.request, "Teacher updated.")
         return reverse_lazy('admin_teacher_detail', kwargs={'pk': self.object.pk})
 
-# ---- Dashboard final ----
+# @login_required
+def dashboard_teacher(request):
+    """
+    Main Teacher Dashboard
+    """
+
+    return redirect("dashboard_final")
+
+
 @login_required
 def dashboard_final(request):
+
     try:
-        teacher, created = Teacher.objects.get_or_create(user=request.user)
-        if created:
-            messages.info(request, "Teacher profile created automatically.")
-        classes = teacher.assigned_class.all()
-        subjects = teacher.subject.all()
-        exams = Exam.objects.filter(class_room__in=classes).order_by('exam_date')
-        notices = Notice.objects.order_by('-created_at')[:5]
-        total_students = Student.objects.filter(class_room__in=classes).distinct().count()
+
+        teacher = get_object_or_404(
+            Teacher.objects.select_related(
+                "user",
+                "user__school",
+            ),
+            user=request.user,
+        )
+
+        school = request.user.school
+
+        assigned_classes = (
+            teacher.assigned_class.filter(
+                school=school
+            )
+            .order_by("name")
+        )
+
+        assigned_subjects = (
+            teacher.subject.all()
+            .order_by("subject")
+        )
+
+        pupils = Student.objects.filter(
+            school=school,
+            class_room__in=assigned_classes,
+        ).select_related(
+            "user"
+        )
+
+        upcoming_exams = (
+            Exam.objects.filter(
+                school=school,
+                class_room__in=assigned_classes,
+            )
+            .select_related(
+                "subject",
+                "class_room",
+            )
+            .order_by("exam_date")
+        )
+
+        notices = (
+            Notice.objects.filter(
+                created_by__school=school
+            )
+            .select_related(
+                "created_by"
+            )
+            .order_by("-created_at")[:8]
+        )
+
+        assignments = (
+            Assignment.objects.filter(
+                teacher=teacher
+            )
+            .order_by("-created_at")[:5]
+        )
+
+        timetable_today = (
+            Timetable.objects.filter(
+                teacher=teacher
+            )
+            .select_related(
+                "class_room",
+                "subject",
+            )
+        )
+
         context = {
+
             "teacher": teacher,
-            "classes": classes,
-            "subjects": subjects,
-            "exams": exams[:6],
-            "exams_full": exams,
+
+            "school": school,
+
+            "classes": assigned_classes,
+
+            "subjects": assigned_subjects,
+
+            "exams": upcoming_exams[:6],
+
+            "assignments": assignments,
+
+            "today_timetable": timetable_today,
+
             "notices": notices,
+
             "stats": {
-                "classes": classes.count(),
-                "subjects": subjects.count(),
-                "students": total_students,
-                "upcoming_exams": exams.count(),
+
+                "classes": assigned_classes.count(),
+
+                "subjects": assigned_subjects.count(),
+
+                "students": pupils.count(),
+
+                "upcoming_exams": upcoming_exams.count(),
+
             }
+
         }
-        return render(request, "teachersApp/dashboard_final.html", context)
+
+        return render(
+
+            request,
+
+            "teachersApp/dashboard_final.html",
+
+            context,
+
+        )
+
     except Exception as e:
-        logger.error(f"Dashboard error: {e}", exc_info=True)
-        return HttpResponse(f"Dashboard Error: {e}", status=500)
 
-@login_required
-def dashboard_teacher(request):
-    return redirect('dashboard_final')
+        logger.exception(e)
 
+        messages.error(
+
+            request,
+
+            "Unable to load your dashboard."
+
+        )
+
+        return redirect("home")
 # ---- Teacher Class Detail ----
 @login_required
 def teacher_class_detail(request, class_id):

@@ -1,30 +1,398 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Post New Assignment{% endblock %}
+
+{% block title %}
+Create Assignment
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
+
+<div class="container-fluid mt-4">
+
     <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow">
+
+        <div class="col-lg-9">
+
+            <div class="card shadow-lg border-0">
+
                 <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="bi bi-plus-circle"></i> Post New Assignment</h4>
-                </div>
-                <div class="card-body">
-                    <form method="POST" enctype="multipart/form-data">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <div class="d-flex gap-2 mt-3">
-                            <button type="submit" class="btn btn-success">
-                                <i class="bi bi-save"></i> Post Assignment
-                            </button>
-                            <a href="{% url 'teacher_assignments' %}" class="btn btn-secondary">
-                                <i class="bi bi-arrow-left"></i> Cancel
-                            </a>
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <h3 class="mb-1">
+
+                                <i class="bi bi-journal-plus"></i>
+
+                                Create New Assignment
+
+                            </h3>
+
+                            <small>
+
+                                Publish work for your pupils.
+
+                            </small>
+
                         </div>
-                    </form>
+
+                        <a href="{% url 'teacher_assignments' %}" class="btn btn-light">
+
+                            <i class="bi bi-arrow-left"></i>
+
+                            Back
+
+                        </a>
+
+                    </div>
+
                 </div>
+
+                <div class="card-body">
+
+                    {% if messages %}
+
+                        {% for message in messages %}
+
+                            <div class="alert alert-{{ message.tags }}">
+
+                                {{ message }}
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% endif %}
+
+                    <form
+                        method="POST"
+                        enctype="multipart/form-data"
+                        id="assignmentForm">
+
+                        {% csrf_token %}
+
+                        <div class="row">
+
+                            <div class="col-md-12 mb-3">
+
+                                <label class="form-label fw-bold">
+
+                                    Assignment Title
+
+                                </label>
+
+                                {{ form.title }}
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-bold">
+
+                                    Subject
+
+                                </label>
+
+                                {{ form.subject }}
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-bold">
+
+                                    Class
+
+                                </label>
+
+                                {{ form.class_room }}
+
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+
+                                <label class="form-label fw-bold">
+
+                                    Assignment Instructions
+
+                                </label>
+
+                                {{ form.description }}
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-bold">
+
+                                    Due Date
+
+                                </label>
+
+                                {{ form.due_date }}
+
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+
+                                <label class="form-label fw-bold">
+
+                                    Attachment
+
+                                </label>
+
+                                {{ form.file_upload }}
+
+                                <small class="text-muted">
+
+                                    PDF, DOCX, PPT, ZIP, images and other learning materials.
+
+                                </small>
+
+                            </div>
+                            <div class="col-12">
+
+                                <div class="card bg-light border mb-4">
+
+                                    <div class="card-header">
+
+                                        <strong>
+
+                                            <i class="bi bi-eye"></i>
+
+                                            Assignment Preview
+
+                                        </strong>
+
+                                    </div>
+
+                                    <div class="card-body">
+
+                                        <p class="mb-1">
+
+                                            <strong>Title:</strong>
+
+                                            <span id="previewTitle">
+
+                                                Not entered
+
+                                            </span>
+
+                                        </p>
+
+                                        <p class="mb-1">
+
+                                            <strong>Subject:</strong>
+
+                                            <span id="previewSubject">
+
+                                                -
+
+                                            </span>
+
+                                        </p>
+
+                                        <p class="mb-1">
+
+                                            <strong>Class:</strong>
+
+                                            <span id="previewClass">
+
+                                                -
+
+                                            </span>
+
+                                        </p>
+
+                                        <p class="mb-1">
+
+                                            <strong>Due Date:</strong>
+
+                                            <span id="previewDate">
+
+                                                -
+
+                                            </span>
+
+                                        </p>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                            <div class="col-12">
+
+                                <div class="d-flex flex-wrap gap-2">
+
+                                    <button
+                                        type="submit"
+                                        class="btn btn-success">
+
+                                        <i class="bi bi-upload"></i>
+
+                                        Publish Assignment
+
+                                    </button>
+
+                                    <button
+                                        type="reset"
+                                        class="btn btn-warning">
+
+                                        <i class="bi bi-arrow-clockwise"></i>
+
+                                        Reset Form
+
+                                    </button>
+
+                                    <a
+                                        href="{% url 'teacher_assignments' %}"
+                                        class="btn btn-secondary">
+
+                                        <i class="bi bi-arrow-left"></i>
+
+                                        Cancel
+
+                                    </a>
+
+                                    <a
+                                        href="{% url 'dashboard_final' %}"
+                                        class="btn btn-primary">
+
+                                        <i class="bi bi-speedometer2"></i>
+
+                                        Dashboard
+
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
             </div>
+
         </div>
+
     </div>
+
 </div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const title=document.getElementById("id_title");
+    const subject=document.getElementById("id_subject");
+    const classroom=document.getElementById("id_class_room");
+    const due=document.getElementById("id_due_date");
+
+    function updatePreview(){
+
+        if(title){
+
+            document.getElementById("previewTitle").textContent=
+                title.value || "Not entered";
+
+        }
+
+        if(subject){
+
+            document.getElementById("previewSubject").textContent=
+                subject.options[subject.selectedIndex]?.text || "-";
+
+        }
+
+        if(classroom){
+
+            document.getElementById("previewClass").textContent=
+                classroom.options[classroom.selectedIndex]?.text || "-";
+
+        }
+
+        if(due){
+
+            document.getElementById("previewDate").textContent=
+                due.value || "-";
+
+        }
+
+    }
+
+    [title,subject,classroom,due].forEach(function(el){
+
+        if(el){
+
+            el.addEventListener("input",updatePreview);
+
+            el.addEventListener("change",updatePreview);
+
+        }
+
+    });
+
+    updatePreview();
+
+});
+
+</script>
+
+<style>
+
+.card{
+
+    border-radius:14px;
+
+}
+
+.card-header{
+
+    font-weight:600;
+
+}
+
+.form-control,
+.form-select{
+
+    border-radius:10px;
+
+}
+
+textarea{
+
+    min-height:180px;
+
+}
+
+.btn{
+
+    border-radius:10px;
+
+}
+
+label{
+
+    margin-bottom:6px;
+
+}
+
+@media(max-width:768px){
+
+    .btn{
+
+        width:100%;
+
+    }
+
+}
+
+</style>
+
 {% endblock %}

@@ -1,54 +1,495 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Resources{% endblock %}
+
+{% block title %}
+Teaching Resources
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>My Resources</h2>
-    <p class="text-muted">Materials and files shared for your classes</p>
 
-    {% if resources %}
-        <div class="table-responsive">
-            <table class="table table-hover table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Title</th>
-                        <th>Subject</th>
-                        <th>Class</th>
-                        <th>Posted By</th>
-                        <th>Date</th>
-                        <th>File</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for resource in resources %}
-                        <tr>
-                            <td>{{ resource.title }}</td>
-                            <td>{{ resource.subject.subject }}</td>
-                            <td>{{ resource.class_room.name }} {{ resource.class_room.section }}</td>
-                            <td>{{ resource.teacher.user.get_full_name }}</td>
-                            <td>{{ resource.created_at|date:"d M Y" }}</td>
-                            <td>
-                                {% if resource.file %}
-                                    <a href="{{ resource.file.url }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                        <i class="bi bi-file-earmark"></i> View
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">No file</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> No resources available for your classes.
-        </div>
-    {% endif %}
+<div class="container-fluid mt-4">
 
-    <div class="mt-3">
-        <a href="{% url 'dashboard_teacher' %}" class="btn btn-secondary">← Back to Dashboard</a>
-    </div>
+    <div class="row">
+
+        <div class="col-12">
+
+            <div class="card shadow-lg border-0">
+
+                <div class="card-header bg-primary text-white">
+
+                    <div class="d-flex justify-content-between align-items-center">
+
+                        <div>
+
+                            <h3 class="mb-1">
+
+                                <i class="bi bi-folder2-open"></i>
+
+                                Teaching Resources
+
+                            </h3>
+
+                            <small>
+
+                                Access learning materials shared with your assigned classes.
+
+                            </small>
+
+                        </div>
+
+                        <a
+                            href="{% url 'dashboard_final' %}"
+                            class="btn btn-light">
+
+                            <i class="bi bi-speedometer2"></i>
+
+                            Dashboard
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div class="row mb-4">
+
+                        <div class="col-lg-3">
+
+                            <div class="card border-primary shadow-sm">
+
+                                <div class="card-body text-center">
+
+                                    <i class="bi bi-folder-fill text-primary fs-1"></i>
+
+                                    <h3 class="mt-2">
+
+                                        {{ resources|length }}
+
+                                    </h3>
+
+                                    <p class="text-muted mb-0">
+
+                                        Total Resources
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-lg-3">
+
+                            <div class="card border-success shadow-sm">
+
+                                <div class="card-body text-center">
+
+                                    <i class="bi bi-file-earmark-text-fill text-success fs-1"></i>
+
+                                    <h3>
+
+                                        {{ teacher.subject.count }}
+
+                                    </h3>
+
+                                    <p class="text-muted mb-0">
+
+                                        Subjects
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-lg-3">
+
+                            <div class="card border-warning shadow-sm">
+
+                                <div class="card-body text-center">
+
+                                    <i class="bi bi-door-open-fill text-warning fs-1"></i>
+
+                                    <h3>
+
+                                        {{ teacher.assigned_class.count }}
+
+                                    </h3>
+
+                                    <p class="text-muted mb-0">
+
+                                        Classes
+
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div class="col-lg-3">
+
+                            <div class="card border-danger shadow-sm">
+
+                                <div class="card-body text-center">
+
+                                    <i class="bi bi-person-video3 text-danger fs-1"></i>
+
+                                    <h5 class="mt-2">
+
+                                        {{ teacher.user.get_full_name }}
+
+                                    </h5>
+
+                                    <small class="text-muted">
+
+                                        Logged in Teacher
+
+                                    </small>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="row mb-4">
+
+                        <div class="col-md-6">
+
+                            <input
+                                type="text"
+                                id="resourceSearch"
+                                class="form-control"
+                                placeholder="Search resources...">
+
+                        </div>
+
+                        <div class="col-md-6 text-end">
+
+                            <button
+                                onclick="window.print()"
+                                class="btn btn-outline-dark">
+
+                                <i class="bi bi-printer"></i>
+
+                                Print
+
+                            </button>
+
+                        </div>
+
+                    </div>
+{% if resources %}
+
+<div class="table-responsive">
+
+    <table class="table table-hover align-middle" id="resourceTable">
+
+        <thead class="table-dark">
+
+            <tr>
+
+                <th width="5%">#</th>
+
+                <th width="25%">Resource</th>
+
+                <th width="15%">Subject</th>
+
+                <th width="15%">Class</th>
+
+                <th width="15%">Teacher</th>
+
+                <th width="10%">Date</th>
+
+                <th width="15%" class="text-center">Actions</th>
+
+            </tr>
+
+        </thead>
+
+        <tbody>
+
+        {% for resource in resources %}
+
+            <tr>
+
+                <td>
+
+                    {{ forloop.counter }}
+
+                </td>
+
+                <td>
+
+                    <div class="fw-bold">
+
+                        {{ resource.title }}
+
+                    </div>
+
+                    {% if resource.description %}
+
+                    <small class="text-muted">
+
+                        {{ resource.description|truncatechars:90 }}
+
+                    </small>
+
+                    {% endif %}
+
+                </td>
+
+                <td>
+
+                    <span class="badge bg-primary">
+
+                        {{ resource.subject.subject }}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <span class="badge bg-success">
+
+                        {{ resource.class_room.name }}
+
+                        {{ resource.class_room.section }}
+
+                    </span>
+
+                </td>
+
+                <td>
+
+                    <strong>
+
+                        {{ resource.teacher.user.get_full_name }}
+
+                    </strong>
+
+                </td>
+
+                <td>
+
+                    {{ resource.created_at|date:"d M Y" }}
+
+                </td>
+
+                <td class="text-center">
+
+                    {% if resource.file %}
+
+                        <a
+
+                            href="{{ resource.file.url }}"
+
+                            target="_blank"
+
+                            class="btn btn-sm btn-outline-primary">
+
+                            <i class="bi bi-eye"></i>
+
+                        </a>
+
+                        <a
+
+                            href="{{ resource.file.url }}"
+
+                            download
+
+                            class="btn btn-sm btn-outline-success">
+
+                            <i class="bi bi-download"></i>
+
+                        </a>
+
+                    {% else %}
+
+                        <span class="badge bg-secondary">
+
+                            No File
+
+                        </span>
+
+                    {% endif %}
+
+                </td>
+
+            </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+
 </div>
+
+{% else %}
+
+<div class="text-center py-5">
+
+    <i class="bi bi-folder-x display-1 text-secondary"></i>
+
+    <h3 class="mt-3">
+
+        No Resources Available
+
+    </h3>
+
+    <p class="text-muted">
+
+        Learning materials shared with your classes will appear here.
+
+    </p>
+
+</div>
+
+{% endif %}
+
+<hr class="my-4">
+
+<div class="d-flex flex-wrap gap-2">
+
+    <a
+
+        href="{% url 'dashboard_final' %}"
+
+        class="btn btn-primary">
+
+        <i class="bi bi-speedometer2"></i>
+
+        Dashboard
+
+    </a>
+
+    <a
+
+        href="{% url 'teacher_timetable' %}"
+
+        class="btn btn-outline-primary">
+
+        <i class="bi bi-calendar3"></i>
+
+        Timetable
+
+    </a>
+
+    <a
+
+        href="{% url 'teacher_assignments' %}"
+
+        class="btn btn-outline-success">
+
+        <i class="bi bi-journal-plus"></i>
+
+        Assignments
+
+    </a>
+
+    <a
+
+        href="{% url 'teacher_academic' %}"
+
+        class="btn btn-outline-warning">
+
+        <i class="bi bi-clipboard-data"></i>
+
+        Academic Records
+
+    </a>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const search=document.getElementById("resourceSearch");
+
+search.addEventListener("keyup",function(){
+
+let value=this.value.toLowerCase();
+
+let rows=document.querySelectorAll("#resourceTable tbody tr");
+
+rows.forEach(function(row){
+
+row.style.display=row.innerText.toLowerCase().includes(value) ? "" : "none";
+
+});
+
+});
+
+</script>
+
+<style>
+
+.card{
+
+border-radius:14px;
+
+}
+
+.card-header{
+
+font-weight:600;
+
+}
+
+.table td{
+
+vertical-align:middle;
+
+}
+
+.badge{
+
+font-size:.85rem;
+
+padding:7px 10px;
+
+}
+
+.btn{
+
+border-radius:10px;
+
+}
+
+.form-control{
+
+border-radius:10px;
+
+}
+
+@media(max-width:768px){
+
+.btn{
+
+width:100%;
+
+}
+
+}
+
+</style>
+
 {% endblock %}

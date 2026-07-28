@@ -1,5 +1,7 @@
 from django.db import models
+
 from accountsApp.models import User
+from schoolsApp.models import School
 
 
 class Parent(models.Model):
@@ -10,12 +12,32 @@ class Parent(models.Model):
     accountsApp.signals when the user role is 'parent'.
     """
 
+    # ==========================================
+    # MULTI SCHOOL
+    # ==========================================
+
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="parents",
+        null=True,
+        blank=True,
+    )
+
+    # ==========================================
+    # USER ACCOUNT
+    # ==========================================
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="parent_profile",
         limit_choices_to={"role": "parent"},
     )
+
+    # ==========================================
+    # CONTACT
+    # ==========================================
 
     phone_number = models.CharField(
         max_length=15,

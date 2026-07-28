@@ -1,47 +1,435 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}My Timetable{% endblock %}
+
+{% block title %}
+My Teaching Timetable
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>My Teaching Timetable</h2>
-    <p class="text-muted">Teacher: {{ teacher.user.get_full_name }}</p>
 
-    <div class="table-responsive">
-        <table class="table table-bordered table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Day</th>
-                    <th>Time</th>
-                    <th>Class</th>
-                    <th>Subject</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for day, entries in timetable.items %}
-                    {% if entries %}
-                        {% for entry in entries %}
-                            <tr>
-                                {% if forloop.first %}
-                                    <td rowspan="{{ entries|length }}">{{ day }}</td>
-                                {% endif %}
-                                <td>{{ entry.start_time|time:"H:i" }} - {{ entry.end_time|time:"H:i" }}</td>
-                                <td>{{ entry.class_room.name }} {{ entry.class_room.section }}</td>
-                                <td>{{ entry.subject.subject }}</td>
-                            </tr>
-                        {% endfor %}
-                    {% else %}
+<div class="container-fluid mt-4">
+
+    <div class="card shadow-lg">
+
+        <div class="card-header bg-primary text-white">
+
+            <div class="row align-items-center">
+
+                <div class="col-md-8">
+
+                    <h3>
+
+                        <i class="bi bi-calendar3"></i>
+
+                        My Teaching Timetable
+
+                    </h3>
+
+                    <small>
+
+                        {{ teacher.user.get_full_name }}
+
+                    </small>
+
+                </div>
+
+                <div class="col-md-4 text-end">
+
+                    <button
+                        class="btn btn-light"
+                        onclick="window.print()">
+
+                        <i class="bi bi-printer"></i>
+
+                        Print Timetable
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row mb-4">
+
+                <div class="col-md-4">
+
+                    <div class="card border-primary">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+
+                                Teaching Days
+
+                            </h6>
+
+                            <h2>
+
+                                {{ timetable|length }}
+
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="card border-success">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+
+                                Assigned Classes
+
+                            </h6>
+
+                            <h2>
+
+                                {{ teacher.assigned_class.count }}
+
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-4">
+
+                    <div class="card border-warning">
+
+                        <div class="card-body text-center">
+
+                            <h6>
+
+                                Subjects
+
+                            </h6>
+
+                            <h2>
+
+                                {{ teacher.subject.count }}
+
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <input
+                type="text"
+                id="searchSchedule"
+                class="form-control mb-3"
+                placeholder="Search class or subject...">
+
+            <div class="table-responsive">
+
+                <table
+                    class="table table-hover table-bordered align-middle"
+                    id="timetableTable">
+
+                    <thead class="table-primary">
+
                         <tr>
-                            <td>{{ day }}</td>
-                            <td colspan="3" class="text-muted">No classes</td>
+
+                            <th width="15%">
+
+                                Day
+
+                            </th>
+
+                            <th width="20%">
+
+                                Time
+
+                            </th>
+
+                            <th>
+
+                                Class
+
+                            </th>
+
+                            <th>
+
+                                Subject
+
+                            </th>
+
                         </tr>
-                    {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
+
+                    </thead>
+
+                    <tbody>
+{% for day, entries in timetable.items %}
+
+    {% if entries %}
+
+        {% for entry in entries %}
+
+        <tr>
+
+            {% if forloop.first %}
+
+            <td rowspan="{{ entries|length }}" class="fw-bold bg-light text-center align-middle">
+
+                {{ day }}
+
+            </td>
+
+            {% endif %}
+
+            <td>
+
+                <span class="badge bg-primary">
+
+                    {{ entry.start_time|time:"H:i" }}
+
+                </span>
+
+                -
+
+                <span class="badge bg-dark">
+
+                    {{ entry.end_time|time:"H:i" }}
+
+                </span>
+
+            </td>
+
+            <td>
+
+                <span class="badge bg-success">
+
+                    {{ entry.class_room.name }}
+
+                </span>
+
+                {% if entry.class_room.section %}
+
+                    <span class="badge bg-secondary">
+
+                        {{ entry.class_room.section }}
+
+                    </span>
+
+                {% endif %}
+
+            </td>
+
+            <td>
+
+                <i class="bi bi-book-half text-primary"></i>
+
+                <strong>
+
+                    {{ entry.subject.subject }}
+
+                </strong>
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+    {% else %}
+
+        <tr>
+
+            <td class="fw-bold bg-light">
+
+                {{ day }}
+
+            </td>
+
+            <td colspan="3" class="text-center text-muted">
+
+                <i class="bi bi-calendar-x fs-5"></i>
+
+                <br>
+
+                No lessons scheduled
+
+            </td>
+
+        </tr>
+
+    {% endif %}
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+<!-- Quick Actions -->
+<div class="row mt-4">
+
+    <div class="col-12">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header bg-light">
+
+                <h5 class="mb-0">
+
+                    <i class="bi bi-lightning-charge"></i>
+
+                    Quick Actions
+
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    <a href="{% url 'dashboard_final' %}" class="btn btn-primary">
+
+                        <i class="bi bi-speedometer2"></i>
+
+                        Dashboard
+
+                    </a>
+
+                    <a href="{% url 'teacher_assignments' %}" class="btn btn-success">
+
+                        <i class="bi bi-journal-text"></i>
+
+                        Assignments
+
+                    </a>
+
+                    <a href="{% url 'teacher_academic' %}" class="btn btn-warning">
+
+                        <i class="bi bi-pencil-square"></i>
+
+                        Academic Records
+
+                    </a>
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-dark"
+                        onclick="window.print();">
+
+                        <i class="bi bi-printer"></i>
+
+                        Print Timetable
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
-    <div class="mt-3">
-        <a href="{% url 'dashboard_teacher' %}" class="btn btn-secondary">← Back to Dashboard</a>
-    </div>
 </div>
+
+</div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const search = document.getElementById("searchSchedule");
+
+    const table = document.getElementById("timetableTable");
+
+    if (!search || !table) return;
+
+    search.addEventListener("keyup", function () {
+
+        let value = this.value.toLowerCase();
+
+        table.querySelectorAll("tbody tr").forEach(function(row){
+
+            row.style.display =
+                row.innerText.toLowerCase().includes(value)
+                ? ""
+                : "none";
+
+        });
+
+    });
+
+});
+
+</script>
+
+<style>
+
+.table td{
+
+    vertical-align:middle;
+
+}
+
+.table th{
+
+    white-space:nowrap;
+
+}
+
+.badge{
+
+    font-size:.9rem;
+
+}
+
+.card{
+
+    border-radius:12px;
+
+}
+
+@media print{
+
+    .btn,
+    .card-header button,
+    #searchSchedule,
+    .navbar,
+    footer{
+
+        display:none !important;
+
+    }
+
+    body{
+
+        background:#fff !important;
+
+    }
+
+    .card{
+
+        border:none !important;
+
+        box-shadow:none !important;
+
+    }
+
+}
+
+</style>
+
 {% endblock %}

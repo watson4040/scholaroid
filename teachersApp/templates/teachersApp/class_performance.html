@@ -1,49 +1,513 @@
 {% extends "base.html" %}
 {% load teacher_extras %}
 {% load static %}
-{% block title %}Class Performance - {{ classroom.name }}{% endblock %}
+
+{% block title %}
+Class Performance
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Class Performance</h2>
-    <p class="text-muted">{{ classroom.name }} {{ classroom.section }}</p>
 
-    {% if students %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Pupil</th>
-                        {% for subject in subjects %}
-                            <th>{{ subject.subject }}</th>
-                        {% endfor %}
-                        <th>Average</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in students %}
-                        <tr>
-                            <td>{{ row.student.user.get_full_name }}</td>
-                            {% for subject in subjects %}
-                                <td>{{ row|get_item:subject.id }}</td>
-                            {% endfor %}
-                            <td><strong>{{ row.average }}</strong></td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="container-fluid mt-4">
+
+    <div class="card shadow-lg">
+
+        <div class="card-header bg-primary text-white">
+
+            <div class="row align-items-center">
+
+                <div class="col-md-8">
+
+                    <h3 class="mb-1">
+
+                        <i class="bi bi-graph-up-arrow"></i>
+
+                        Class Performance Analysis
+
+                    </h3>
+
+                    <small>
+
+                        Class:
+                        <strong>
+
+                            {{ classroom.name }} {{ classroom.section }}
+
+                        </strong>
+
+                    </small>
+
+                </div>
+
+                <div class="col-md-4 text-end">
+
+                    <a
+                        href="{% url 'teacher_print_class_list' classroom.id %}"
+                        class="btn btn-light">
+
+                        <i class="bi bi-printer"></i>
+
+                        Print Class List
+
+                    </a>
+
+                </div>
+
+            </div>
+
         </div>
-    {% else %}
-        <div class="alert alert-info">No performance data available for this class.</div>
-    {% endif %}
 
-    <div class="mt-3">
-        <a href="{% url 'dashboard_teacher' %}" class="btn btn-secondary">← Back to Dashboard</a>
-        <a href="{% url 'teacher_print_class_list' classroom.id %}" class="btn btn-outline-primary">
-            <i class="bi bi-printer"></i> Print Class List
-        </a>
-        <a href="{% url 'teacher_print_results' classroom.id subjects.0.id %}" class="btn btn-outline-success">
-            <i class="bi bi-printer"></i> Print Results
-        </a>
-    </div>
+        <div class="card-body">
+
+            <div class="row mb-4">
+
+                <div class="col-md-3">
+
+                    <div class="card border-primary">
+
+                        <div class="card-body text-center">
+
+                            <h6>Total Pupils</h6>
+
+                            <h2>
+
+                                {{ students|length }}
+
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-success">
+
+                        <div class="card-body text-center">
+
+                            <h6>Subjects</h6>
+
+                            <h2>
+
+                                {{ subjects|length }}
+
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-warning">
+
+                        <div class="card-body text-center">
+
+                            <h6>Class Teacher</h6>
+
+                            <h6 class="mt-2">
+
+                                {{ teacher.user.get_full_name }}
+
+                            </h6>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-info">
+
+                        <div class="card-body text-center">
+
+                            <h6>Performance Report</h6>
+
+                            <span class="badge bg-success">
+
+                                Live
+
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% if students %}
+
+            <div class="table-responsive">
+
+                <table
+                    class="table table-bordered table-hover align-middle"
+                    id="performanceTable">
+
+                    <thead class="table-primary">
+
+                        <tr>
+
+                            <th>#</th>
+
+                            <th>Pupil</th>
+
+                            {% for subject in subjects %}
+
+                                <th>
+
+                                    {{ subject.subject }}
+
+                                </th>
+
+                            {% endfor %}
+
+                            <th>
+
+                                Average
+
+                            </th>
+
+                            <th>
+
+                                Grade
+
+                            </th>
+
+                            <th>
+
+                                Remark
+
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+
+{% for row in students %}
+
+<tr>
+
+    <td>
+
+        {{ forloop.counter }}
+
+    </td>
+
+    <td>
+
+        <strong>
+
+            {{ row.student.user.get_full_name|default:row.student.user.username }}
+
+        </strong>
+
+    </td>
+
+    {% for subject in subjects %}
+
+        <td class="text-center">
+
+            {{ row|get_item:subject.id }}
+
+        </td>
+
+    {% endfor %}
+
+    <td class="text-center">
+
+        <strong>
+
+            {{ row.average }}
+
+        </strong>
+
+    </td>
+
+    <td class="text-center">
+
+        {% if row.average != "-" %}
+
+            {% if row.average >= 90 %}
+
+                <span class="badge bg-success">
+
+                    A+
+
+                </span>
+
+            {% elif row.average >= 80 %}
+
+                <span class="badge bg-success">
+
+                    A
+
+                </span>
+
+            {% elif row.average >= 70 %}
+
+                <span class="badge bg-primary">
+
+                    B
+
+                </span>
+
+            {% elif row.average >= 60 %}
+
+                <span class="badge bg-info text-dark">
+
+                    C
+
+                </span>
+
+            {% elif row.average >= 50 %}
+
+                <span class="badge bg-warning text-dark">
+
+                    D
+
+                </span>
+
+            {% else %}
+
+                <span class="badge bg-danger">
+
+                    F
+
+                </span>
+
+            {% endif %}
+
+        {% else %}
+
+            -
+
+        {% endif %}
+
+    </td>
+
+    <td>
+
+        {% if row.average != "-" %}
+
+            {% if row.average >= 90 %}
+
+                Outstanding
+
+            {% elif row.average >= 80 %}
+
+                Excellent
+
+            {% elif row.average >= 70 %}
+
+                Very Good
+
+            {% elif row.average >= 60 %}
+
+                Good
+
+            {% elif row.average >= 50 %}
+
+                Pass
+
+            {% else %}
+
+                Needs Improvement
+
+            {% endif %}
+
+        {% else %}
+
+            No Marks
+
+        {% endif %}
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
 </div>
+
+{% else %}
+
+<div class="alert alert-info">
+
+    No performance data is available for this class.
+
+</div>
+
+{% endif %}
+
+<div class="row mt-4">
+
+    <div class="col-md-12">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header bg-light">
+
+                <h5 class="mb-0">
+
+                    Quick Actions
+
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    <a
+                        href="{% url 'dashboard_final' %}"
+                        class="btn btn-secondary">
+
+                        <i class="bi bi-arrow-left"></i>
+
+                        Dashboard
+
+                    </a>
+
+                    <a
+                        href="{% url 'teacher_academic' %}"
+                        class="btn btn-primary">
+
+                        <i class="bi bi-journal-check"></i>
+
+                        Enter Marks
+
+                    </a>
+
+                    <a
+                        href="{% url 'teacher_print_class_list' classroom.id %}"
+                        class="btn btn-outline-primary">
+
+                        <i class="bi bi-printer"></i>
+
+                        Print Class List
+
+                    </a>
+
+                    {% if subjects %}
+
+                    <a
+                        href="{% url 'teacher_print_results' classroom.id subjects.0.id %}"
+                        class="btn btn-outline-success">
+
+                        <i class="bi bi-file-earmark-pdf"></i>
+
+                        Print Results
+
+                    </a>
+
+                    {% endif %}
+
+                    <button
+                        onclick="window.print()"
+                        class="btn btn-outline-dark">
+
+                        <i class="bi bi-printer-fill"></i>
+
+                        Print Performance Report
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const searchBox = document.createElement("input");
+
+    searchBox.type = "text";
+
+    searchBox.className = "form-control mb-3";
+
+    searchBox.placeholder = "Search pupil...";
+
+    const table = document.getElementById("performanceTable");
+
+    table.parentNode.insertBefore(searchBox, table);
+
+    searchBox.addEventListener("keyup", function(){
+
+        let value = this.value.toLowerCase();
+
+        table.querySelectorAll("tbody tr").forEach(function(row){
+
+            row.style.display =
+                row.innerText.toLowerCase().includes(value)
+                ? ""
+                : "none";
+
+        });
+
+    });
+
+});
+
+</script>
+
+<style>
+
+@media print {
+
+    .btn,
+    .card-header a,
+    input,
+    .navbar,
+    footer {
+
+        display: none !important;
+
+    }
+
+    body {
+
+        background: white !important;
+
+    }
+
+}
+
+.table th {
+
+    white-space: nowrap;
+
+}
+
+.badge {
+
+    font-size: 0.9rem;
+
+}
+
+</style>
+
 {% endblock %}

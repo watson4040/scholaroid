@@ -1,85 +1,536 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Enter Marks - {{ subject.subject }}{% endblock %}
+
+{% block title %}
+Academic Marks Entry
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>Enter Marks for {{ subject.subject }}</h2>
-    <p class="text-muted">Class: {{ classroom.name }} {{ classroom.section }}</p>
 
-    <form method="POST">
-        {% csrf_token %}
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Pupil</th>
-                        <th>Test (max 30)</th>
-                        <th>Exam (max 50)</th>
-                        <th>Max Marks</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for student in students %}
-                    <tr>
-                        <td>{{ student.user.get_full_name }}</td>
-                        <td>
-                            <input type="number" name="test_{{ student.id }}" class="form-control" step="0.01" min="0" max="30" placeholder="Test">
-                        </td>
-                        <td>
-                            <input type="number" name="exam_{{ student.id }}" class="form-control" step="0.01" min="0" max="50" placeholder="Exam">
-                        </td>
-                        <td>
-                            <input type="number" name="max_marks_{{ student.id }}" class="form-control" step="0.01" min="1" value="100" placeholder="Max">
-                        </td>
-                        <td>
-                            <span id="total_{{ student.id }}">0</span>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="container-fluid mt-4">
+
+    <div class="card shadow-lg border-0">
+
+        <div class="card-header bg-primary text-white">
+
+            <div class="row align-items-center">
+
+                <div class="col-md-8">
+
+                    <h3 class="mb-1">
+
+                        <i class="bi bi-journal-check"></i>
+
+                        Academic Marks Entry
+
+                    </h3>
+
+                    <small>
+
+                        Subject:
+                        <strong>{{ subject.subject }}</strong>
+
+                        |
+
+                        Class:
+                        <strong>{{ classroom.name }} {{ classroom.section }}</strong>
+
+                    </small>
+
+                </div>
+
+                <div class="col-md-4 text-end">
+
+                    <a href="{% url 'teacher_print_results' classroom.id subject.id %}"
+                       class="btn btn-light">
+
+                        <i class="bi bi-printer"></i>
+
+                        Print Results
+
+                    </a>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <div class="row mt-3">
-            <div class="col-md-3">
-                <label for="term" class="form-label">Term</label>
-                <select name="term" id="term" class="form-select" required>
-                    <option value="1">Term 1</option>
-                    <option value="2">Term 2</option>
-                    <option value="3">Term 3</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <label for="academic_year" class="form-label">Academic Year</label>
-                <input type="text" name="academic_year" id="academic_year" class="form-control" placeholder="e.g. 2025/2026" required>
-            </div>
-            <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-success w-100">
-                    <i class="bi bi-save"></i> Save Marks
-                </button>
-            </div>
+        <div class="card-body">
+
+            <form method="POST">
+
+                {% csrf_token %}
+
+                <div class="row mb-4">
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+
+                            Academic Year
+
+                        </label>
+
+                        <input
+                            type="text"
+                            name="academic_year"
+                            class="form-control"
+                            placeholder="2026/2027"
+                            required>
+
+                    </div>
+
+                    <div class="col-md-2">
+
+                        <label class="form-label">
+
+                            Term
+
+                        </label>
+
+                        <select
+                            name="term"
+                            class="form-select"
+                            required>
+
+                            <option value="1">
+
+                                Term 1
+
+                            </option>
+
+                            <option value="2">
+
+                                Term 2
+
+                            </option>
+
+                            <option value="3">
+
+                                Term 3
+
+                            </option>
+
+                        </select>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <label class="form-label">
+
+                            Search Pupil
+
+                        </label>
+
+                        <input
+                            id="searchStudent"
+                            type="text"
+                            class="form-control"
+                            placeholder="Search by name...">
+
+                    </div>
+
+                    <div class="col-md-4 d-flex align-items-end">
+
+                        <button
+                            type="submit"
+                            class="btn btn-success me-2">
+
+                            <i class="bi bi-save"></i>
+
+                            Save Marks
+
+                        </button>
+
+                        <a
+                            href="{% url 'teacher_academic' %}"
+                            class="btn btn-secondary me-2">
+
+                            Change Class
+
+                        </a>
+
+                        <a
+                            href="{% url 'dashboard_final' %}"
+                            class="btn btn-outline-dark">
+
+                            Dashboard
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+                <div class="table-responsive">
+
+                    <table
+                        class="table table-bordered table-hover align-middle"
+                        id="marksTable">
+
+                        <thead class="table-primary">
+
+                            <tr>
+
+                                <th>#</th>
+
+                                <th>Pupil</th>
+
+                                <th>Test<br>(30)</th>
+
+                                <th>Exam<br>(70)</th>
+
+                                <th>Total</th>
+
+                                <th>%</th>
+
+                                <th>Grade</th>
+
+                                <th>Remark</th>
+
+                            </tr>
+
+                        </thead>
+
+                        <tbody>
+
+{% for student in students %}
+
+<tr>
+
+    <td>
+
+        {{ forloop.counter }}
+
+    </td>
+
+    <td>
+
+        <strong>
+
+            {{ student.user.get_full_name|default:student.user.username }}
+
+        </strong>
+
+    </td>
+
+    <td>
+
+        <input
+            type="number"
+            class="form-control test-mark"
+            name="test_{{ student.id }}"
+            min="0"
+            max="30"
+            step="0.01">
+
+    </td>
+
+    <td>
+
+        <input
+            type="number"
+            class="form-control exam-mark"
+            name="exam_{{ student.id }}"
+            min="0"
+            max="70"
+            step="0.01">
+
+    </td>
+
+    <td>
+
+        <span
+            id="total_{{ student.id }}"
+            class="fw-bold">
+
+            0
+
+        </span>
+
+    </td>
+
+    <td>
+
+        <span
+            id="percent_{{ student.id }}">
+
+            0%
+
+        </span>
+
+    </td>
+
+    <td>
+
+        <span
+            id="grade_{{ student.id }}"
+            class="badge bg-secondary">
+
+            -
+
+        </span>
+
+    </td>
+
+    <td>
+
+        <span
+            id="remark_{{ student.id }}">
+
+            -
+
+        </span>
+
+    </td>
+
+</tr>
+
+{% endfor %}
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+                <!-- LIVE CLASS SUMMARY -->
+
+                <div class="row mt-4">
+
+                    <div class="col-md-3">
+
+                        <div class="card border-success">
+
+                            <div class="card-body text-center">
+
+                                <h6>Total Pupils</h6>
+
+                                <h2 id="totalStudents">
+
+                                    {{ students|length }}
+
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <div class="card border-primary">
+
+                            <div class="card-body text-center">
+
+                                <h6>Class Average</h6>
+
+                                <h2 id="classAverage">
+
+                                    0%
+
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <div class="card border-warning">
+
+                            <div class="card-body text-center">
+
+                                <h6>Highest Mark</h6>
+
+                                <h2 id="highestMark">
+
+                                    0
+
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-3">
+
+                        <div class="card border-danger">
+
+                            <div class="card-body text-center">
+
+                                <h6>Lowest Mark</h6>
+
+                                <h2 id="lowestMark">
+
+                                    0
+
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </form>
+
         </div>
 
-        <div class="mt-3">
-            <a href="{% url 'teacher_academic' %}" class="btn btn-secondary">← Back to Selection</a>
-            <a href="{% url 'dashboard_final' %}" class="btn btn-outline-secondary">Dashboard</a>
-        </div>
-    </form>
+    </div>
+
 </div>
 
 <script>
-    // Auto-calculate total when any mark changes
-    document.querySelectorAll('input[type="number"]').forEach(input => {
-        input.addEventListener('input', function() {
-            const row = this.closest('tr');
-            const test = parseFloat(row.querySelector('[name^="test_"]').value) || 0;
-            const exam = parseFloat(row.querySelector('[name^="exam_"]').value) || 0;
-            const totalSpan = row.querySelector('[id^="total_"]');
-            if (totalSpan) {
-                totalSpan.textContent = (test + exam).toFixed(2);
-            }
-        });
+
+function calculateStatistics(){
+
+    let totals=[];
+
+    document.querySelectorAll("#marksTable tbody tr").forEach(function(row){
+
+        let testInput=row.querySelector(".test-mark");
+
+        let examInput=row.querySelector(".exam-mark");
+
+        if(!testInput || !examInput){
+
+            return;
+
+        }
+
+        let test=parseFloat(testInput.value)||0;
+
+        let exam=parseFloat(examInput.value)||0;
+
+        let total=test+exam;
+
+        let percentage=total;
+
+        totals.push(percentage);
+
+        row.querySelector("[id^='total_']").innerText=total.toFixed(2);
+
+        row.querySelector("[id^='percent_']").innerText=percentage.toFixed(1)+"%";
+
+        let grade="-";
+
+        let remark="-";
+
+        let badge="bg-danger";
+
+        if(percentage>=90){
+
+            grade="A+";
+
+            remark="Outstanding";
+
+            badge="bg-success";
+
+        }
+
+        else if(percentage>=80){
+
+            grade="A";
+
+            remark="Excellent";
+
+            badge="bg-success";
+
+        }
+
+        else if(percentage>=70){
+
+            grade="B";
+
+            remark="Very Good";
+
+            badge="bg-primary";
+
+        }
+
+        else if(percentage>=60){
+
+            grade="C";
+
+            remark="Good";
+
+            badge="bg-info";
+
+        }
+
+        else if(percentage>=50){
+
+            grade="D";
+
+            remark="Pass";
+
+            badge="bg-warning";
+
+        }
+
+        else{
+
+            grade="F";
+
+            remark="Fail";
+
+            badge="bg-danger";
+
+        }
+
+        let gradeBadge=row.querySelector("[id^='grade_']");
+
+        gradeBadge.innerText=grade;
+
+        gradeBadge.className="badge "+badge;
+
+        row.querySelector("[id^='remark_']").innerText=remark;
+
     });
+
+    if(totals.length){
+
+        let average=totals.reduce((a,b)=>a+b,0)/totals.length;
+
+        document.getElementById("classAverage").innerText=average.toFixed(1)+"%";
+
+        document.getElementById("highestMark").innerText=Math.max(...totals).toFixed(1);
+
+        document.getElementById("lowestMark").innerText=Math.min(...totals).toFixed(1);
+
+    }
+
+}
+
+document.querySelectorAll(".test-mark,.exam-mark").forEach(function(input){
+
+    input.addEventListener("input",calculateStatistics);
+
+});
+
+document.getElementById("searchStudent").addEventListener("keyup",function(){
+
+    let value=this.value.toLowerCase();
+
+    document.querySelectorAll("#marksTable tbody tr").forEach(function(row){
+
+        row.style.display=row.innerText.toLowerCase().includes(value) ? "" : "none";
+
+    });
+
+});
+
+calculateStatistics();
+
 </script>
+
 {% endblock %}

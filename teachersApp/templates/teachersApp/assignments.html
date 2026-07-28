@@ -1,58 +1,541 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}My Assignments{% endblock %}
+
+{% block title %}
+My Assignments
+{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>My Assignments</h2>
-        <a href="{% url 'teacher_assignment_create' %}" class="btn btn-primary">
-            <i class="bi bi-plus-circle"></i> Post New Assignment
-        </a>
-    </div>
 
-    {% if assignments %}
-        <div class="table-responsive">
-            <table class="table table-hover table-striped">
-                <thead class="table-dark">
-                    <tr>
-                        <th>Title</th>
-                        <th>Subject</th>
-                        <th>Class</th>
-                        <th>Due Date</th>
-                        <th>Posted</th>
-                        <th>File</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for assignment in assignments %}
+<div class="container-fluid mt-4">
+
+    <div class="card shadow-lg">
+
+        <div class="card-header bg-primary text-white">
+
+            <div class="row align-items-center">
+
+                <div class="col-md-8">
+
+                    <h3>
+
+                        <i class="bi bi-journal-text"></i>
+
+                        My Assignments
+
+                    </h3>
+
+                    <small>
+
+                        Manage classroom assignments
+
+                    </small>
+
+                </div>
+
+                <div class="col-md-4 text-end">
+
+                    <a
+                        href="{% url 'teacher_assignment_create' %}"
+                        class="btn btn-light">
+
+                        <i class="bi bi-plus-circle"></i>
+
+                        New Assignment
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="card-body">
+
+            <div class="row mb-4">
+
+                <div class="col-md-3">
+
+                    <div class="card border-primary">
+
+                        <div class="card-body text-center">
+
+                            <h6>Total Assignments</h6>
+
+                            <h2>
+
+                                {{ assignments|length }}
+
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-success">
+
+                        <div class="card-body text-center">
+
+                            <h6>Teacher</h6>
+
+                            <strong>
+
+                                {{ teacher.user.get_full_name }}
+
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-warning">
+
+                        <div class="card-body text-center">
+
+                            <h6>Assigned Classes</h6>
+
+                            <h2>
+
+                                {{ teacher.assigned_class.count }}
+
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="col-md-3">
+
+                    <div class="card border-info">
+
+                        <div class="card-body text-center">
+
+                            <h6>Subjects</h6>
+
+                            <h2>
+
+                                {{ teacher.subject.count }}
+
+                            </h2>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <input
+                type="text"
+                id="assignmentSearch"
+                class="form-control mb-3"
+                placeholder="Search assignments...">
+
+            {% if assignments %}
+
+            <div class="table-responsive">
+
+                <table
+                    class="table table-hover table-bordered align-middle"
+                    id="assignmentTable">
+
+                    <thead class="table-primary">
+
                         <tr>
-                            <td><strong>{{ assignment.title }}</strong></td>
-                            <td>{{ assignment.subject.subject }}</td>
-                            <td>{{ assignment.class_room.name }} {{ assignment.class_room.section }}</td>
-                            <td>{{ assignment.due_date|date:"d M Y" }}</td>
-                            <td>{{ assignment.created_at|date:"d M Y" }}</td>
-                            <td>
-                                {% if assignment.file_upload %}
-                                    <a href="{{ assignment.file_upload.url }}" target="_blank" class="btn btn-sm btn-outline-info">
-                                        <i class="bi bi-file-earmark-pdf"></i> View
-                                    </a>
-                                {% else %}
-                                    <span class="text-muted">No file</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    {% else %}
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle"></i> You haven't posted any assignments yet.
-        </div>
-    {% endif %}
 
-    <div class="mt-3">
-        <a href="{% url 'dashboard_teacher' %}" class="btn btn-secondary">← Back to Dashboard</a>
-    </div>
+                            <th>Title</th>
+
+                            <th>Subject</th>
+
+                            <th>Class</th>
+
+                            <th>Due Date</th>
+
+                            <th>Posted</th>
+
+                            <th>Status</th>
+
+                            <th>Attachment</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody>
+{% for assignment in assignments %}
+
+<tr>
+
+    <td>
+
+        <strong>
+
+            {{ assignment.title }}
+
+        </strong>
+
+        {% if assignment.description %}
+
+            <br>
+
+            <small class="text-muted">
+
+                {{ assignment.description|truncatechars:70 }}
+
+            </small>
+
+        {% endif %}
+
+    </td>
+
+    <td>
+
+        <span class="badge bg-primary">
+
+            {{ assignment.subject.subject }}
+
+        </span>
+
+    </td>
+
+    <td>
+
+        <span class="badge bg-success">
+
+            {{ assignment.class_room.name }}
+
+        </span>
+
+        {% if assignment.class_room.section %}
+
+            <span class="badge bg-secondary">
+
+                {{ assignment.class_room.section }}
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <td>
+
+        {{ assignment.due_date|date:"d M Y" }}
+
+    </td>
+
+    <td>
+
+        {{ assignment.created_at|date:"d M Y" }}
+
+    </td>
+
+    <td>
+
+        {% now "Y-m-d" as today %}
+
+        {% if assignment.due_date|date:"Y-m-d" < today %}
+
+            <span class="badge bg-danger">
+
+                Overdue
+
+            </span>
+
+        {% elif assignment.due_date|date:"Y-m-d" == today %}
+
+            <span class="badge bg-warning text-dark">
+
+                Due Today
+
+            </span>
+
+        {% else %}
+
+            <span class="badge bg-success">
+
+                Active
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <td>
+
+        {% if assignment.file_upload %}
+
+            <a
+                href="{{ assignment.file_upload.url }}"
+                target="_blank"
+                class="btn btn-sm btn-outline-primary">
+
+                <i class="bi bi-paperclip"></i>
+
+                Open
+
+            </a>
+
+        {% else %}
+
+            <span class="text-muted">
+
+                <i class="bi bi-dash-circle"></i>
+
+                None
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
 </div>
+
+{% else %}
+
+<div class="alert alert-info text-center">
+
+    <i class="bi bi-journal-x fs-2"></i>
+
+    <h5 class="mt-3">
+
+        No Assignments Yet
+
+    </h5>
+
+    <p>
+
+        Create your first assignment for your pupils.
+
+    </p>
+
+    <a
+        href="{% url 'teacher_assignment_create' %}"
+        class="btn btn-primary">
+
+        <i class="bi bi-plus-circle"></i>
+
+        Create Assignment
+
+    </a>
+
+</div>
+
+{% endif %}
+<!-- Quick Actions -->
+<div class="row mt-4">
+
+    <div class="col-12">
+
+        <div class="card shadow-sm">
+
+            <div class="card-header bg-light">
+
+                <h5 class="mb-0">
+
+                    <i class="bi bi-lightning-charge"></i>
+
+                    Quick Actions
+
+                </h5>
+
+            </div>
+
+            <div class="card-body">
+
+                <div class="d-flex flex-wrap gap-2">
+
+                    <a
+                        href="{% url 'dashboard_final' %}"
+                        class="btn btn-primary">
+
+                        <i class="bi bi-speedometer2"></i>
+
+                        Dashboard
+
+                    </a>
+
+                    <a
+                        href="{% url 'teacher_assignment_create' %}"
+                        class="btn btn-success">
+
+                        <i class="bi bi-plus-circle"></i>
+
+                        New Assignment
+
+                    </a>
+
+                    <a
+                        href="{% url 'teacher_timetable' %}"
+                        class="btn btn-info text-white">
+
+                        <i class="bi bi-calendar3"></i>
+
+                        Timetable
+
+                    </a>
+
+                    <a
+                        href="{% url 'teacher_academic' %}"
+                        class="btn btn-warning">
+
+                        <i class="bi bi-pencil-square"></i>
+
+                        Academic Records
+
+                    </a>
+
+                    <button
+                        type="button"
+                        class="btn btn-outline-dark"
+                        onclick="window.print();">
+
+                        <i class="bi bi-printer"></i>
+
+                        Print
+
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+    const search = document.getElementById("assignmentSearch");
+
+    const table = document.getElementById("assignmentTable");
+
+    if(search && table){
+
+        search.addEventListener("keyup", function(){
+
+            const value = this.value.toLowerCase();
+
+            table.querySelectorAll("tbody tr").forEach(function(row){
+
+                row.style.display = row.innerText.toLowerCase().includes(value)
+
+                    ? ""
+
+                    : "none";
+
+            });
+
+        });
+
+    }
+
+});
+
+</script>
+
+<style>
+
+.table td{
+
+    vertical-align:middle;
+
+}
+
+.table th{
+
+    white-space:nowrap;
+
+}
+
+.badge{
+
+    font-size:.88rem;
+
+}
+
+.card{
+
+    border-radius:12px;
+
+}
+
+.card-header{
+
+    font-weight:600;
+
+}
+
+.btn{
+
+    border-radius:8px;
+
+}
+
+.table-hover tbody tr:hover{
+
+    background:#f8f9fa;
+
+}
+
+@media print{
+
+    .btn,
+
+    #assignmentSearch,
+
+    .navbar,
+
+    footer{
+
+        display:none !important;
+
+    }
+
+    body{
+
+        background:white !important;
+
+    }
+
+    .card{
+
+        border:none !important;
+
+        box-shadow:none !important;
+
+    }
+
+}
+
+</style>
+
 {% endblock %}
