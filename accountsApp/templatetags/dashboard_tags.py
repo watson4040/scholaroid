@@ -11,7 +11,7 @@ def dashboard_url(context):
     user = request.user
     mapping = {
         'admin': 'dashboard_admin',
-        'student': 'dashboard_student',
+        'pupil': 'dashboard_student',
         'teacher': 'dashboard_teacher',
         'parent': 'dashboard_parent',
     }

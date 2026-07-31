@@ -52,7 +52,7 @@
                             <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_admin' %}">Dashboard</a></li>
                         {% elif user.role == 'teacher' %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_teacher' %}">Dashboard</a></li>
-                        {% elif user.role == 'student' %}
+                        {% elif user.role == 'pupil' %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_student' %}">Dashboard</a></li>
                         {% elif user.role == 'parent' %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'dashboard_parent' %}">Dashboard</a></li>

@@ -1,19 +1,32 @@
 from django.db import models
+
 from accountsApp.models import User
 from classesApp.models import ClassRoom, Subjects
 
 
+# ============================================================
+# TEACHER
+# ============================================================
+
 class Teacher(models.Model):
     """
-    Teacher profile linked to a system user.
-    The profile is automatically created by accountsApp.signals.
+    Teacher profile linked to a system User.
+
+    The actual User role must be:
+        teacher
+
+    Teacher profiles can be assigned:
+        - multiple subjects
+        - multiple classes
     """
 
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name="teacher_profile",
-        limit_choices_to={"role": "teacher"},
+        limit_choices_to={
+            "role": "teacher",
+        },
     )
 
     subject = models.ManyToManyField(
@@ -35,16 +48,29 @@ class Teacher(models.Model):
     )
 
     class Meta:
-        ordering = ["user__username"]
+        ordering = [
+            "user__username",
+        ]
+
         verbose_name = "Teacher"
         verbose_name_plural = "Teachers"
 
     def __str__(self):
         full_name = self.user.get_full_name().strip()
-        return full_name if full_name else self.user.username
 
+        return (
+            full_name
+            if full_name
+            else self.user.username
+        )
+
+
+# ============================================================
+# PUPIL REPORT
+# ============================================================
 
 class PupilReport(models.Model):
+
     TERM_CHOICES = [
         ("1", "Term 1"),
         ("2", "Term 2"),
@@ -63,32 +89,65 @@ class PupilReport(models.Model):
         default="1",
     )
 
-    academic_year = models.CharField(max_length=9)
+    academic_year = models.CharField(
+        max_length=9,
+    )
 
     teacher = models.ForeignKey(
         Teacher,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name="pupil_reports",
     )
 
-    comment = models.TextField(blank=True)
+    comment = models.TextField(
+        blank=True,
+    )
 
-    is_submitted = models.BooleanField(default=False)
+    is_submitted = models.BooleanField(
+        default=False,
+    )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        unique_together = ("pupil", "term", "academic_year")
-        ordering = ["-academic_year", "term"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=[
+                    "pupil",
+                    "term",
+                    "academic_year",
+                ],
+                name="unique_pupil_term_academic_year_report",
+            ),
+        ]
+
+        ordering = [
+            "-academic_year",
+            "term",
+        ]
 
     def __str__(self):
-        return f"{self.pupil.user.username} - Term {self.term} ({self.academic_year})"
+        return (
+            f"{self.pupil.user.username} - "
+            f"Term {self.term} "
+            f"({self.academic_year})"
+        )
 
+
+# ============================================================
+# ACADEMIC RECORD
+# ============================================================
 
 class AcademicRecord(models.Model):
+
     EXAM_TYPES = [
         ("TEST", "Test"),
         ("EXAM", "Exam"),
@@ -116,7 +175,9 @@ class AcademicRecord(models.Model):
         default="1",
     )
 
-    academic_year = models.CharField(max_length=9)
+    academic_year = models.CharField(
+        max_length=9,
+    )
 
     exam_type = models.CharField(
         max_length=10,
@@ -136,21 +197,30 @@ class AcademicRecord(models.Model):
         default=100,
     )
 
-    remark = models.TextField(blank=True)
+    remark = models.TextField(
+        blank=True,
+    )
 
     teacher = models.ForeignKey(
         Teacher,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name="academic_records",
     )
 
-    date_recorded = models.DateField(auto_now_add=True)
+    date_recorded = models.DateField(
+        auto_now_add=True,
+    )
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        ordering = ["-date_recorded"]
+        ordering = [
+            "-date_recorded",
+        ]
 
     def __str__(self):
         return (
@@ -160,24 +230,34 @@ class AcademicRecord(models.Model):
         )
 
 
+# ============================================================
+# ASSIGNMENT
+# ============================================================
+
 class Assignment(models.Model):
-    title = models.CharField(max_length=255)
+
+    title = models.CharField(
+        max_length=255,
+    )
 
     description = models.TextField()
 
     subject = models.ForeignKey(
         Subjects,
         on_delete=models.CASCADE,
+        related_name="assignments",
     )
 
     class_room = models.ForeignKey(
         ClassRoom,
         on_delete=models.CASCADE,
+        related_name="assignments",
     )
 
     teacher = models.ForeignKey(
         Teacher,
         on_delete=models.CASCADE,
+        related_name="assignments",
     )
 
     due_date = models.DateField()
@@ -188,18 +268,29 @@ class Assignment(models.Model):
         null=True,
     )
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        ordering = ["-created_at"]
+        ordering = [
+            "-created_at",
+        ]
 
     def __str__(self):
         return self.title
 
 
+# ============================================================
+# BEHAVIOR LOG
+# ============================================================
+
 class BehaviorLog(models.Model):
+
     BEHAVIOR_TYPES = [
         ("positive", "Positive"),
         ("negative", "Negative"),
@@ -214,6 +305,7 @@ class BehaviorLog(models.Model):
     teacher = models.ForeignKey(
         Teacher,
         on_delete=models.CASCADE,
+        related_name="behavior_logs",
     )
 
     category = models.CharField(
@@ -224,16 +316,26 @@ class BehaviorLog(models.Model):
 
     note = models.TextField()
 
-    conduct_remark = models.TextField(blank=True)
+    conduct_remark = models.TextField(
+        blank=True,
+    )
 
-    is_report_card_remark = models.BooleanField(default=False)
+    is_report_card_remark = models.BooleanField(
+        default=False,
+    )
 
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField(
+        auto_now_add=True,
+    )
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        ordering = ["-date"]
+        ordering = [
+            "-date",
+        ]
 
     def __str__(self):
         return (
@@ -243,7 +345,12 @@ class BehaviorLog(models.Model):
         )
 
 
+# ============================================================
+# TIMETABLE
+# ============================================================
+
 class Timetable(models.Model):
+
     DAYS = [
         ("Mon", "Monday"),
         ("Tue", "Tuesday"),
@@ -263,11 +370,13 @@ class Timetable(models.Model):
     class_room = models.ForeignKey(
         ClassRoom,
         on_delete=models.CASCADE,
+        related_name="timetable_entries",
     )
 
     subject = models.ForeignKey(
         Subjects,
         on_delete=models.CASCADE,
+        related_name="timetable_entries",
     )
 
     day = models.CharField(
@@ -279,12 +388,19 @@ class Timetable(models.Model):
 
     end_time = models.TimeField()
 
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
 
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
 
     class Meta:
-        ordering = ["day", "start_time"]
+        ordering = [
+            "day",
+            "start_time",
+        ]
 
     def __str__(self):
         return (

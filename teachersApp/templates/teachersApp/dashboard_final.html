@@ -1,1075 +1,135 @@
 {% extends "base.html" %}
-{% load static %}
 
 {% block title %}Teacher Dashboard{% endblock %}
 
-{% block extra_css %}
-
-<link rel="stylesheet" href="{% static 'css/teachers-dashboard.css' %}">
-{% endblock %}
-
 {% block content %}
-
-<div class="d-flex">
-
-```
-<!-- =====================================================
-     TEACHER SIDEBAR
-     ===================================================== -->
-<nav id="teacherSidebar" class="teacher-sidebar">
-
-    <div class="nav flex-column">
-
-        <div class="px-3 pt-2 pb-1 text-uppercase small text-muted">
-            Menu
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                Welcome, {{ teacher.user.get_full_name|default:teacher.user.username }}
+            </h2>
+            <p class="text-muted mb-0">Teacher Dashboard</p>
         </div>
-
-        <!-- Dashboard -->
-        <a
-            class="nav-link active"
-            href="{% url 'dashboard_final' %}"
-        >
-            <i class="bi bi-speedometer2"></i>
-            <span>Dashboard</span>
+        <a href="{% url 'profile' %}" class="btn btn-outline-primary mt-2 mt-md-0">
+            <i class="fas fa-user me-1"></i> Profile
         </a>
-
-        <!-- Messaging -->
-        <a
-            class="nav-link"
-            href="{% url 'inbox' %}"
-        >
-            <i class="bi bi-chat-dots"></i>
-            <span>Inbox</span>
-        </a>
-
-        <!-- Exams -->
-        <a
-            class="nav-link"
-            href="{% url 'teacher_exams_list' %}"
-        >
-            <i class="bi bi-journal-check"></i>
-            <span>Exams</span>
-        </a>
-
-        <!-- Notices -->
-        <a
-            class="nav-link"
-            href="{% url 'notice_list' %}"
-        >
-            <i class="bi bi-bell"></i>
-            <span>Notices</span>
-        </a>
-
-        <!-- Resources -->
-        <a
-            class="nav-link"
-            href="{% url 'teacher_resources' %}"
-        >
-            <i class="bi bi-folder"></i>
-            <span>Resources</span>
-        </a>
-
-        <!-- Timetable -->
-        <a
-            class="nav-link"
-            href="{% url 'teacher_timetable' %}"
-        >
-            <i class="bi bi-calendar3"></i>
-            <span>Timetable</span>
-        </a>
-
-        <!-- Assignments -->
-        <a
-            class="nav-link"
-            href="{% url 'teacher_assignments' %}"
-        >
-            <i class="bi bi-pencil-square"></i>
-            <span>Assignments</span>
-        </a>
-
-        <!-- Academic -->
-        <a
-            class="nav-link"
-            href="{% url 'teacher_academic' %}"
-        >
-            <i class="bi bi-file-earmark-text"></i>
-            <span>Academic</span>
-        </a>
-
-        <!-- Behaviour -->
-        <a
-            class="nav-link"
-            href="{% url 'teacher_behavior' %}"
-        >
-            <i class="bi bi-clipboard2-pulse"></i>
-            <span>Behavior</span>
-        </a>
-
-        <!-- Performance -->
-        <a
-            class="nav-link"
-            href="#classes"
-            onclick="showPerformanceHelp(event)"
-        >
-            <i class="bi bi-graph-up"></i>
-            <span>Performance</span>
-        </a>
-
-        <!-- Reports -->
-        <a
-            class="nav-link"
-            href="#classes"
-            onclick="showReportsHelp(event)"
-        >
-            <i class="bi bi-printer"></i>
-            <span>Print Reports</span>
-        </a>
-
-    </div>
-</nav>
-
-
-<!-- =====================================================
-     MAIN DASHBOARD
-     ===================================================== -->
-<div
-    id="teacherMain"
-    class="flex-grow-1 slide-transition"
->
-
-    <div class="container-fluid mt-3">
-
-
-        <!-- =================================================
-             HEADER
-             ================================================= -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-
-            <div class="d-flex align-items-center gap-3">
-
-                <button
-                    id="teacherSidebarToggle"
-                    type="button"
-                    aria-label="Toggle teacher navigation"
-                    aria-expanded="false"
-                >
-                    <i class="bi bi-list"></i>
-                </button>
-
-                <div>
-                    <h3 class="mb-0">
-                        Welcome
-                        {% if teacher.user.first_name %}
-                            {{ teacher.user.first_name }}
-                        {% else %}
-                            {{ teacher.user.username }}
-                        {% endif %}
-                        !
-                    </h3>
-
-                    <small class="text-muted">
-                        Teacher Dashboard
-                    </small>
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             STATISTICS
-             ================================================= -->
-        <div class="row g-3 mb-4">
-
-            <!-- Classes -->
-            <div class="col-sm-6 col-lg-3">
-
-                <div class="t-stat bg-grad-a">
-
-                    <div>
-                        <h3>
-                            {{ stats.classes|default:0 }}
-                        </h3>
-
-                        <h6>
-                            Classes
-                        </h6>
-                    </div>
-
-                    <div class="icon">
-                        <i class="fa-solid fa-chalkboard"></i>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Subjects -->
-            <div class="col-sm-6 col-lg-3">
-
-                <div class="t-stat bg-grad-b">
-
-                    <div>
-                        <h3>
-                            {{ stats.subjects|default:0 }}
-                        </h3>
-
-                        <h6>
-                            Subjects
-                        </h6>
-                    </div>
-
-                    <div class="icon">
-                        <i class="fa-solid fa-book-open"></i>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Pupils -->
-            <div class="col-sm-6 col-lg-3">
-
-                <div class="t-stat bg-grad-c">
-
-                    <div>
-                        <h3>
-                            {{ stats.students|default:0 }}
-                        </h3>
-
-                        <h6>
-                            Pupils
-                        </h6>
-                    </div>
-
-                    <div class="icon">
-                        <i class="fa-solid fa-user-graduate"></i>
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Exams -->
-            <div class="col-sm-6 col-lg-3">
-
-                <div class="t-stat bg-grad-d">
-
-                    <div>
-                        <h3>
-                            {{ stats.upcoming_exams|default:0 }}
-                        </h3>
-
-                        <h6>
-                            Exams
-                        </h6>
-                    </div>
-
-                    <div class="icon">
-                        <i class="fa-solid fa-file-pen"></i>
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             QUICK ACTIONS
-             ================================================= -->
-        <div class="row g-3 mb-4">
-
-            <!-- Timetable -->
-            <div class="col-sm-6 col-lg-3">
-
-                <div class="card teacher-action-card h-100">
-
-                    <div class="card-body text-center">
-
-                        <i class="bi bi-calendar3 fs-1 text-primary"></i>
-
-                        <h5 class="mt-2">
-                            Timetable
-                        </h5>
-
-                        <p class="small text-muted">
-                            View your teaching schedule.
-                        </p>
-
-                        <a
-                            href="{% url 'teacher_timetable' %}"
-                            class="btn btn-sm btn-outline-primary"
-                        >
-                            View Timetable
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Assignments -->
-            <div class="col-sm-6 col-lg-3">
-
-                <div class="card teacher-action-card h-100">
-
-                    <div class="card-body text-center">
-
-                        <i class="bi bi-pencil-square fs-1 text-success"></i>
-
-                        <h5 class="mt-2">
-                            Assignments
-                        </h5>
-
-                        <p class="small text-muted">
-                            Post and manage assignments.
-                        </p>
-
-                        <a
-                            href="{% url 'teacher_assignments' %}"
-                            class="btn btn-sm btn-outline-success"
-                        >
-                            Manage
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Academic -->
-            <div class="col-sm-6 col-lg-3">
-
-                <div class="card teacher-action-card h-100">
-
-                    <div class="card-body text-center">
-
-                        <i class="bi bi-file-earmark-text fs-1 text-warning"></i>
-
-                        <h5 class="mt-2">
-                            Academic
-                        </h5>
-
-                        <p class="small text-muted">
-                            Enter and manage pupil marks.
-                        </p>
-
-                        <a
-                            href="{% url 'teacher_academic' %}"
-                            class="btn btn-sm btn-outline-warning"
-                        >
-                            Enter Marks
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Behavior -->
-            <div class="col-sm-6 col-lg-3">
-
-                <div class="card teacher-action-card h-100">
-
-                    <div class="card-body text-center">
-
-                        <i class="bi bi-clipboard2-pulse fs-1 text-danger"></i>
-
-                        <h5 class="mt-2">
-                            Behavior
-                        </h5>
-
-                        <p class="small text-muted">
-                            Record pupil behavior.
-                        </p>
-
-                        <a
-                            href="{% url 'teacher_behavior' %}"
-                            class="btn btn-sm btn-outline-danger"
-                        >
-                            View Logs
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             CLASSES
-             ================================================= -->
-        <div class="row g-4">
-
-            <div
-                class="col-xl-6"
-                id="classes"
-            >
-
-                <div class="card section-card h-100">
-
-                    <div class="card-header">
-
-                        <span>
-                            <i class="bi bi-people me-1"></i>
-                            Your Classes
-                        </span>
-
-                        <span class="badge bg-primary">
-                            {{ stats.classes|default:0 }}
-                        </span>
-
-                    </div>
-
-                    <div class="card-body p-0">
-
-                        {% if classes %}
-
-                            <ul class="list-group list-group-flush scroll-box">
-
-                                {% for cls in classes %}
-
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-
-                                        <div>
-
-                                            <strong>
-                                                <i class="bi bi-door-open me-1 text-primary"></i>
-
-                                                {{ cls.name }}
-
-                                                {% if cls.section %}
-                                                    {{ cls.section }}
-                                                {% endif %}
-                                            </strong>
-
-                                            <br>
-
-                                            <small class="text-muted">
-                                                Open the class to manage attendance, reports and pupils.
-                                            </small>
-
-                                        </div>
-
-                                        <a
-                                            href="{% url 'teacher_class_detail' cls.id %}"
-                                            class="btn btn-sm btn-outline-primary"
-                                        >
-                                            Open
-                                        </a>
-
-                                    </li>
-
-                                {% endfor %}
-
-                            </ul>
-
-                        {% else %}
-
-                            <div class="p-4 text-center text-muted">
-
-                                <i class="bi bi-people fs-2 d-block mb-2"></i>
-
-                                No classes have been assigned to you yet.
-
-                            </div>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- =================================================
-                 SUBJECTS
-                 ================================================= -->
-            <div
-                class="col-xl-6"
-                id="subjects"
-            >
-
-                <div class="card section-card h-100">
-
-                    <div class="card-header">
-
-                        <span>
-                            <i class="bi bi-book me-1"></i>
-                            Your Subjects
-                        </span>
-
-                        <span class="badge bg-success">
-                            {{ stats.subjects|default:0 }}
-                        </span>
-
-                    </div>
-
-                    <div class="card-body p-0">
-
-                        {% if subjects %}
-
-                            <ul class="list-group list-group-flush scroll-box">
-
-                                {% for sub in subjects %}
-
-                                    <li class="list-group-item d-flex align-items-center">
-
-                                        <i class="bi bi-journal-text me-2 text-success"></i>
-
-                                        <span>
-                                            {{ sub.subject }}
-                                        </span>
-
-                                    </li>
-
-                                {% endfor %}
-
-                            </ul>
-
-                        {% else %}
-
-                            <div class="p-4 text-center text-muted">
-
-                                <i class="bi bi-book fs-2 d-block mb-2"></i>
-
-                                No subjects have been assigned yet.
-
-                            </div>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             UPCOMING EXAMS + NOTICES
-             ================================================= -->
-        <div class="row g-4 mt-1">
-
-
-            <!-- Exams -->
-            <div
-                class="col-xl-7"
-                id="exams"
-            >
-
-                <div class="card section-card h-100">
-
-                    <div class="card-header">
-
-                        <span>
-                            <i class="bi bi-journal-check me-1"></i>
-                            Upcoming Exams
-                        </span>
-
-                        <a
-                            href="{% url 'teacher_exams_list' %}"
-                            class="btn btn-sm btn-outline-primary"
-                        >
-                            All Exams
-                        </a>
-
-                    </div>
-
-                    <div class="card-body p-0">
-
-                        {% if exams %}
-
-                            <div class="table-responsive">
-
-                                <table class="table table-hover table-modern mb-0">
-
-                                    <thead>
-
-                                        <tr>
-
-                                            <th>
-                                                Subject
-                                            </th>
-
-                                            <th>
-                                                Class
-                                            </th>
-
-                                            <th>
-                                                Date
-                                            </th>
-
-                                            <th>
-                                                Marks
-                                            </th>
-
-                                        </tr>
-
-                                    </thead>
-
-                                    <tbody>
-
-                                        {% for exam in exams %}
-
-                                            <tr>
-
-                                                <td>
-                                                    <strong>
-                                                        {{ exam.subject.subject }}
-                                                    </strong>
-                                                </td>
-
-                                                <td>
-                                                    {{ exam.class_room.name }}
-
-                                                    {% if exam.class_room.section %}
-                                                        {{ exam.class_room.section }}
-                                                    {% endif %}
-                                                </td>
-
-                                                <td>
-                                                    {{ exam.exam_date|date:"d M Y" }}
-                                                </td>
-
-                                                <td>
-                                                    <span class="badge bg-light text-dark border">
-                                                        {{ exam.max_marks }}
-                                                    </span>
-                                                </td>
-
-                                            </tr>
-
-                                        {% endfor %}
-
-                                    </tbody>
-
-                                </table>
-
-                            </div>
-
-                        {% else %}
-
-                            <div class="p-4 text-center text-muted">
-
-                                <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
-
-                                No upcoming exams scheduled.
-
-                            </div>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Notices -->
-            <div
-                class="col-xl-5"
-                id="notices"
-            >
-
-                <div class="card section-card h-100">
-
-                    <div class="card-header">
-
-                        <span>
-                            <i class="bi bi-bell me-1"></i>
-                            Recent Notices
-                        </span>
-
-                        <a
-                            href="{% url 'notice_list' %}"
-                            class="btn btn-sm btn-outline-secondary"
-                        >
-                            All
-                        </a>
-
-                    </div>
-
-                    <div class="card-body p-0">
-
-                        {% if notices %}
-
-                            <ul class="list-group list-group-flush scroll-box">
-
-                                {% for notice in notices %}
-
-                                    <li class="list-group-item">
-
-                                        <strong>
-                                            {{ notice.title|truncatechars:45 }}
-                                        </strong>
-
-                                        {% if notice.message %}
-
-                                            <br>
-
-                                            <small class="text-muted">
-                                                {{ notice.message|truncatechars:100 }}
-                                            </small>
-
-                                        {% endif %}
-
-                                        <br>
-
-                                        <small class="text-muted">
-                                            {{ notice.created_at|date:"d M Y" }}
-                                        </small>
-
-                                    </li>
-
-                                {% endfor %}
-
-                            </ul>
-
-                        {% else %}
-
-                            <div class="p-4 text-center text-muted">
-
-                                <i class="bi bi-bell-slash fs-2 d-block mb-2"></i>
-
-                                No notices available.
-
-                            </div>
-
-                        {% endif %}
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             TEACHER TOOLS
-             ================================================= -->
-        <div class="row g-4 mt-1">
-
-
-            <!-- Resources -->
-            <div
-                class="col-lg-4"
-                id="resources"
-            >
-
-                <div class="card section-card h-100">
-
-                    <div class="card-header">
-
-                        <span>
-                            <i class="bi bi-folder me-1"></i>
-                            Resources
-                        </span>
-
-                    </div>
-
-                    <div class="card-body text-center">
-
-                        <i class="bi bi-folder2-open fs-1 text-primary"></i>
-
-                        <p class="text-muted small mt-2">
-                            Access learning materials and files
-                            shared with your assigned classes.
-                        </p>
-
-                        <a
-                            href="{% url 'teacher_resources' %}"
-                            class="teacher-role-btn"
-                        >
-                            View Resources
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Messages -->
-            <div
-                class="col-lg-4"
-                id="messages"
-            >
-
-                <div class="card section-card h-100">
-
-                    <div class="card-header">
-
-                        <span>
-                            <i class="bi bi-chat-dots me-1"></i>
-                            Messaging
-                        </span>
-
-                    </div>
-
-                    <div class="card-body text-center">
-
-                        <i class="bi bi-chat-right-dots fs-1 text-success"></i>
-
-                        <p class="text-muted small mt-2">
-                            Communicate with parents, pupils
-                            and other authorised users.
-                        </p>
-
-                        <a
-                            href="{% url 'inbox' %}"
-                            class="teacher-role-btn"
-                        >
-                            Open Inbox
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <!-- Reports -->
-            <div
-                class="col-lg-4"
-                id="reports"
-            >
-
-                <div class="card section-card h-100">
-
-                    <div class="card-header">
-
-                        <span>
-                            <i class="bi bi-printer me-1"></i>
-                            Reports
-                        </span>
-
-                    </div>
-
-                    <div class="card-body text-center">
-
-                        <i class="bi bi-file-earmark-bar-graph fs-1 text-warning"></i>
-
-                        <p class="text-muted small mt-2">
-                            Open a class to view performance,
-                            print class lists and print results.
-                        </p>
-
-                        <a
-                            href="#classes"
-                            class="teacher-role-btn"
-                            onclick="showReportsHelp(event)"
-                        >
-                            View Class Reports
-                        </a>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
     </div>
 
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <small class="text-muted">MY CLASSES</small>
+                    <h2 class="fw-bold mb-0">{{ stats.classes|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <small class="text-muted">SUBJECTS</small>
+                    <h2 class="fw-bold mb-0">{{ stats.subjects|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <small class="text-muted">PUPILS</small>
+                    <h2 class="fw-bold mb-0">{{ stats.students|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-body">
+                    <small class="text-muted">UPCOMING EXAMS</small>
+                    <h2 class="fw-bold mb-0">{{ stats.upcoming_exams|default:0 }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="mb-0">My Classes</h5>
+                </div>
+                <div class="card-body px-4">
+                    {% for classroom in classes %}
+                        <a href="{% url 'teacher_class_detail' classroom.id %}"
+                           class="d-flex justify-content-between align-items-center text-decoration-none border-bottom py-3">
+                            <span>
+                                <strong>{{ classroom.name }}</strong>
+                                <small class="text-muted d-block">Section {{ classroom.section }}</small>
+                            </span>
+                            <i class="fas fa-chevron-right"></i>
+                        </a>
+                    {% empty %}
+                        <p class="text-muted mb-0">No classes have been assigned yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 h-100">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="mb-0">My Subjects</h5>
+                </div>
+                <div class="card-body px-4">
+                    {% for subject in subjects %}
+                        <span class="badge bg-primary-subtle text-primary me-2 mb-2 px-3 py-2">
+                            {{ subject.subject }}
+                        </span>
+                    {% empty %}
+                        <p class="text-muted mb-0">No subjects have been assigned yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="mb-0">Upcoming Exams</h5>
+                </div>
+                <div class="card-body px-4">
+                    {% for exam in exams %}
+                        <div class="border-bottom py-3">
+                            <strong>{{ exam.subject.subject }}</strong>
+                            <div class="small text-muted">
+                                {{ exam.class_room.name }} - {{ exam.class_room.section }}
+                                · {{ exam.exam_date|date:"d M Y" }}
+                            </div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted mb-0">No upcoming exams.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-white border-0 pt-4 px-4">
+                    <h5 class="mb-0">Notices</h5>
+                </div>
+                <div class="card-body px-4">
+                    {% for notice in notices %}
+                        <div class="border-bottom py-3">
+                            <strong>{{ notice.title }}</strong>
+                            <div class="small text-muted">{{ notice.created_at|date:"d M Y" }}</div>
+                            <div>{{ notice.message|truncatewords:25 }}</div>
+                        </div>
+                    {% empty %}
+                        <p class="text-muted mb-0">No notices yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-```
-
-</div>
-
-<!-- =========================================================
-     SIDEBAR SCRIPT
-     ========================================================= -->
-
-<script>
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    const teacherToggle =
-        document.getElementById("teacherSidebarToggle");
-
-    const teacherSidebar =
-        document.getElementById("teacherSidebar");
-
-    const teacherMain =
-        document.getElementById("teacherMain");
-
-
-    if (!teacherToggle || !teacherSidebar || !teacherMain) {
-        return;
-    }
-
-
-    teacherToggle.addEventListener("click", function () {
-
-        teacherSidebar.classList.toggle("active");
-
-        const isOpen =
-            teacherSidebar.classList.contains("active");
-
-        teacherToggle.setAttribute(
-            "aria-expanded",
-            isOpen ? "true" : "false"
-        );
-
-
-        /*
-         * On desktop, move the main content when
-         * the sidebar is opened.
-         */
-        if (window.innerWidth >= 992) {
-
-            if (isOpen) {
-
-                teacherMain.classList.add(
-                    "teacher-sidebar-open"
-                );
-
-            } else {
-
-                teacherMain.classList.remove(
-                    "teacher-sidebar-open"
-                );
-
-            }
-
-        }
-
-    });
-
-
-    /*
-     * Close sidebar automatically on mobile
-     * after clicking a navigation item.
-     */
-    document
-        .querySelectorAll("#teacherSidebar .nav-link")
-        .forEach(function (link) {
-
-            link.addEventListener("click", function () {
-
-                if (window.innerWidth < 992) {
-
-                    teacherSidebar.classList.remove(
-                        "active"
-                    );
-
-                    teacherMain.classList.remove(
-                        "teacher-sidebar-open"
-                    );
-
-                    teacherToggle.setAttribute(
-                        "aria-expanded",
-                        "false"
-                    );
-
-                }
-
-            });
-
-        });
-
-
-    /*
-     * Keep layout correct when browser
-     * window is resized.
-     */
-    window.addEventListener("resize", function () {
-
-        if (window.innerWidth < 992) {
-
-            teacherMain.classList.remove(
-                "teacher-sidebar-open"
-            );
-
-        }
-
-    });
-
-});
-
-
-/*
- * Performance navigation helper.
- *
- * Performance belongs to a specific class, so the
- * teacher must first choose a class.
- */
-function showPerformanceHelp(event) {
-
-    event.preventDefault();
-
-    const classSection =
-        document.getElementById("classes");
-
-    if (classSection) {
-
-        classSection.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-
-    }
-
-    alert(
-        "Open one of your classes to access its performance report."
-    );
-
-}
-
-
-/*
- * Reports navigation helper.
- *
- * Class reports require a class selection first.
- */
-function showReportsHelp(event) {
-
-    event.preventDefault();
-
-    const classSection =
-        document.getElementById("classes");
-
-    if (classSection) {
-
-        classSection.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-
-    }
-
-    alert(
-        "Open a class to access class lists and printable results."
-    );
-
-}
-
-</script>
-
 {% endblock %}
