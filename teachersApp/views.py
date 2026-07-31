@@ -1,20 +1,30 @@
-
-# ============================================================
-# teachersApp/views.py
-# ============================================================
-
+import datetime
 import logging
 
+from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db import transaction
+from django.db.models import Avg, Q
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.utils.timezone import now
+from django.views.generic import DetailView, ListView, UpdateView
 
-from accountsApp.models import User
+from accountsApp.mixins import AdminRequiredMixin
+from accountsApp.models import Notice
+from attendanceApp.models import Attendance
 from classesApp.models import ClassRoom, Subjects
 from examsApp.models import Exam
+from resourcesApp.models import Resource
 from studentsApp.models import Student
 
+from .forms import (
+    AssignmentForm,
+    BehaviorLogForm,
+    PupilReportForm,
+    TeacherAdminForm,
+)
 from .models import (
     AcademicRecord,
     Assignment,
@@ -27,890 +37,847 @@ from .models import (
 logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# HELPER: GET CURRENT TEACHER
-# ============================================================
+# ==========================================================
+# ADMIN TEACHER VIEWS
+# ==========================================================
 
-def get_teacher(request):
+
+class AdminTeacherList(AdminRequiredMixin, ListView):
     """
-    Return the Teacher profile belonging to the logged-in user.
-
-    If the account is not a teacher, return 403.
-    """
-
-    if not request.user.is_authenticated:
-        return None
-
-    teacher = get_object_or_404(
-        Teacher.objects.select_related("user"),
-        user=request.user,
-    )
-
-    return teacher
-
-
-# ============================================================
-# HELPER: GET TEACHER SCHOOL
-# ============================================================
-
-def get_teacher_school(request):
-    """
-    Get the school assigned to the logged-in teacher.
-
-    The school belongs to User, not ClassRoom.
+    Admin list of teachers.
     """
 
-    if not request.user.is_authenticated:
-        return None
+    model = Teacher
+    template_name = "teachersApp/admin_teacher_list.html"
+    paginate_by = 12
 
-    return getattr(
-        request.user,
-        "school",
-        None,
-    )
-
-
-# ============================================================
-# HELPER: GET TEACHER CLASSES
-# ============================================================
-
-def get_teacher_classes(teacher):
-    """
-    Return only classes assigned to the teacher.
-
-    IMPORTANT:
-    ClassRoom does NOT have a school field.
-
-    Therefore DO NOT do:
-
-        teacher.assigned_class.filter(school=school)
-
-    School isolation is handled through the pupils' school
-    instead.
-    """
-
-    return (
-        teacher.assigned_class
-        .all()
-        .order_by(
-            "name",
-            "section",
-        )
-    )
-
-
-# ============================================================
-# HELPER: TEACHER CLASS ACCESS
-# ============================================================
-
-def teacher_has_access_to_class(
-    teacher,
-    class_room,
-):
-    """
-    Check whether the teacher is assigned to this class.
-    """
-
-    if teacher is None or class_room is None:
-        return False
-
-    return teacher.assigned_class.filter(
-        pk=class_room.pk
-    ).exists()
-
-
-# ============================================================
-# HELPER: TEACHER SUBJECT ACCESS
-# ============================================================
-
-def teacher_has_access_to_subject(
-    teacher,
-    subject,
-):
-    """
-    Check whether the teacher teaches this subject.
-    """
-
-    if teacher is None or subject is None:
-        return False
-
-    return teacher.subject.filter(
-        pk=subject.pk
-    ).exists()
-
-
-# ============================================================
-# HELPER: FILTER PUPILS BY TEACHER SCHOOL
-# ============================================================
-
-def get_teacher_pupils(
-    request,
-    queryset=None,
-):
-    """
-    Return pupils belonging to the teacher's assigned classes.
-
-    School filtering is performed on Student.school because
-    Student has a school ForeignKey.
-
-    ClassRoom does NOT have a school field.
-    """
-
-    teacher = get_teacher(request)
-
-    if queryset is None:
-        classes = get_teacher_classes(teacher)
-
-        pupils = (
-            Student.objects
-            .filter(
-                class_room__in=classes
-            )
+    def get_queryset(self):
+        queryset = (
+            Teacher.objects.select_related("user", "user__school")
+            .prefetch_related("subject", "assigned_class")
+            .order_by("user__first_name", "user__last_name", "user__username")
         )
 
-    else:
-        pupils = queryset
+        query = self.request.GET.get("q", "").strip()
 
-    pupils = (
-        pupils
-        .select_related(
-            "user",
-            "class_room",
-            "school",
+        if query:
+            queryset = queryset.filter(
+                Q(user__first_name__icontains=query)
+                | Q(user__last_name__icontains=query)
+                | Q(user__username__icontains=query)
+                | Q(subject__subject__icontains=query)
+                | Q(assigned_class__name__icontains=query)
+                | Q(assigned_class__section__icontains=query)
+            ).distinct()
+
+        return queryset
+
+
+class AdminTeacherDetail(AdminRequiredMixin, DetailView):
+    """
+    Admin view of one teacher.
+    """
+
+    model = Teacher
+    template_name = "teachersApp/admin_teacher_detail.html"
+
+    def get_queryset(self):
+        return (
+            Teacher.objects.select_related("user", "user__school")
+            .prefetch_related("subject", "assigned_class")
         )
-        .order_by(
-            "user__first_name",
-            "user__last_name",
+
+
+class AdminTeacherUpdate(AdminRequiredMixin, UpdateView):
+    """
+    Admin edit view for a teacher profile.
+    """
+
+    model = Teacher
+    form_class = TeacherAdminForm
+    template_name = "teachersApp/admin_teacher_edit.html"
+
+    def get_success_url(self):
+        messages.success(self.request, "Teacher updated successfully.")
+
+        return reverse_lazy(
+            "admin_teacher_detail",
+            kwargs={"pk": self.object.pk},
         )
-    )
-
-    school = get_teacher_school(request)
-
-    if school is not None:
-        pupils = pupils.filter(
-            school=school
-        )
-
-    return pupils
 
 
-# ============================================================
+# ==========================================================
 # TEACHER DASHBOARD
-# ============================================================
+# ==========================================================
+
 
 @login_required
 def dashboard_teacher(request):
+    """
+    Main teacher dashboard entry point.
 
-    teacher = get_teacher(request)
+    This intentionally redirects to dashboard_final because
+    dashboard_final contains the actual teacher dashboard.
+    """
 
-    school = get_teacher_school(request)
+    return redirect("dashboard_final")
 
-    classes = get_teacher_classes(
-        teacher
-    )
-
-    subjects = (
-        teacher.subject
-        .all()
-        .order_by("subject")
-    )
-
-    pupils = get_teacher_pupils(
-        request
-    )
-
-    exams = (
-        Exam.objects
-        .filter(
-            class_room__in=classes
-        )
-        .select_related(
-            "subject",
-            "class_room",
-        )
-        .order_by(
-            "exam_date"
-        )
-    )
-
-    assignments = (
-        Assignment.objects
-        .filter(
-            teacher=teacher
-        )
-        .select_related(
-            "subject",
-            "class_room",
-        )
-        .order_by(
-            "-created_at"
-        )[:10]
-    )
-
-    timetable = (
-        Timetable.objects
-        .filter(
-            teacher=teacher
-        )
-        .select_related(
-            "class_room",
-            "subject",
-        )
-        .order_by(
-            "day",
-            "start_time",
-        )
-    )
-
-    context = {
-        "teacher": teacher,
-        "school": school,
-
-        "classes": classes,
-        "subjects": subjects,
-
-        "pupils": pupils[:20],
-        "students": pupils[:20],
-
-        "exams": exams[:10],
-
-        "assignments": assignments,
-
-        "today_timetable": timetable,
-        "timetable": timetable,
-
-        "stats": {
-            "classes": classes.count(),
-            "subjects": subjects.count(),
-            "students": pupils.count(),
-            "pupils": pupils.count(),
-            "upcoming_exams": exams.count(),
-        },
-    }
-
-    return render(
-        request,
-        "teachersApp/dashboard_final.html",
-        context,
-    )
-
-
-# ============================================================
-# DASHBOARD ALIAS
-# ============================================================
 
 @login_required
 def dashboard_final(request):
     """
-    Final teacher dashboard.
+    Main Teacher Dashboard.
 
-    This is kept separate because teachersApp/urls.py points
-    the /final/ route to dashboard_final.
+    IMPORTANT:
+    ClassRoom currently DOES NOT contain a school field.
+
+    Therefore we must NOT do:
+
+        teacher.assigned_class.filter(school=school)
+
+    or:
+
+        teacher.assigned_class.all().filter(school=school)
+
+    Teacher classes are determined from the Teacher.assigned_class
+    ManyToMany relationship.
+
+    Pupils DO contain a school field, so pupils can safely be
+    restricted by the teacher's school.
     """
 
-    teacher = get_teacher(request)
+    try:
+        # ------------------------------------------------------
+        # Make sure the logged-in user actually has a teacher
+        # profile.
+        # ------------------------------------------------------
 
-    school = get_teacher_school(request)
-
-    classes = get_teacher_classes(
-        teacher
-    )
-
-    subjects = (
-        teacher.subject
-        .all()
-        .order_by("subject")
-    )
-
-    pupils = get_teacher_pupils(
-        request
-    )
-
-    exams = (
-        Exam.objects
-        .filter(
-            class_room__in=classes
+        teacher = get_object_or_404(
+            Teacher.objects.select_related(
+                "user",
+                "user__school",
+            ),
+            user=request.user,
         )
-        .select_related(
-            "subject",
+
+        # ------------------------------------------------------
+        # School belongs to the User model.
+        # ------------------------------------------------------
+
+        school = getattr(request.user, "school", None)
+
+        # ------------------------------------------------------
+        # TEACHER'S ASSIGNED CLASSES
+        #
+        # ClassRoom has:
+        #   id
+        #   name
+        #   section
+        #   capacity
+        #
+        # It does NOT have school.
+        # ------------------------------------------------------
+
+        assigned_classes = (
+            teacher.assigned_class.all()
+            .order_by("name", "section")
+        )
+
+        # ------------------------------------------------------
+        # TEACHER'S ASSIGNED SUBJECTS
+        #
+        # Subjects uses the field:
+        #
+        #     subject
+        #
+        # not:
+        #
+        #     name
+        # ------------------------------------------------------
+
+        assigned_subjects = (
+            teacher.subject.all()
+            .order_by("subject")
+        )
+
+        # ------------------------------------------------------
+        # PUPILS
+        #
+        # Student is internally the Django model name, but the
+        # user-facing terminology remains Pupil/Pupils.
+        #
+        # Student DOES have a school field.
+        # ------------------------------------------------------
+
+        pupils_queryset = Student.objects.filter(
+            class_room__in=assigned_classes,
+        ).select_related(
+            "user",
+            "school",
             "class_room",
         )
-        .order_by(
-            "exam_date"
+
+        if school is not None:
+            pupils_queryset = pupils_queryset.filter(
+                school=school
+            )
+
+        pupils = pupils_queryset
+
+        # ------------------------------------------------------
+        # UPCOMING EXAMS
+        # ------------------------------------------------------
+
+        upcoming_exams = (
+            Exam.objects.filter(
+                class_room__in=assigned_classes,
+            )
+            .select_related(
+                "subject",
+                "class_room",
+            )
+            .order_by("exam_date")
         )
-    )
 
-    assignments = (
-        Assignment.objects
-        .filter(
-            teacher=teacher
+        # ------------------------------------------------------
+        # SCHOOL NOTICES
+        #
+        # Notice -> created_by -> school is valid because User
+        # contains the school ForeignKey.
+        # ------------------------------------------------------
+
+        if school is not None:
+            notices = (
+                Notice.objects.filter(
+                    created_by__school=school,
+                )
+                .select_related("created_by")
+                .order_by("-created_at")[:8]
+            )
+        else:
+            notices = (
+                Notice.objects.filter(
+                    created_by=request.user,
+                )
+                .select_related("created_by")
+                .order_by("-created_at")[:8]
+            )
+
+        # ------------------------------------------------------
+        # TEACHER ASSIGNMENTS
+        # ------------------------------------------------------
+
+        assignments = (
+            Assignment.objects.filter(
+                teacher=teacher,
+            )
+            .select_related(
+                "subject",
+                "class_room",
+                "teacher",
+            )
+            .order_by("-created_at")[:5]
         )
-        .select_related(
-            "subject",
-            "class_room",
+
+        # ------------------------------------------------------
+        # TEACHER TIMETABLE
+        # ------------------------------------------------------
+
+        timetable_today = (
+            Timetable.objects.filter(
+                teacher=teacher,
+            )
+            .select_related(
+                "class_room",
+                "subject",
+            )
+            .order_by("day", "start_time")
         )
-        .order_by(
-            "-created_at"
-        )[:10]
-    )
 
-    timetable = (
-        Timetable.objects
-        .filter(
-            teacher=teacher
-        )
-        .select_related(
-            "class_room",
-            "subject",
-        )
-        .order_by(
-            "day",
-            "start_time",
-        )
-    )
+        # ------------------------------------------------------
+        # DASHBOARD CONTEXT
+        # ------------------------------------------------------
 
-    context = {
-        "teacher": teacher,
-        "school": school,
+        context = {
+            "teacher": teacher,
+            "school": school,
+            "classes": assigned_classes,
+            "subjects": assigned_subjects,
+            "exams": upcoming_exams[:6],
+            "assignments": assignments,
+            "today_timetable": timetable_today,
+            "notices": notices,
+            "stats": {
+                "classes": assigned_classes.count(),
+                "subjects": assigned_subjects.count(),
+                "students": pupils.count(),
+                "upcoming_exams": upcoming_exams.count(),
+            },
+        }
 
-        "classes": classes,
-        "subjects": subjects,
-
-        "pupils": pupils[:20],
-        "students": pupils[:20],
-
-        "exams": exams[:10],
-
-        "assignments": assignments,
-
-        "today_timetable": timetable,
-        "timetable": timetable,
-
-        "stats": {
-            "classes": classes.count(),
-            "subjects": subjects.count(),
-            "students": pupils.count(),
-            "pupils": pupils.count(),
-            "upcoming_exams": exams.count(),
-        },
-    }
-
-    return render(
-        request,
-        "teachersApp/dashboard_final.html",
-        context,
-    )
-
-
-# ============================================================
-# TEACHER CLASS DETAIL
-# ============================================================
-
-@login_required
-def teacher_class_detail(
-    request,
-    class_id,
-):
-
-    teacher = get_teacher(request)
-
-    class_room = get_object_or_404(
-        ClassRoom,
-        pk=class_id,
-    )
-
-    if not teacher_has_access_to_class(
-        teacher,
-        class_room,
-    ):
         return render(
             request,
-            "errors/403.html",
-            status=403,
+            "teachersApp/dashboard_final.html",
+            context,
         )
 
-    school = get_teacher_school(request)
-
-    pupils = (
-        Student.objects
-        .filter(
-            class_room=class_room
-        )
-        .select_related(
-            "user",
-            "class_room",
-            "school",
-        )
-        .order_by(
-            "user__first_name",
-            "user__last_name",
-        )
-    )
-
-    # IMPORTANT:
-    # Student has school, so filtering here is valid.
-    if school is not None:
-        pupils = pupils.filter(
-            school=school
+    except Teacher.DoesNotExist:
+        logger.exception(
+            "Teacher profile does not exist for user %s.",
+            request.user.pk,
         )
 
-    subjects = (
-        teacher.subject
-        .all()
-        .order_by(
-            "subject"
+        messages.error(
+            request,
+            "Your teacher profile could not be found. "
+            "Please contact the school administrator.",
         )
-    )
 
-    exams = (
-        Exam.objects
-        .filter(
-            class_room=class_room
+        return redirect("home")
+
+    except Exception:
+        logger.exception(
+            "Unable to load teacher dashboard for user %s.",
+            request.user.pk,
         )
-        .select_related(
-            "subject"
+
+        messages.error(
+            request,
+            "Unable to load your teacher dashboard.",
         )
-        .order_by(
-            "exam_date"
+
+        return redirect("home")
+
+
+# ==========================================================
+# TEACHER CLASS DETAIL / ATTENDANCE
+# ==========================================================
+
+
+@login_required
+def teacher_class_detail(request, class_id):
+    """
+    Displays a teacher's assigned class and allows attendance
+    to be recorded for its pupils.
+    """
+
+    try:
+        teacher = get_object_or_404(
+            Teacher.objects.select_related(
+                "user",
+                "user__school",
+            ),
+            user=request.user,
         )
-    )
 
-    assignments = (
-        Assignment.objects
-        .filter(
-            teacher=teacher,
-            class_room=class_room,
+        classroom = get_object_or_404(
+            ClassRoom,
+            id=class_id,
         )
-        .select_related(
-            "subject",
+
+        # ------------------------------------------------------
+        # SECURITY:
+        # Teacher may only access assigned classes.
+        # ------------------------------------------------------
+
+        if not teacher.assigned_class.filter(
+            id=classroom.id
+        ).exists():
+            messages.error(
+                request,
+                "You are not assigned to this class.",
+            )
+
+            return redirect("dashboard_final")
+
+        # ------------------------------------------------------
+        # PUPILS IN THIS CLASS
+        # ------------------------------------------------------
+
+        students = (
+            Student.objects.filter(
+                class_room=classroom,
+            )
+            .select_related(
+                "user",
+                "school",
+                "parent",
+                "parent__user",
+            )
+            .order_by(
+                "user__first_name",
+                "user__last_name",
+                "user__username",
+            )
         )
-        .order_by(
-            "-created_at"
+
+        # ------------------------------------------------------
+        # POST = SAVE ATTENDANCE
+        # ------------------------------------------------------
+
+        if request.method == "POST":
+
+            today = now().date()
+
+            for student in students:
+
+                status = request.POST.get(
+                    f"status_{student.id}"
+                )
+
+                if status in {
+                    "present",
+                    "absent",
+                    "late",
+                }:
+
+                    Attendance.objects.update_or_create(
+                        student=student,
+                        date=today,
+                        defaults={
+                            "status": status,
+                            "teacher": teacher,
+                        },
+                    )
+
+            messages.success(
+                request,
+                "Attendance saved successfully.",
+            )
+
+            return redirect(
+                "teacher_class_detail",
+                class_id=classroom.id,
+            )
+
+        # ------------------------------------------------------
+        # TODAY'S ATTENDANCE
+        # ------------------------------------------------------
+
+        today = now().date()
+
+        attendance_records = Attendance.objects.filter(
+            student__in=students,
+            date=today,
         )
-    )
 
-    academic_records = (
-        AcademicRecord.objects
-        .filter(
-            teacher=teacher,
-            class_room=class_room,
+        attendance_map = {
+            record.student_id: record.status
+            for record in attendance_records
+        }
+
+        # ------------------------------------------------------
+        # PREPARE PUPIL DATA
+        # ------------------------------------------------------
+
+        pupil_data = []
+
+        for pupil in students:
+
+            parent_user = None
+
+            if pupil.parent_id and pupil.parent.user_id:
+                parent_user = pupil.parent.user
+
+            pupil_data.append(
+                {
+                    "student": pupil,
+                    "pupil": pupil,
+                    "today_status": attendance_map.get(
+                        pupil.id,
+                        "",
+                    ),
+                    "parent_user": parent_user,
+                }
+            )
+
+        return render(
+            request,
+            "teachersApp/class_detail.html",
+            {
+                "classroom": classroom,
+                "student_data": pupil_data,
+                "pupil_data": pupil_data,
+                "students": students,
+                "pupils": students,
+                "today": today,
+                "teacher": teacher,
+            },
         )
-        .select_related(
-            "pupil",
-            "pupil__user",
-            "subject",
+
+    except Exception:
+        logger.exception(
+            "Error in teacher_class_detail. "
+            "class_id=%s user=%s",
+            class_id,
+            request.user.pk,
         )
-        .order_by(
-            "-date_recorded"
+
+        messages.error(
+            request,
+            "Unable to load this class.",
         )
-    )
 
-    context = {
-        "teacher": teacher,
-        "school": school,
-
-        "class_room": class_room,
-        "class": class_room,
-
-        "pupils": pupils,
-        "students": pupils,
-
-        "subjects": subjects,
-        "exams": exams,
-
-        "assignments": assignments,
-
-        "academic_records": academic_records,
-    }
-
-    return render(
-        request,
-        "teachersApp/class_detail.html",
-        context,
-    )
+        return redirect("dashboard_final")
 
 
-# ============================================================
-# PUPIL REPORT CREATE / EDIT
-# ============================================================
+# ==========================================================
+# PUPIL REPORT
+# ==========================================================
+
 
 @login_required
 def pupil_report_create_or_edit(
     request,
     pupil_id,
+    term=None,
+    year=None,
 ):
+    """
+    Create or edit a pupil report for a pupil belonging to
+    one of the teacher's assigned classes.
+    """
 
-    teacher = get_teacher(request)
-
-    school = get_teacher_school(request)
-
-    pupil = get_object_or_404(
-        Student.objects.select_related(
-            "user",
-            "class_room",
-            "school",
-        ),
-        pk=pupil_id,
-    )
-
-    # --------------------------------------------------------
-    # SCHOOL SECURITY
-    # --------------------------------------------------------
-
-    if (
-        school is not None
-        and pupil.school_id != school.id
-    ):
-        return render(
-            request,
-            "errors/403.html",
-            status=403,
+    try:
+        teacher = get_object_or_404(
+            Teacher,
+            user=request.user,
         )
 
-    # --------------------------------------------------------
-    # CLASS SECURITY
-    # --------------------------------------------------------
-
-    if (
-        pupil.class_room_id
-        and not teacher.assigned_class.filter(
-            pk=pupil.class_room_id
-        ).exists()
-    ):
-        return render(
-            request,
-            "errors/403.html",
-            status=403,
+        pupil = get_object_or_404(
+            Student.objects.select_related(
+                "user",
+                "school",
+                "class_room",
+            ),
+            id=pupil_id,
         )
 
-    term = request.POST.get(
-        "term",
-        request.GET.get(
-            "term",
-            "1",
-        ),
-    )
+        # ------------------------------------------------------
+        # SECURITY
+        # ------------------------------------------------------
 
-    academic_year = request.POST.get(
-        "academic_year",
-        request.GET.get(
-            "academic_year",
-            "",
-        ),
-    ).strip()
-
-    report = None
-
-    if academic_year:
-
-        report = (
-            PupilReport.objects
-            .filter(
-                pupil=pupil,
-                term=term,
-                academic_year=academic_year,
+        if (
+            not pupil.class_room_id
+            or not teacher.assigned_class.filter(
+                id=pupil.class_room_id
+            ).exists()
+        ):
+            messages.error(
+                request,
+                "You are not allowed to report on this pupil.",
             )
-            .first()
-        )
 
-    if request.method == "POST":
+            return redirect("dashboard_final")
 
-        comment = request.POST.get(
-            "comment",
-            "",
-        ).strip()
+        # ------------------------------------------------------
+        # DEFAULT TERM
+        # ------------------------------------------------------
 
-        is_submitted = (
-            request.POST.get(
-                "is_submitted"
+        if term is None:
+            term = "1"
+
+        # ------------------------------------------------------
+        # DEFAULT ACADEMIC YEAR
+        # ------------------------------------------------------
+
+        if year is None:
+
+            current_year = datetime.date.today().year
+
+            year = (
+                f"{current_year}/"
+                f"{current_year + 1}"
             )
-            in [
-                "1",
-                "true",
-                "True",
-                "on",
-                "yes",
-            ]
+
+        # ------------------------------------------------------
+        # GET OR CREATE REPORT
+        # ------------------------------------------------------
+
+        report, created = PupilReport.objects.get_or_create(
+            pupil=pupil,
+            term=term,
+            academic_year=year,
+            defaults={
+                "teacher": teacher,
+            },
         )
 
-        if not academic_year:
+        # ------------------------------------------------------
+        # POST
+        # ------------------------------------------------------
+
+        if request.method == "POST":
+
+            form = PupilReportForm(
+                request.POST,
+                instance=report,
+            )
+
+            if form.is_valid():
+
+                report = form.save(
+                    commit=False
+                )
+
+                report.teacher = teacher
+
+                report.save()
+
+                messages.success(
+                    request,
+                    (
+                        f"Report for "
+                        f"{pupil.user.get_full_name() or pupil.user.username} "
+                        f"saved successfully."
+                    ),
+                )
+
+                if report.is_submitted:
+
+                    messages.info(
+                        request,
+                        "The report has been submitted.",
+                    )
+
+                return redirect(
+                    "teacher_class_detail",
+                    class_id=pupil.class_room.id,
+                )
 
             messages.error(
                 request,
-                "Academic year is required.",
+                "Please correct the errors below.",
             )
 
         else:
 
-            if report is None:
-
-                report = PupilReport.objects.create(
-                    pupil=pupil,
-                    term=term,
-                    academic_year=academic_year,
-                    teacher=teacher,
-                    comment=comment,
-                    is_submitted=is_submitted,
-                )
-
-            else:
-
-                report.teacher = teacher
-                report.comment = comment
-                report.is_submitted = is_submitted
-
-                report.save()
-
-            messages.success(
-                request,
-                "Pupil report saved successfully.",
+            form = PupilReportForm(
+                instance=report,
             )
 
-            return redirect(
-                "teacher_class_detail",
-                class_id=pupil.class_room_id,
-            )
+        return render(
+            request,
+            "teachersApp/report_form.html",
+            {
+                "form": form,
+                "pupil": pupil,
+                "report": report,
+                "classroom": pupil.class_room,
+                "teacher": teacher,
+            },
+        )
 
-    context = {
-        "teacher": teacher,
-        "school": school,
+    except Exception:
+        logger.exception(
+            "Error in pupil_report_create_or_edit. "
+            "pupil_id=%s user=%s",
+            pupil_id,
+            request.user.pk,
+        )
 
-        "pupil": pupil,
-        "student": pupil,
+        messages.error(
+            request,
+            "Unable to save the pupil report.",
+        )
 
-        "report": report,
+        return redirect("dashboard_final")
 
-        "term": term,
-        "academic_year": academic_year,
 
-        "term_choices": PupilReport.TERM_CHOICES,
-    }
-
-    return render(
-        request,
-        "teachersApp/pupil_report.html",
-        context,
-    )
-
-# ============================================================
+# ==========================================================
 # TEACHER TIMETABLE
-# ============================================================
+# ==========================================================
+
 
 @login_required
 def teacher_timetable(request):
+    """
+    Display the teacher timetable grouped by day.
+    """
 
-    teacher = get_teacher(request)
+    try:
 
-    timetable = (
-        Timetable.objects
-        .filter(
-            teacher=teacher
+        teacher = get_object_or_404(
+            Teacher,
+            user=request.user,
         )
-        .select_related(
-            "class_room",
-            "subject",
+
+        timetable_entries = (
+            Timetable.objects.filter(
+                teacher=teacher,
+            )
+            .select_related(
+                "class_room",
+                "subject",
+            )
+            .order_by(
+                "day",
+                "start_time",
+            )
         )
-        .order_by(
-            "day",
-            "start_time",
+
+        days = [
+            "Mon",
+            "Tue",
+            "Wed",
+            "Thu",
+            "Fri",
+            "Sat",
+            "Sun",
+        ]
+
+        timetable = {
+            day: []
+            for day in days
+        }
+
+        for entry in timetable_entries:
+
+            if entry.day in timetable:
+                timetable[entry.day].append(
+                    entry
+                )
+
+        return render(
+            request,
+            "teachersApp/timetable.html",
+            {
+                "teacher": teacher,
+                "timetable": timetable,
+                "days": days,
+            },
         )
-    )
 
-    context = {
-        "teacher": teacher,
-        "timetable": timetable,
-        "today_timetable": timetable,
-    }
+    except Exception:
+        logger.exception(
+            "Error loading teacher timetable for user %s.",
+            request.user.pk,
+        )
 
-    return render(
-        request,
-        "teachersApp/timetable.html",
-        context,
-    )
+        messages.error(
+            request,
+            "Unable to load your timetable.",
+        )
+
+        return redirect("dashboard_final")
 
 
-# ============================================================
+# ==========================================================
 # TEACHER ASSIGNMENTS
-# ============================================================
+# ==========================================================
+
 
 @login_required
 def teacher_assignments(request):
+    """
+    Display assignments created by the logged-in teacher.
+    """
 
-    teacher = get_teacher(request)
+    teacher = get_object_or_404(
+        Teacher,
+        user=request.user,
+    )
 
     assignments = (
-        Assignment.objects
-        .filter(
-            teacher=teacher
+        Assignment.objects.filter(
+            teacher=teacher,
         )
         .select_related(
             "subject",
             "class_room",
+            "teacher",
         )
-        .order_by(
-            "-created_at"
-        )
+        .order_by("-created_at")
     )
-
-    context = {
-        "teacher": teacher,
-        "assignments": assignments,
-        "classes": get_teacher_classes(teacher),
-        "subjects": teacher.subject.all(),
-    }
 
     return render(
         request,
         "teachersApp/assignments.html",
-        context,
+        {
+            "assignments": assignments,
+            "teacher": teacher,
+        },
     )
 
-
-# ============================================================
-# CREATE ASSIGNMENT
-# ============================================================
 
 @login_required
 def teacher_assignment_create(request):
+    """
+    Create an assignment.
 
-    teacher = get_teacher(request)
+    The teacher can only select:
+        - their assigned classes
+        - their assigned subjects
+    """
 
-    classes = get_teacher_classes(
-        teacher
+    teacher = get_object_or_404(
+        Teacher,
+        user=request.user,
     )
-
-    subjects = teacher.subject.all()
 
     if request.method == "POST":
 
-        title = request.POST.get(
-            "title",
-            "",
-        ).strip()
-
-        description = request.POST.get(
-            "description",
-            "",
-        ).strip()
-
-        subject_id = request.POST.get(
-            "subject"
+        form = AssignmentForm(
+            request.POST,
+            request.FILES,
         )
 
-        class_id = request.POST.get(
-            "class_room"
+        # Restrict POST form choices as well.
+        form.fields["class_room"].queryset = (
+            teacher.assigned_class.all()
         )
 
-        due_date = request.POST.get(
-            "due_date"
+        form.fields["subject"].queryset = (
+            teacher.subject.all()
         )
 
-        file_upload = request.FILES.get(
-            "file_upload"
-        )
+        form.instance.teacher = teacher
 
-        if not title:
+        if form.is_valid():
 
-            messages.error(
-                request,
-                "Assignment title is required.",
+            assignment = form.save(
+                commit=False
             )
 
-        elif not description:
+            assignment.teacher = teacher
 
-            messages.error(
-                request,
-                "Assignment description is required.",
-            )
-
-        elif not subject_id:
-
-            messages.error(
-                request,
-                "Please select a subject.",
-            )
-
-        elif not class_id:
-
-            messages.error(
-                request,
-                "Please select a class.",
-            )
-
-        elif not due_date:
-
-            messages.error(
-                request,
-                "Please select a due date.",
-            )
-
-        else:
-
-            subject = get_object_or_404(
-                Subjects,
-                pk=subject_id,
-            )
-
-            class_room = get_object_or_404(
-                ClassRoom,
-                pk=class_id,
-            )
-
-            if not teacher_has_access_to_subject(
-                teacher,
-                subject,
-            ):
-                return render(
-                    request,
-                    "errors/403.html",
-                    status=403,
-                )
-
-            if not teacher_has_access_to_class(
-                teacher,
-                class_room,
-            ):
-                return render(
-                    request,
-                    "errors/403.html",
-                    status=403,
-                )
-
-            Assignment.objects.create(
-                title=title,
-                description=description,
-                subject=subject,
-                class_room=class_room,
-                teacher=teacher,
-                due_date=due_date,
-                file_upload=file_upload,
-            )
+            assignment.save()
 
             messages.success(
                 request,
-                "Assignment created successfully.",
+                "Assignment posted successfully.",
             )
 
             return redirect(
                 "teacher_assignments"
             )
 
-    context = {
-        "teacher": teacher,
-        "classes": classes,
-        "subjects": subjects,
-    }
+    else:
+
+        form = AssignmentForm()
+
+        form.fields["class_room"].queryset = (
+            teacher.assigned_class.all()
+        )
+
+        form.fields["subject"].queryset = (
+            teacher.subject.all()
+        )
 
     return render(
         request,
         "teachersApp/assignment_form.html",
-        context,
+        {
+            "form": form,
+            "teacher": teacher,
+        },
     )
 
 
-# ============================================================
-# TEACHER ACADEMIC
-# ============================================================
+# ==========================================================
+# ACADEMIC RECORDS
+# ==========================================================
+
 
 @login_required
 def teacher_academic(
@@ -918,635 +885,579 @@ def teacher_academic(
     class_id=None,
     subject_id=None,
 ):
+    """
+    Teacher academic marks entry.
 
-    teacher = get_teacher(request)
+    Teachers can only enter marks for:
+        - assigned classes
+        - assigned subjects
+    """
 
-    classes = get_teacher_classes(
-        teacher
-    )
+    try:
 
-    subjects = teacher.subject.all()
+        teacher = get_object_or_404(
+            Teacher,
+            user=request.user,
+        )
 
-    selected_class = None
-    selected_subject = None
+        # ------------------------------------------------------
+        # Read IDs from query string if they were not supplied
+        # by the URL.
+        # ------------------------------------------------------
 
-    # --------------------------------------------------------
-    # CLASS
-    # --------------------------------------------------------
+        if not class_id or class_id == 0:
+            class_id = request.GET.get(
+                "class_id"
+            )
 
-    if class_id is not None:
+        if not subject_id or subject_id == 0:
+            subject_id = request.GET.get(
+                "subject_id"
+            )
 
-        selected_class = get_object_or_404(
+        # ------------------------------------------------------
+        # Convert IDs safely.
+        # ------------------------------------------------------
+
+        try:
+
+            if class_id:
+                class_id = int(class_id)
+
+            if subject_id:
+                subject_id = int(subject_id)
+
+        except (TypeError, ValueError):
+
+            messages.error(
+                request,
+                "Invalid class or subject.",
+            )
+
+            return redirect(
+                "dashboard_final"
+            )
+
+        # ------------------------------------------------------
+        # SELECTION PAGE
+        # ------------------------------------------------------
+
+        if not class_id or not subject_id:
+
+            classes = (
+                teacher.assigned_class.all()
+                .order_by(
+                    "name",
+                    "section",
+                )
+            )
+
+            subjects = (
+                teacher.subject.all()
+                .order_by("subject")
+            )
+
+            return render(
+                request,
+                "teachersApp/academic_select.html",
+                {
+                    "classes": classes,
+                    "subjects": subjects,
+                    "teacher": teacher,
+                },
+            )
+
+        # ------------------------------------------------------
+        # GET CLASS AND SUBJECT
+        # ------------------------------------------------------
+
+        classroom = get_object_or_404(
             ClassRoom,
-            pk=class_id,
+            id=class_id,
         )
 
-        if not teacher_has_access_to_class(
-            teacher,
-            selected_class,
-        ):
-            return render(
-                request,
-                "errors/403.html",
-                status=403,
-            )
-
-    # --------------------------------------------------------
-    # SUBJECT
-    # --------------------------------------------------------
-
-    if subject_id is not None:
-
-        selected_subject = get_object_or_404(
+        subject = get_object_or_404(
             Subjects,
-            pk=subject_id,
+            id=subject_id,
         )
 
-        if not teacher_has_access_to_subject(
-            teacher,
-            selected_subject,
-        ):
-            return render(
+        # ------------------------------------------------------
+        # SECURITY
+        # ------------------------------------------------------
+
+        if not teacher.assigned_class.filter(
+            id=classroom.id
+        ).exists():
+
+            messages.error(
                 request,
-                "errors/403.html",
-                status=403,
+                "You are not assigned to this class.",
             )
 
-    # --------------------------------------------------------
-    # PUPILS
-    # --------------------------------------------------------
+            return redirect(
+                "dashboard_final"
+            )
 
-    pupils = Student.objects.none()
+        if not teacher.subject.filter(
+            id=subject.id
+        ).exists():
 
-    if selected_class:
+            messages.error(
+                request,
+                "You are not assigned to this subject.",
+            )
 
-        pupils = (
-            Student.objects
-            .filter(
-                class_room=selected_class
+            return redirect(
+                "dashboard_final"
+            )
+
+        # ------------------------------------------------------
+        # PUPILS
+        # ------------------------------------------------------
+
+        students = (
+            Student.objects.filter(
+                class_room=classroom,
             )
             .select_related(
                 "user",
-                "class_room",
                 "school",
             )
             .order_by(
                 "user__first_name",
                 "user__last_name",
+                "user__username",
             )
         )
 
-        school = get_teacher_school(request)
+        # ------------------------------------------------------
+        # SAVE MARKS
+        # ------------------------------------------------------
 
-        if school is not None:
+        if request.method == "POST":
 
-            pupils = pupils.filter(
-                school=school
+            term = request.POST.get(
+                "term"
             )
 
-    # --------------------------------------------------------
-    # RECORDS
-    # --------------------------------------------------------
-
-    records = AcademicRecord.objects.none()
-
-    if selected_class:
-
-        records = (
-            AcademicRecord.objects
-            .filter(
-                teacher=teacher,
-                class_room=selected_class,
-            )
-            .select_related(
-                "pupil",
-                "pupil__user",
-                "subject",
-            )
-            .order_by(
-                "-date_recorded"
-            )
-        )
-
-        if selected_subject:
-
-            records = records.filter(
-                subject=selected_subject
+            academic_year = request.POST.get(
+                "academic_year"
             )
 
-    # --------------------------------------------------------
-    # SAVE MARKS
-    # --------------------------------------------------------
+            if not term or not academic_year:
 
-    if request.method == "POST":
-
-        pupil_id = request.POST.get(
-            "pupil_id"
-        )
-
-        subject_post_id = request.POST.get(
-            "subject_id",
-            subject_id,
-        )
-
-        class_post_id = request.POST.get(
-            "class_id",
-            class_id,
-        )
-
-        marks = request.POST.get(
-            "marks"
-        )
-
-        max_marks = request.POST.get(
-            "max_marks",
-            "100",
-        )
-
-        term = request.POST.get(
-            "term",
-            "1",
-        )
-
-        academic_year = request.POST.get(
-            "academic_year",
-            "",
-        ).strip()
-
-        exam_type = request.POST.get(
-            "exam_type",
-            "TEST",
-        )
-
-        remark = request.POST.get(
-            "remark",
-            "",
-        ).strip()
-
-        if (
-            pupil_id
-            and subject_post_id
-            and class_post_id
-            and marks
-            and academic_year
-        ):
-
-            pupil = get_object_or_404(
-                Student,
-                pk=pupil_id,
-            )
-
-            subject = get_object_or_404(
-                Subjects,
-                pk=subject_post_id,
-            )
-
-            class_room = get_object_or_404(
-                ClassRoom,
-                pk=class_post_id,
-            )
-
-            if not teacher_has_access_to_class(
-                teacher,
-                class_room,
-            ):
-                return render(
+                messages.error(
                     request,
-                    "errors/403.html",
-                    status=403,
+                    (
+                        "Please select a term "
+                        "and enter an academic year."
+                    ),
                 )
 
-            if not teacher_has_access_to_subject(
-                teacher,
-                subject,
-            ):
-                return render(
-                    request,
-                    "errors/403.html",
-                    status=403,
+                return redirect(
+                    "teacher_academic_entry",
+                    class_id=classroom.id,
+                    subject_id=subject.id,
                 )
 
-            # Ensure pupil belongs to this class.
-            if pupil.class_room_id != class_room.pk:
-                return render(
-                    request,
-                    "errors/403.html",
-                    status=403,
+            for student in students:
+
+                test_marks = request.POST.get(
+                    f"test_{student.id}"
                 )
 
-            school = get_teacher_school(request)
-
-            if (
-                school is not None
-                and pupil.school_id != school.id
-            ):
-                return render(
-                    request,
-                    "errors/403.html",
-                    status=403,
+                exam_marks = request.POST.get(
+                    f"exam_{student.id}"
                 )
 
-            AcademicRecord.objects.create(
-                pupil=pupil,
-                subject=subject,
-                class_room=class_room,
-                term=term,
-                academic_year=academic_year,
-                exam_type=exam_type,
-                marks=marks,
-                max_marks=max_marks,
-                remark=remark,
-                teacher=teacher,
-            )
+                test_max_marks = request.POST.get(
+                    f"test_max_marks_{student.id}"
+                )
+
+                exam_max_marks = request.POST.get(
+                    f"exam_max_marks_{student.id}"
+                )
+
+                # --------------------------------------------------
+                # TEST
+                # --------------------------------------------------
+
+                if (
+                    test_marks
+                    and test_marks.strip()
+                ):
+
+                    try:
+
+                        marks = float(
+                            test_marks
+                        )
+
+                        max_marks = (
+                            float(test_max_marks)
+                            if test_max_marks
+                            else 30
+                        )
+
+                        AcademicRecord.objects.create(
+                            pupil=student,
+                            subject=subject,
+                            class_room=classroom,
+                            term=term,
+                            academic_year=academic_year,
+                            exam_type="TEST",
+                            marks=marks,
+                            max_marks=max_marks,
+                            teacher=teacher,
+                        )
+
+                    except (
+                        TypeError,
+                        ValueError,
+                    ):
+
+                        logger.warning(
+                            "Invalid TEST marks for pupil %s.",
+                            student.id,
+                        )
+
+                # --------------------------------------------------
+                # EXAM
+                # --------------------------------------------------
+
+                if (
+                    exam_marks
+                    and exam_marks.strip()
+                ):
+
+                    try:
+
+                        marks = float(
+                            exam_marks
+                        )
+
+                        max_marks = (
+                            float(exam_max_marks)
+                            if exam_max_marks
+                            else 50
+                        )
+
+                        AcademicRecord.objects.create(
+                            pupil=student,
+                            subject=subject,
+                            class_room=classroom,
+                            term=term,
+                            academic_year=academic_year,
+                            exam_type="EXAM",
+                            marks=marks,
+                            max_marks=max_marks,
+                            teacher=teacher,
+                        )
+
+                    except (
+                        TypeError,
+                        ValueError,
+                    ):
+
+                        logger.warning(
+                            "Invalid EXAM marks for pupil %s.",
+                            student.id,
+                        )
 
             messages.success(
                 request,
-                "Academic record saved successfully.",
+                "Marks saved successfully.",
             )
 
             return redirect(
                 "teacher_academic_entry",
-                class_id=class_room.pk,
-                subject_id=subject.pk,
+                class_id=classroom.id,
+                subject_id=subject.id,
             )
+
+        return render(
+            request,
+            "teachersApp/academic.html",
+            {
+                "classroom": classroom,
+                "subject": subject,
+                "students": students,
+                "pupils": students,
+                "teacher": teacher,
+            },
+        )
+
+    except Exception:
+        logger.exception(
+            "Critical error in teacher_academic. "
+            "class_id=%s subject_id=%s user=%s",
+            class_id,
+            subject_id,
+            request.user.pk,
+        )
 
         messages.error(
             request,
-            "Please complete all required academic record fields.",
+            "Unable to load the academic records page.",
         )
 
-    context = {
-        "teacher": teacher,
-        "classes": classes,
-        "subjects": subjects,
-
-        "selected_class": selected_class,
-        "selected_subject": selected_subject,
-
-        "pupils": pupils,
-        "students": pupils,
-
-        "records": records,
-        "academic_records": records,
-
-        "exam_types": AcademicRecord.EXAM_TYPES,
-        "term_choices": PupilReport.TERM_CHOICES,
-    }
-
-    return render(
-        request,
-        "teachersApp/academic.html",
-        context,
-    )
+        return redirect(
+            "dashboard_final"
+        )
 
 
-# ============================================================
-# TEACHER BEHAVIOR
-# ============================================================
+# ==========================================================
+# BEHAVIOR
+# ==========================================================
+
 
 @login_required
 def teacher_behavior(
     request,
     pupil_id=None,
 ):
+    """
+    Add or list teacher behavior records.
+    """
 
-    teacher = get_teacher(request)
-
-    classes = get_teacher_classes(
-        teacher
+    teacher = get_object_or_404(
+        Teacher,
+        user=request.user,
     )
 
-    pupils = get_teacher_pupils(
-        request
-    )
+    if pupil_id:
 
-    selected_pupil = None
-
-    if pupil_id is not None:
-
-        selected_pupil = get_object_or_404(
+        pupil = get_object_or_404(
             Student.objects.select_related(
                 "user",
                 "class_room",
                 "school",
             ),
-            pk=pupil_id,
+            id=pupil_id,
         )
 
-        school = get_teacher_school(request)
-
         if (
-            school is not None
-            and selected_pupil.school_id != school.id
-        ):
-            return render(
-                request,
-                "errors/403.html",
-                status=403,
-            )
-
-        if (
-            selected_pupil.class_room_id
-            and not teacher.assigned_class.filter(
-                pk=selected_pupil.class_room_id
+            not pupil.class_room_id
+            or not teacher.assigned_class.filter(
+                id=pupil.class_room_id
             ).exists()
         ):
-            return render(
-                request,
-                "errors/403.html",
-                status=403,
-            )
-
-    if request.method == "POST":
-
-        post_pupil_id = request.POST.get(
-            "pupil_id",
-            pupil_id,
-        )
-
-        category = request.POST.get(
-            "category",
-            "positive",
-        )
-
-        note = request.POST.get(
-            "note",
-            "",
-        ).strip()
-
-        conduct_remark = request.POST.get(
-            "conduct_remark",
-            "",
-        ).strip()
-
-        is_report_card_remark = (
-            request.POST.get(
-                "is_report_card_remark"
-            )
-            in [
-                "1",
-                "true",
-                "True",
-                "on",
-                "yes",
-            ]
-        )
-
-        if not post_pupil_id:
 
             messages.error(
                 request,
-                "Please select a pupil.",
+                "You are not assigned to this pupil's class.",
             )
 
-        elif not note:
+            return redirect(
+                "dashboard_final"
+            )
+
+        if request.method == "POST":
+
+            category = request.POST.get(
+                "category"
+            )
+
+            note = request.POST.get(
+                "note"
+            )
+
+            conduct_remark = request.POST.get(
+                "conduct_remark"
+            )
+
+            is_report_card_remark = (
+                request.POST.get(
+                    "is_report_card_remark"
+                )
+                == "on"
+            )
+
+            if category and note:
+
+                BehaviorLog.objects.create(
+                    pupil=pupil,
+                    teacher=teacher,
+                    category=category,
+                    note=note,
+                    conduct_remark=(
+                        conduct_remark or ""
+                    ),
+                    is_report_card_remark=(
+                        is_report_card_remark
+                    ),
+                )
+
+                messages.success(
+                    request,
+                    "Behavior log added successfully.",
+                )
+
+                return redirect(
+                    "teacher_class_detail",
+                    class_id=pupil.class_room.id,
+                )
 
             messages.error(
                 request,
-                "Please enter a behavior note.",
+                "Please fill in all required fields.",
             )
 
         else:
 
-            pupil = get_object_or_404(
-                Student.objects.select_related(
-                    "school",
-                    "class_room",
-                ),
-                pk=post_pupil_id,
+            form = BehaviorLogForm(
+                initial={
+                    "pupil": pupil
+                }
             )
 
-            school = get_teacher_school(request)
+            if "pupil" in form.fields:
+                form.fields[
+                    "pupil"
+                ].widget = forms.HiddenInput()
 
-            if (
-                school is not None
-                and pupil.school_id != school.id
-            ):
-                return render(
-                    request,
-                    "errors/403.html",
-                    status=403,
-                )
+        return render(
+            request,
+            "teachersApp/behavior_form.html",
+            {
+                "form": form,
+                "pupil": pupil,
+                "teacher": teacher,
+            },
+        )
 
-            if (
-                pupil.class_room_id
-                and not teacher.assigned_class.filter(
-                    pk=pupil.class_room_id
-                ).exists()
-            ):
-                return render(
-                    request,
-                    "errors/403.html",
-                    status=403,
-                )
+    # ------------------------------------------------------
+    # LIST BEHAVIOR LOGS
+    # ------------------------------------------------------
 
-            BehaviorLog.objects.create(
-                pupil=pupil,
-                teacher=teacher,
-                category=category,
-                note=note,
-                conduct_remark=conduct_remark,
-                is_report_card_remark=is_report_card_remark,
-            )
-
-            messages.success(
-                request,
-                "Behavior record saved successfully.",
-            )
-
-            return redirect(
-                "teacher_behavior"
-            )
-
-    behavior_logs = (
-        BehaviorLog.objects
-        .filter(
-            teacher=teacher
+    logs = (
+        BehaviorLog.objects.filter(
+            teacher=teacher,
         )
         .select_related(
             "pupil",
             "pupil__user",
         )
-        .order_by(
-            "-date"
-        )
+        .order_by("-date")
     )
-
-    if selected_pupil:
-
-        behavior_logs = behavior_logs.filter(
-            pupil=selected_pupil
-        )
-
-    context = {
-        "teacher": teacher,
-        "classes": classes,
-
-        "pupils": pupils,
-        "students": pupils,
-
-        "selected_pupil": selected_pupil,
-
-        "behavior_logs": behavior_logs,
-
-        "behavior_types": BehaviorLog.BEHAVIOR_TYPES,
-    }
 
     return render(
         request,
-        "teachersApp/behavior.html",
-        context,
+        "teachersApp/behavior_list.html",
+        {
+            "logs": logs,
+            "teacher": teacher,
+        },
     )
 
-# ============================================================
+
+# ==========================================================
 # CLASS PERFORMANCE
-# ============================================================
+# ==========================================================
+
 
 @login_required
 def teacher_class_performance(
     request,
     class_id,
 ):
+    """
+    Display academic performance of pupils in a teacher's
+    assigned class.
+    """
 
-    teacher = get_teacher(request)
-
-    class_room = get_object_or_404(
-        ClassRoom,
-        pk=class_id,
+    teacher = get_object_or_404(
+        Teacher,
+        user=request.user,
     )
 
-    if not teacher_has_access_to_class(
-        teacher,
-        class_room,
-    ):
-        return render(
+    classroom = get_object_or_404(
+        ClassRoom,
+        id=class_id,
+    )
+
+    if not teacher.assigned_class.filter(
+        id=classroom.id
+    ).exists():
+
+        messages.error(
             request,
-            "errors/403.html",
-            status=403,
+            "You are not assigned to this class.",
         )
 
-    school = get_teacher_school(request)
+        return redirect(
+            "dashboard_final"
+        )
 
-    pupils = (
-        Student.objects
-        .filter(
-            class_room=class_room
+    students = (
+        Student.objects.filter(
+            class_room=classroom,
         )
         .select_related(
             "user",
-            "class_room",
             "school",
         )
-        .order_by(
-            "user__first_name",
-            "user__last_name",
-        )
     )
 
-    if school is not None:
-
-        pupils = pupils.filter(
-            school=school
-        )
-
-    records = (
-        AcademicRecord.objects
-        .filter(
-            class_room=class_room
-        )
-        .select_related(
-            "pupil",
-            "pupil__user",
-            "subject",
-        )
-        .order_by(
-            "pupil__user__first_name",
-            "pupil__user__last_name",
-            "subject__subject",
-        )
+    subjects = (
+        teacher.subject.all()
+        .order_by("subject")
     )
 
-    performance = []
+    performance_data = []
 
-    for pupil in pupils:
+    for student in students:
 
-        pupil_records = records.filter(
-            pupil=pupil
-        )
+        row = {
+            "student": student,
+            "pupil": student,
+        }
 
         total_marks = 0
-        total_max_marks = 0
+        count = 0
 
-        for record in pupil_records:
+        for subject in subjects:
 
-            if record.marks is not None:
-
-                total_marks += float(
-                    record.marks
-                )
-
-            if record.max_marks:
-
-                total_max_marks += float(
-                    record.max_marks
-                )
-
-        if total_max_marks > 0:
-
-            percentage = round(
-                (
-                    total_marks
-                    / total_max_marks
-                )
-                * 100,
-                1,
+            records = AcademicRecord.objects.filter(
+                pupil=student,
+                subject=subject,
+                class_room=classroom,
             )
 
-        else:
+            average = records.aggregate(
+                Avg("marks")
+            )["marks__avg"]
 
-            percentage = 0
+            row[subject.id] = (
+                round(average, 2)
+                if average is not None
+                else "-"
+            )
 
-        if percentage >= 80:
-            grade = "A"
+            if average is not None:
 
-        elif percentage >= 70:
-            grade = "B"
+                total_marks += average
+                count += 1
 
-        elif percentage >= 60:
-            grade = "C"
+        row["average"] = (
+            round(
+                total_marks / count,
+                2,
+            )
+            if count
+            else "-"
+        )
 
-        elif percentage >= 50:
-            grade = "D"
-
-        else:
-            grade = "F"
-
-        performance.append(
-            {
-                "pupil": pupil,
-                "student": pupil,
-                "records": pupil_records,
-                "total_marks": total_marks,
-                "total_max_marks": total_max_marks,
-                "percentage": percentage,
-                "grade": grade,
-            }
+        performance_data.append(
+            row
         )
 
     context = {
+        "classroom": classroom,
+        "students": performance_data,
+        "pupils": performance_data,
+        "subjects": subjects,
         "teacher": teacher,
-        "school": school,
-
-        "class_room": class_room,
-        "class": class_room,
-
-        "pupils": pupils,
-        "students": pupils,
-
-        "records": records,
-        "academic_records": records,
-
-        "performance": performance,
     }
 
     return render(
@@ -1556,78 +1467,75 @@ def teacher_class_performance(
     )
 
 
-# ============================================================
+# ==========================================================
 # PRINT CLASS LIST
-# ============================================================
+# ==========================================================
+
 
 @login_required
 def teacher_print_class_list(
     request,
     class_id,
 ):
+    """
+    Printable pupil list for an assigned class.
+    """
 
-    teacher = get_teacher(request)
-
-    class_room = get_object_or_404(
-        ClassRoom,
-        pk=class_id,
+    teacher = get_object_or_404(
+        Teacher,
+        user=request.user,
     )
 
-    if not teacher_has_access_to_class(
-        teacher,
-        class_room,
-    ):
-        return render(
+    classroom = get_object_or_404(
+        ClassRoom,
+        id=class_id,
+    )
+
+    if not teacher.assigned_class.filter(
+        id=classroom.id
+    ).exists():
+
+        messages.error(
             request,
-            "errors/403.html",
-            status=403,
+            "You are not assigned to this class.",
         )
 
-    school = get_teacher_school(request)
+        return redirect(
+            "dashboard_final"
+        )
 
-    pupils = (
-        Student.objects
-        .filter(
-            class_room=class_room
+    students = (
+        Student.objects.filter(
+            class_room=classroom,
         )
         .select_related(
             "user",
-            "class_room",
             "school",
         )
         .order_by(
             "user__first_name",
             "user__last_name",
+            "user__username",
         )
     )
-
-    if school is not None:
-
-        pupils = pupils.filter(
-            school=school
-        )
-
-    context = {
-        "teacher": teacher,
-        "school": school,
-
-        "class_room": class_room,
-        "class": class_room,
-
-        "pupils": pupils,
-        "students": pupils,
-    }
 
     return render(
         request,
         "teachersApp/print_class_list.html",
-        context,
+        {
+            "classroom": classroom,
+            "students": students,
+            "pupils": students,
+            "teacher": teacher,
+            "today": now().date(),
+        },
     )
 
 
-# ============================================================
+# ==========================================================
 # PRINT RESULTS
-# ============================================================
+# ==========================================================
+
 
 @login_required
 def teacher_print_results(
@@ -1635,154 +1543,203 @@ def teacher_print_results(
     class_id,
     subject_id,
 ):
+    """
+    Printable results for a teacher's assigned class and
+    subject.
+    """
 
-    teacher = get_teacher(request)
+    teacher = get_object_or_404(
+        Teacher,
+        user=request.user,
+    )
 
-    class_room = get_object_or_404(
+    classroom = get_object_or_404(
         ClassRoom,
-        pk=class_id,
+        id=class_id,
     )
 
     subject = get_object_or_404(
         Subjects,
-        pk=subject_id,
+        id=subject_id,
     )
 
-    if not teacher_has_access_to_class(
-        teacher,
-        class_room,
-    ):
-        return render(
+    if not teacher.assigned_class.filter(
+        id=classroom.id
+    ).exists():
+
+        messages.error(
             request,
-            "errors/403.html",
-            status=403,
+            "You are not assigned to this class.",
         )
 
-    if not teacher_has_access_to_subject(
-        teacher,
-        subject,
-    ):
-        return render(
-            request,
-            "errors/403.html",
-            status=403,
+        return redirect(
+            "dashboard_final"
         )
 
-    school = get_teacher_school(request)
+    if not teacher.subject.filter(
+        id=subject.id
+    ).exists():
 
-    pupils = (
-        Student.objects
-        .filter(
-            class_room=class_room
+        messages.error(
+            request,
+            "You are not assigned to this subject.",
+        )
+
+        return redirect(
+            "dashboard_final"
+        )
+
+    students = (
+        Student.objects.filter(
+            class_room=classroom,
         )
         .select_related(
             "user",
-            "class_room",
             "school",
         )
         .order_by(
             "user__first_name",
             "user__last_name",
+            "user__username",
         )
     )
 
-    if school is not None:
+    results = []
 
-        pupils = pupils.filter(
-            school=school
+    for student in students:
+
+        records = (
+            AcademicRecord.objects.filter(
+                pupil=student,
+                subject=subject,
+                class_room=classroom,
+            )
+            .order_by("-date_recorded")
         )
 
-    records = (
-        AcademicRecord.objects
-        .filter(
-            class_room=class_room,
-            subject=subject,
+        test = records.filter(
+            exam_type="TEST"
+        ).first()
+
+        exam = records.filter(
+            exam_type="EXAM"
+        ).first()
+
+        total = 0
+
+        if test:
+            total += test.marks
+
+        if exam:
+            total += exam.marks
+
+        results.append(
+            {
+                "student": student,
+                "pupil": student,
+                "test": (
+                    test.marks
+                    if test
+                    else "-"
+                ),
+                "exam": (
+                    exam.marks
+                    if exam
+                    else "-"
+                ),
+                "total": (
+                    total
+                    if test or exam
+                    else "-"
+                ),
+            }
         )
-        .select_related(
-            "pupil",
-            "pupil__user",
-            "subject",
-        )
-        .order_by(
-            "pupil__user__first_name",
-            "pupil__user__last_name",
-        )
-    )
-
-    context = {
-        "teacher": teacher,
-        "school": school,
-
-        "class_room": class_room,
-        "class": class_room,
-
-        "subject": subject,
-
-        "pupils": pupils,
-        "students": pupils,
-
-        "records": records,
-        "academic_records": records,
-    }
 
     return render(
         request,
         "teachersApp/print_results.html",
-        context,
+        {
+            "classroom": classroom,
+            "subject": subject,
+            "results": results,
+            "teacher": teacher,
+            "today": now().date(),
+        },
     )
 
 
-# ============================================================
+# ==========================================================
 # TEACHER RESOURCES
-# ============================================================
+# ==========================================================
+
 
 @login_required
 def teacher_resources(request):
+    """
+    Display resources belonging to the teacher's assigned
+    classes.
 
-    teacher = get_teacher(request)
+    IMPORTANT:
+    Resource uses `uploaded_by`, not `teacher`.
+    """
 
-    classes = get_teacher_classes(
-        teacher
-    )
+    try:
 
-    subjects = teacher.subject.all()
+        teacher = get_object_or_404(
+            Teacher,
+            user=request.user,
+        )
 
-    context = {
-        "teacher": teacher,
-        "classes": classes,
-        "subjects": subjects,
-    }
+        classes = teacher.assigned_class.all()
 
-    return render(
-        request,
-        "teachersApp/resources.html",
-        context,
-    )
+        resources = (
+            Resource.objects.filter(
+                class_room__in=classes,
+            )
+            .select_related(
+                "subject",
+                "class_room",
+                "uploaded_by",
+            )
+            .order_by("-created_at")
+        )
+
+        return render(
+            request,
+            "teachersApp/resources.html",
+            {
+                "teacher": teacher,
+                "resources": resources,
+            },
+        )
+
+    except Exception:
+        logger.exception(
+            "Error loading teacher resources for user %s.",
+            request.user.pk,
+        )
+
+        messages.error(
+            request,
+            "Could not load resources.",
+        )
+
+        return redirect(
+            "dashboard_final"
+        )
 
 
-# ============================================================
-# FINAL TEST
-# ============================================================
+# ==========================================================
+# DEVELOPMENT TEST
+# ==========================================================
 
-@login_required
+
 def final_test(request):
+    """
+    Simple development endpoint used to confirm that the
+    current teacher views.py file is loaded.
+    """
 
-    teacher = get_teacher(request)
-
-    classes = get_teacher_classes(
-        teacher
-    )
-
-    subjects = teacher.subject.all()
-
-    context = {
-        "teacher": teacher,
-        "classes": classes,
-        "subjects": subjects,
-    }
-
-    return render(
-        request,
-        "teachersApp/final_test.html",
-        context,
+    return HttpResponse(
+        "FINAL TEST WORKS! The new teacher views.py is running."
     )
