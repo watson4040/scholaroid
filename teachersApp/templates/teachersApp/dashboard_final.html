@@ -1,0 +1,1841 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Teacher Dashboard | Scholaroid{% endblock %}
+
+{% block extra_css %}
+
+<style>
+    /* =========================================================
+       SCHOLAROID TEACHER DASHBOARD
+       ========================================================= */
+
+    .teacher-page {
+        min-height: 100vh;
+        background: #f5f7fb;
+    }
+
+    .teacher-header {
+        background: #ffffff;
+        border: 0;
+        border-radius: 20px;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+    }
+
+    .teacher-avatar {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: #0d6efd;
+        color: #ffffff;
+        font-size: 1.35rem;
+        font-weight: 700;
+        flex-shrink: 0;
+    }
+
+    .teacher-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .teacher-stat-card {
+        border: 0;
+        border-radius: 18px;
+        background: #ffffff;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+        height: 100%;
+    }
+
+    .teacher-stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 24px rgba(15, 23, 42, 0.09);
+    }
+
+    .teacher-stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.15rem;
+    }
+
+    .teacher-section {
+        border: 0;
+        border-radius: 20px;
+        background: #ffffff;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.06);
+        overflow: hidden;
+        height: 100%;
+    }
+
+    .teacher-section-header {
+        padding: 1.15rem 1.25rem;
+        border-bottom: 1px solid #edf0f4;
+        background: #ffffff;
+    }
+
+    .teacher-section-body {
+        padding: 1.25rem;
+    }
+
+    .teacher-section-title {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+
+    .teacher-section-subtitle {
+        margin: 0.25rem 0 0;
+        color: #64748b;
+        font-size: 0.82rem;
+    }
+
+    .teacher-action {
+        display: flex;
+        align-items: center;
+        gap: 0.9rem;
+        width: 100%;
+        min-height: 92px;
+        padding: 1rem;
+        border: 1px solid #edf0f4;
+        border-radius: 16px;
+        background: #ffffff;
+        color: #1e293b;
+        text-decoration: none;
+        transition:
+            transform 0.2s ease,
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .teacher-action:hover {
+        color: #1e293b;
+        text-decoration: none;
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.07);
+    }
+
+    .teacher-action-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 1rem;
+    }
+
+    .teacher-action-title {
+        margin: 0;
+        font-size: 0.92rem;
+        font-weight: 700;
+    }
+
+    .teacher-action-text {
+        margin: 0.2rem 0 0;
+        color: #64748b;
+        font-size: 0.76rem;
+        line-height: 1.35;
+    }
+
+    .teacher-list-item {
+        padding: 0.95rem 0;
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .teacher-list-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .teacher-list-item:first-child {
+        padding-top: 0;
+    }
+
+    .teacher-list-link {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .teacher-list-link:hover {
+        text-decoration: none;
+    }
+
+    .teacher-class-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+        flex-shrink: 0;
+    }
+
+    .teacher-subject-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.55rem 0.75rem;
+        margin: 0 0.4rem 0.4rem 0;
+        border-radius: 10px;
+        background: rgba(13, 110, 253, 0.08);
+        color: #0d6efd;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .teacher-empty {
+        padding: 1.5rem 0.5rem;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .teacher-empty-icon {
+        display: block;
+        margin-bottom: 0.6rem;
+        font-size: 1.7rem;
+        color: #94a3b8;
+    }
+
+    .teacher-table {
+        margin-bottom: 0;
+    }
+
+    .teacher-table th {
+        padding: 0.8rem 0.75rem;
+        color: #64748b;
+        background: #f8fafc;
+        border-bottom: 1px solid #e5e7eb;
+        font-size: 0.73rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        white-space: nowrap;
+    }
+
+    .teacher-table td {
+        padding: 0.9rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #edf0f4;
+        font-size: 0.86rem;
+    }
+
+    .teacher-table tbody tr:last-child td {
+        border-bottom: 0;
+    }
+
+    .teacher-notice {
+        padding: 0.9rem;
+        border: 1px solid #edf0f4;
+        border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .teacher-notice + .teacher-notice {
+        margin-top: 0.75rem;
+    }
+
+    .teacher-notice-title {
+        margin: 0;
+        font-size: 0.88rem;
+        font-weight: 700;
+    }
+
+    .teacher-notice-message {
+        margin: 0.35rem 0 0;
+        color: #475569;
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }
+
+    .teacher-timetable-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.8rem 0;
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .teacher-timetable-row:last-child {
+        border-bottom: 0;
+    }
+
+    .teacher-time {
+        min-width: 90px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #0d6efd;
+    }
+
+    .teacher-mobile-scroll {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    @media (max-width: 767.98px) {
+
+        .teacher-page {
+            padding-top: 0.75rem;
+        }
+
+        .teacher-header {
+            border-radius: 16px;
+        }
+
+        .teacher-stat-card {
+            border-radius: 16px;
+        }
+
+        .teacher-section {
+            border-radius: 16px;
+        }
+
+        .teacher-action {
+            min-height: 82px;
+        }
+
+        .teacher-time {
+            min-width: 75px;
+        }
+    }
+</style>
+
+{% endblock %}
+
+
+{% block content %}
+
+<div class="teacher-page py-3 py-md-4">
+
+    <div class="container-fluid px-3 px-md-4">
+
+        <!-- =====================================================
+             HEADER
+             ===================================================== -->
+
+        <div class="teacher-header p-3 p-md-4 mb-4">
+
+            <div
+                class="d-flex justify-content-between
+                       align-items-center flex-wrap gap-3"
+            >
+
+                <div class="d-flex align-items-center gap-3">
+
+                    <div class="teacher-avatar">
+
+                        {% if teacher.user.profile_photo %}
+
+                            <img
+                                src="{{ teacher.user.profile_photo.url }}"
+                                alt="Teacher profile photo"
+                            >
+
+                        {% else %}
+
+                            {% if teacher.user.first_name %}
+
+                                {{ teacher.user.first_name|first|upper }}
+
+                            {% else %}
+
+                                {{ teacher.user.username|first|upper }}
+
+                            {% endif %}
+
+                        {% endif %}
+
+                    </div>
+
+
+                    <div>
+
+                        <p class="text-muted small mb-1">
+                            Scholaroid Teacher Portal
+                        </p>
+
+                        <h2 class="fw-bold mb-1">
+
+                            Welcome,
+
+                            {% if teacher.user.first_name %}
+
+                                {{ teacher.user.first_name }}
+
+                            {% else %}
+
+                                {{ teacher.user.username }}
+
+                            {% endif %}
+
+                        </h2>
+
+                        <p class="text-muted mb-0">
+
+                            {% if school %}
+
+                                {{ school }}
+
+                            {% else %}
+
+                                Teacher Dashboard
+
+                            {% endif %}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+                <div class="d-flex gap-2 flex-wrap">
+
+                    <a
+                        href="{% url 'profile' %}"
+                        class="btn btn-outline-primary"
+                    >
+
+                        <i class="fas fa-user me-1"></i>
+
+                        My Profile
+
+                    </a>
+
+
+                    <a
+                        href="{% url 'change_password' %}"
+                        class="btn btn-primary"
+                    >
+
+                        <i class="fas fa-key me-1"></i>
+
+                        Change Password
+
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             STATISTICS
+             ===================================================== -->
+
+        <div class="row g-3 mb-4">
+
+            <!-- Classes -->
+
+            <div class="col-6 col-xl-3">
+
+                <div class="teacher-stat-card">
+
+                    <div
+                        class="card-body p-3 p-md-4
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <div class="small text-muted fw-semibold">
+                                MY CLASSES
+                            </div>
+
+                            <div class="fs-2 fw-bold">
+                                {{ stats.classes|default:0 }}
+                            </div>
+
+                        </div>
+
+                        <div
+                            class="teacher-stat-icon
+                                   bg-primary bg-opacity-10
+                                   text-primary"
+                        >
+
+                            <i class="fas fa-chalkboard"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Subjects -->
+
+            <div class="col-6 col-xl-3">
+
+                <div class="teacher-stat-card">
+
+                    <div
+                        class="card-body p-3 p-md-4
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <div class="small text-muted fw-semibold">
+                                SUBJECTS
+                            </div>
+
+                            <div class="fs-2 fw-bold">
+                                {{ stats.subjects|default:0 }}
+                            </div>
+
+                        </div>
+
+                        <div
+                            class="teacher-stat-icon
+                                   bg-success bg-opacity-10
+                                   text-success"
+                        >
+
+                            <i class="fas fa-book-open"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Pupils -->
+
+            <div class="col-6 col-xl-3">
+
+                <div class="teacher-stat-card">
+
+                    <div
+                        class="card-body p-3 p-md-4
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <div class="small text-muted fw-semibold">
+                                PUPILS
+                            </div>
+
+                            <div class="fs-2 fw-bold">
+                                {{ stats.pupils|default:stats.students|default:0 }}
+                            </div>
+
+                        </div>
+
+                        <div
+                            class="teacher-stat-icon
+                                   bg-warning bg-opacity-10
+                                   text-warning"
+                        >
+
+                            <i class="fas fa-user-graduate"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Exams -->
+
+            <div class="col-6 col-xl-3">
+
+                <div class="teacher-stat-card">
+
+                    <div
+                        class="card-body p-3 p-md-4
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <div class="small text-muted fw-semibold">
+                                UPCOMING EXAMS
+                            </div>
+
+                            <div class="fs-2 fw-bold">
+                                {{ stats.upcoming_exams|default:0 }}
+                            </div>
+
+                        </div>
+
+                        <div
+                            class="teacher-stat-icon
+                                   bg-danger bg-opacity-10
+                                   text-danger"
+                        >
+
+                            <i class="fas fa-file-alt"></i>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             TEACHER QUICK ACTIONS
+             ===================================================== -->
+
+        <div class="teacher-section mb-4">
+
+            <div class="teacher-section-header">
+
+                <h5 class="teacher-section-title">
+                    Teacher Tools
+                </h5>
+
+                <p class="teacher-section-subtitle">
+                    Quickly access the tools you use to manage teaching.
+                </p>
+
+            </div>
+
+
+            <div class="teacher-section-body">
+
+                <div class="row g-3">
+
+                    <!-- Inbox -->
+
+                    <div class="col-12 col-sm-6 col-xl-3">
+
+                        <a
+                            href="{% url 'inbox' %}"
+                            class="teacher-action"
+                        >
+
+                            <div
+                                class="teacher-action-icon
+                                       bg-primary bg-opacity-10
+                                       text-primary"
+                            >
+
+                                <i class="fas fa-comments"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="teacher-action-title">
+                                    Inbox
+                                </p>
+
+                                <p class="teacher-action-text">
+                                    Communicate with pupils, parents and staff.
+                                </p>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Timetable -->
+
+                    <div class="col-12 col-sm-6 col-xl-3">
+
+                        <a
+                            href="{% url 'teacher_timetable' %}"
+                            class="teacher-action"
+                        >
+
+                            <div
+                                class="teacher-action-icon
+                                       bg-success bg-opacity-10
+                                       text-success"
+                            >
+
+                                <i class="fas fa-calendar-alt"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="teacher-action-title">
+                                    Timetable
+                                </p>
+
+                                <p class="teacher-action-text">
+                                    View your teaching schedule.
+                                </p>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Assignments -->
+
+                    <div class="col-12 col-sm-6 col-xl-3">
+
+                        <a
+                            href="{% url 'teacher_assignments' %}"
+                            class="teacher-action"
+                        >
+
+                            <div
+                                class="teacher-action-icon
+                                       bg-warning bg-opacity-10
+                                       text-warning"
+                            >
+
+                                <i class="fas fa-tasks"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="teacher-action-title">
+                                    Assignments
+                                </p>
+
+                                <p class="teacher-action-text">
+                                    Create and manage pupil assignments.
+                                </p>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Academic -->
+
+                    <div class="col-12 col-sm-6 col-xl-3">
+
+                        <a
+                            href="{% url 'teacher_academic' %}"
+                            class="teacher-action"
+                        >
+
+                            <div
+                                class="teacher-action-icon
+                                       bg-danger bg-opacity-10
+                                       text-danger"
+                            >
+
+                                <i class="fas fa-graduation-cap"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="teacher-action-title">
+                                    Academic Records
+                                </p>
+
+                                <p class="teacher-action-text">
+                                    Enter and manage pupil marks.
+                                </p>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Behavior -->
+
+                    <div class="col-12 col-sm-6 col-xl-3">
+
+                        <a
+                            href="{% url 'teacher_behavior' %}"
+                            class="teacher-action"
+                        >
+
+                            <div
+                                class="teacher-action-icon
+                                       bg-info bg-opacity-10
+                                       text-info"
+                            >
+
+                                <i class="fas fa-clipboard-check"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="teacher-action-title">
+                                    Behavior
+                                </p>
+
+                                <p class="teacher-action-text">
+                                    Record and review pupil behavior.
+                                </p>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Resources -->
+
+                    <div class="col-12 col-sm-6 col-xl-3">
+
+                        <a
+                            href="{% url 'teacher_resources' %}"
+                            class="teacher-action"
+                        >
+
+                            <div
+                                class="teacher-action-icon
+                                       bg-secondary bg-opacity-10
+                                       text-secondary"
+                            >
+
+                                <i class="fas fa-folder-open"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="teacher-action-title">
+                                    Resources
+                                </p>
+
+                                <p class="teacher-action-text">
+                                    Access teaching resources.
+                                </p>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Exams -->
+
+                    <div class="col-12 col-sm-6 col-xl-3">
+
+                        <a
+                            href="{% url 'teacher_exams_list' %}"
+                            class="teacher-action"
+                        >
+
+                            <div
+                                class="teacher-action-icon
+                                       bg-primary bg-opacity-10
+                                       text-primary"
+                            >
+
+                                <i class="fas fa-file-signature"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="teacher-action-title">
+                                    Exams
+                                </p>
+
+                                <p class="teacher-action-text">
+                                    View and manage examinations.
+                                </p>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+
+                    <!-- Notices -->
+
+                    <div class="col-12 col-sm-6 col-xl-3">
+
+                        <a
+                            href="{% url 'notice_list' %}"
+                            class="teacher-action"
+                        >
+
+                            <div
+                                class="teacher-action-icon
+                                       bg-dark bg-opacity-10
+                                       text-dark"
+                            >
+
+                                <i class="fas fa-bell"></i>
+
+                            </div>
+
+                            <div>
+
+                                <p class="teacher-action-title">
+                                    Notices
+                                </p>
+
+                                <p class="teacher-action-text">
+                                    Read important school announcements.
+                                </p>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             CLASSES + SUBJECTS
+             ===================================================== -->
+
+        <div class="row g-4 mb-4">
+
+            <!-- Classes -->
+
+            <div class="col-12 col-xl-7">
+
+                <div class="teacher-section">
+
+                    <div
+                        class="teacher-section-header
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <h5 class="teacher-section-title">
+                                My Classes
+                            </h5>
+
+                            <p class="teacher-section-subtitle">
+                                Classes assigned to you.
+                            </p>
+
+                        </div>
+
+                        <span class="badge bg-primary rounded-pill">
+                            {{ stats.classes|default:0 }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="teacher-section-body">
+
+                        {% for classroom in classes %}
+
+                            <div class="teacher-list-item">
+
+                                <div
+                                    class="d-flex
+                                           justify-content-between
+                                           align-items-center
+                                           gap-3"
+                                >
+
+                                    <div
+                                        class="d-flex
+                                               align-items-center
+                                               gap-3"
+                                    >
+
+                                        <div class="teacher-class-icon">
+
+                                            <i class="fas fa-school"></i>
+
+                                        </div>
+
+
+                                        <div>
+
+                                            <div class="fw-semibold">
+                                                {{ classroom.name }}
+                                            </div>
+
+                                            {% if classroom.section %}
+
+                                                <small class="text-muted">
+                                                    Section {{ classroom.section }}
+                                                </small>
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <a
+                                        href="{% url 'teacher_class_detail' classroom.id %}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+
+                                        Open
+
+                                        <i
+                                            class="fas fa-arrow-right
+                                                   ms-1"
+                                        ></i>
+
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        {% empty %}
+
+                            <div class="teacher-empty">
+
+                                <i
+                                    class="fas fa-school
+                                           teacher-empty-icon"
+                                ></i>
+
+                                <div>
+                                    No classes have been assigned to you yet.
+                                </div>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Subjects -->
+
+            <div class="col-12 col-xl-5">
+
+                <div class="teacher-section">
+
+                    <div
+                        class="teacher-section-header
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <h5 class="teacher-section-title">
+                                My Subjects
+                            </h5>
+
+                            <p class="teacher-section-subtitle">
+                                Subjects you teach.
+                            </p>
+
+                        </div>
+
+                        <span class="badge bg-success rounded-pill">
+                            {{ stats.subjects|default:0 }}
+                        </span>
+
+                    </div>
+
+
+                    <div class="teacher-section-body">
+
+                        {% for subject in subjects %}
+
+                            <span class="teacher-subject-badge">
+
+                                <i
+                                    class="fas fa-book-open me-1"
+                                ></i>
+
+                                {{ subject.subject }}
+
+                            </span>
+
+                        {% empty %}
+
+                            <div class="teacher-empty">
+
+                                <i
+                                    class="fas fa-book-open
+                                           teacher-empty-icon"
+                                ></i>
+
+                                No subjects have been assigned yet.
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             PUPILS
+             ===================================================== -->
+
+        <div class="teacher-section mb-4">
+
+            <div
+                class="teacher-section-header
+                       d-flex justify-content-between
+                       align-items-center"
+            >
+
+                <div>
+
+                    <h5 class="teacher-section-title">
+                        My Pupils
+                    </h5>
+
+                    <p class="teacher-section-subtitle">
+                        Pupils belonging to your assigned classes.
+                    </p>
+
+                </div>
+
+                <span class="badge bg-warning text-dark rounded-pill">
+
+                    {{ stats.pupils|default:stats.students|default:0 }}
+
+                </span>
+
+            </div>
+
+
+            <div class="teacher-section-body">
+
+                {% if pupils %}
+
+                    <div class="teacher-mobile-scroll">
+
+                        <table class="table teacher-table">
+
+                            <thead>
+
+                                <tr>
+
+                                    <th>
+                                        Pupil
+                                    </th>
+
+                                    <th>
+                                        Username
+                                    </th>
+
+                                    <th>
+                                        Class
+                                    </th>
+
+                                    <th>
+                                        Action
+                                    </th>
+
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody>
+
+                                {% for pupil in pupils %}
+
+                                    <tr>
+
+                                        <td>
+
+                                            <strong>
+
+                                                {% if pupil.user.get_full_name %}
+
+                                                    {{ pupil.user.get_full_name }}
+
+                                                {% else %}
+
+                                                    {{ pupil.user.username }}
+
+                                                {% endif %}
+
+                                            </strong>
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {{ pupil.user.username }}
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if pupil.class_room %}
+
+                                                {{ pupil.class_room.name }}
+
+                                                {% if pupil.class_room.section %}
+
+                                                    -
+                                                    {{ pupil.class_room.section }}
+
+                                                {% endif %}
+
+                                            {% else %}
+
+                                                <span class="text-muted">
+                                                    Not assigned
+                                                </span>
+
+                                            {% endif %}
+
+                                        </td>
+
+
+                                        <td>
+
+                                            {% if pupil.class_room %}
+
+                                                <a
+                                                    href="{% url 'teacher_class_detail' pupil.class_room.id %}"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                >
+
+                                                    View Class
+
+                                                </a>
+
+                                            {% endif %}
+
+                                        </td>
+
+                                    </tr>
+
+                                {% endfor %}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                {% else %}
+
+                    <div class="teacher-empty">
+
+                        <i
+                            class="fas fa-user-graduate
+                                   teacher-empty-icon"
+                        ></i>
+
+                        <div>
+                            There are currently no pupils in your assigned classes.
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             EXAMS + ASSIGNMENTS
+             ===================================================== -->
+
+        <div class="row g-4 mb-4">
+
+            <!-- Exams -->
+
+            <div class="col-12 col-xl-6">
+
+                <div class="teacher-section">
+
+                    <div
+                        class="teacher-section-header
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <h5 class="teacher-section-title">
+                                Upcoming Exams
+                            </h5>
+
+                            <p class="teacher-section-subtitle">
+                                Examinations for your assigned classes.
+                            </p>
+
+                        </div>
+
+                        <a
+                            href="{% url 'teacher_exams_list' %}"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            View All
+                        </a>
+
+                    </div>
+
+
+                    <div class="teacher-section-body">
+
+                        {% for exam in exams %}
+
+                            <div class="teacher-list-item">
+
+                                <div
+                                    class="d-flex
+                                           justify-content-between
+                                           gap-3"
+                                >
+
+                                    <div>
+
+                                        <strong>
+                                            {{ exam.subject.subject }}
+                                        </strong>
+
+                                        <div class="small text-muted mt-1">
+
+                                            {{ exam.class_room.name }}
+
+                                            {% if exam.class_room.section %}
+
+                                                -
+                                                {{ exam.class_room.section }}
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div
+                                        class="text-end
+                                               text-nowrap"
+                                    >
+
+                                        <div class="small fw-semibold">
+
+                                            {{ exam.exam_date|date:"d M Y" }}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% empty %}
+
+                            <div class="teacher-empty">
+
+                                <i
+                                    class="fas fa-calendar-check
+                                           teacher-empty-icon"
+                                ></i>
+
+                                No upcoming exams.
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Assignments -->
+
+            <div class="col-12 col-xl-6">
+
+                <div class="teacher-section">
+
+                    <div
+                        class="teacher-section-header
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <h5 class="teacher-section-title">
+                                Recent Assignments
+                            </h5>
+
+                            <p class="teacher-section-subtitle">
+                                Your latest assignments.
+                            </p>
+
+                        </div>
+
+                        <a
+                            href="{% url 'teacher_assignments' %}"
+                            class="btn btn-sm btn-outline-success"
+                        >
+                            Manage
+                        </a>
+
+                    </div>
+
+
+                    <div class="teacher-section-body">
+
+                        {% for assignment in assignments %}
+
+                            <div class="teacher-list-item">
+
+                                <div
+                                    class="d-flex
+                                           justify-content-between
+                                           gap-3"
+                                >
+
+                                    <div>
+
+                                        <strong>
+                                            {{ assignment.title }}
+                                        </strong>
+
+                                        <div class="small text-muted mt-1">
+
+                                            {{ assignment.class_room.name }}
+
+                                            {% if assignment.subject %}
+
+                                                ·
+                                                {{ assignment.subject.subject }}
+
+                                            {% endif %}
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <div class="text-end text-nowrap">
+
+                                        <div class="small text-muted">
+                                            Due
+                                        </div>
+
+                                        <div class="small fw-semibold">
+
+                                            {{ assignment.due_date|date:"d M Y" }}
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% empty %}
+
+                            <div class="teacher-empty">
+
+                                <i
+                                    class="fas fa-tasks
+                                           teacher-empty-icon"
+                                ></i>
+
+                                No assignments have been created yet.
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             TIMETABLE + NOTICES
+             ===================================================== -->
+
+        <div class="row g-4 mb-4">
+
+            <!-- Timetable -->
+
+            <div class="col-12 col-xl-6">
+
+                <div class="teacher-section">
+
+                    <div
+                        class="teacher-section-header
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <h5 class="teacher-section-title">
+                                Teaching Timetable
+                            </h5>
+
+                            <p class="teacher-section-subtitle">
+                                Your scheduled teaching periods.
+                            </p>
+
+                        </div>
+
+                        <a
+                            href="{% url 'teacher_timetable' %}"
+                            class="btn btn-sm btn-outline-primary"
+                        >
+                            Full Timetable
+                        </a>
+
+                    </div>
+
+
+                    <div class="teacher-section-body">
+
+                        {% for entry in today_timetable %}
+
+                            <div class="teacher-timetable-row">
+
+                                <div class="teacher-time">
+
+                                    {{ entry.start_time|time:"H:i" }}
+
+                                    -
+
+                                    {{ entry.end_time|time:"H:i" }}
+
+                                </div>
+
+
+                                <div>
+
+                                    <div class="fw-semibold">
+
+                                        {{ entry.subject.subject }}
+
+                                    </div>
+
+                                    <div class="small text-muted">
+
+                                        {{ entry.class_room.name }}
+
+                                        {% if entry.class_room.section %}
+
+                                            -
+                                            {{ entry.class_room.section }}
+
+                                        {% endif %}
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        {% empty %}
+
+                            <div class="teacher-empty">
+
+                                <i
+                                    class="fas fa-calendar-alt
+                                           teacher-empty-icon"
+                                ></i>
+
+                                No timetable entries have been added yet.
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- Notices -->
+
+            <div class="col-12 col-xl-6">
+
+                <div class="teacher-section">
+
+                    <div
+                        class="teacher-section-header
+                               d-flex justify-content-between
+                               align-items-center"
+                    >
+
+                        <div>
+
+                            <h5 class="teacher-section-title">
+                                School Notices
+                            </h5>
+
+                            <p class="teacher-section-subtitle">
+                                Important announcements.
+                            </p>
+
+                        </div>
+
+                        <a
+                            href="{% url 'notice_list' %}"
+                            class="btn btn-sm btn-outline-dark"
+                        >
+                            All Notices
+                        </a>
+
+                    </div>
+
+
+                    <div class="teacher-section-body">
+
+                        {% for notice in notices %}
+
+                            <div class="teacher-notice">
+
+                                <p class="teacher-notice-title">
+
+                                    {{ notice.title }}
+
+                                </p>
+
+
+                                <div class="small text-muted mt-1">
+
+                                    {{ notice.created_at|date:"d M Y" }}
+
+                                </div>
+
+
+                                <p class="teacher-notice-message">
+
+                                    {{ notice.message|truncatewords:30 }}
+
+                                </p>
+
+                            </div>
+
+                        {% empty %}
+
+                            <div class="teacher-empty">
+
+                                <i
+                                    class="fas fa-bell
+                                           teacher-empty-icon"
+                                ></i>
+
+                                No school notices available.
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             REPORTING / PERFORMANCE
+             ===================================================== -->
+
+        <div class="teacher-section mb-4">
+
+            <div class="teacher-section-header">
+
+                <h5 class="teacher-section-title">
+                    Reports & Performance
+                </h5>
+
+                <p class="teacher-section-subtitle">
+                    Review class performance and print academic information.
+                </p>
+
+            </div>
+
+
+            <div class="teacher-section-body">
+
+                <div class="row g-3">
+
+                    {% for classroom in classes %}
+
+                        <div class="col-12 col-md-6 col-xl-4">
+
+                            <div
+                                class="border rounded-4 p-3
+                                       h-100"
+                            >
+
+                                <div
+                                    class="d-flex
+                                           justify-content-between
+                                           align-items-start
+                                           gap-2 mb-3"
+                                >
+
+                                    <div>
+
+                                        <strong>
+                                            {{ classroom.name }}
+                                        </strong>
+
+                                        {% if classroom.section %}
+
+                                            <div class="small text-muted">
+                                                Section {{ classroom.section }}
+                                            </div>
+
+                                        {% endif %}
+
+                                    </div>
+
+                                    <i
+                                        class="fas fa-chart-line
+                                               text-primary"
+                                    ></i>
+
+                                </div>
+
+
+                                <div class="d-flex gap-2 flex-wrap">
+
+                                    <a
+                                        href="{% url 'teacher_class_performance' classroom.id %}"
+                                        class="btn btn-sm btn-outline-primary"
+                                    >
+
+                                        Performance
+
+                                    </a>
+
+
+                                    <a
+                                        href="{% url 'teacher_print_class_list' classroom.id %}"
+                                        class="btn btn-sm btn-outline-secondary"
+                                    >
+
+                                        Class List
+
+                                    </a>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    {% empty %}
+
+                        <div class="col-12">
+
+                            <div class="teacher-empty">
+
+                                <i
+                                    class="fas fa-chart-line
+                                           teacher-empty-icon"
+                                ></i>
+
+                                Assign a class to begin managing performance.
+
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =====================================================
+             FOOTER
+             ===================================================== -->
+
+        <div
+            class="text-center text-muted
+                   small py-3"
+        >
+
+            Scholaroid School Management System
+
+            {% if school %}
+                · {{ school }}
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

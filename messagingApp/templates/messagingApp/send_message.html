@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Send Message{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-0 pt-4">
+                    <h4><i class="fas fa-paper-plane me-2 text-primary"></i> Send New Message</h4>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="recipient" class="form-label fw-semibold">To</label>
+                            <select name="recipient" id="recipient" class="form-select" required>
+                                <option value="">Select recipient</option>
+                                {% for user in users %}
+                                <option value="{{ user.id }}">
+                                    {{ user.get_full_name|default:user.username }} ({{ user.role|title }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subject" class="form-label fw-semibold">Subject</label>
+                            <input type="text" name="subject" id="subject" class="form-control" placeholder="Enter subject" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="body" class="form-label fw-semibold">Message</label>
+                            <textarea name="body" id="body" rows="5" class="form-control" placeholder="Write your message..." required></textarea>
+                        </div>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{% url 'inbox' %}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+                            <button type="submit" class="btn btn-primary rounded-pill px-4">
+                                <i class="fas fa-paper-plane me-2"></i> Send
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

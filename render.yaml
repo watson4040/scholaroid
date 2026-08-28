@@ -1,0 +1,66 @@
+services:
+  - type: web
+    name: scholaroid
+    runtime: python
+    plan: free
+
+    buildCommand: "./render-build.sh"
+    startCommand: "./render-start.sh"
+
+    healthCheckPath: "/"
+    autoDeploy: true
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.14.3"
+
+      - key: DEBUG
+        value: "False"
+
+      - key: SECRET_KEY
+        generateValue: true
+
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+
+      - key: WEBSOCKETS_ENABLED
+        value: "True"
+
+      - key: DATABASE_URL
+        sync: false
+
+      - key: REDIS_URL
+        sync: false
+
+      - key: CLOUDINARY_URL
+        sync: false
+
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+
+      - key: EMAIL_BACKEND
+        sync: false
+
+      - key: EMAIL_HOST
+        sync: false
+
+      - key: EMAIL_PORT
+        value: "587"
+
+      - key: EMAIL_HOST_USER
+        sync: false
+
+      - key: EMAIL_HOST_PASSWORD
+        sync: false
+
+      - key: EMAIL_USE_TLS
+        value: "True"
+
+      - key: DEFAULT_FROM_EMAIL
+        sync: false

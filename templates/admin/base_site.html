@@ -1,0 +1,60 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+{% endblock %}
+
+{% block footer %}
+{{ block.super }}
+
+<!-- Floating Dashboard Button (mobile) -->
+<div id="floating-dashboard-btn">
+    <a href="/dashboard/admin/">
+        <i class="fas fa-tachometer-alt"></i> Dashboard
+    </a>
+</div>
+
+<!-- Page Loader -->
+<div id="page-loader">
+    <div class="loader-spinner"></div>
+</div>
+
+<script src="{% static 'js/admin.js' %}"></script>
+
+<!-- Floating button styling (only for the button) -->
+<style>
+  #floating-dashboard-btn {
+    position: fixed !important;
+    bottom: 24px !important;
+    right: 24px !important;
+    z-index: 9999 !important;
+    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+    color: #fff !important;
+    padding: 14px 22px !important;
+    border-radius: 60px !important;
+    box-shadow: 0 6px 24px rgba(40,167,69,0.45) !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    display: none !important;
+    align-items: center !important;
+    gap: 8px !important;
+    border: none !important;
+  }
+  #floating-dashboard-btn:hover { transform: scale(1.05); box-shadow: 0 8px 32px rgba(40,167,69,0.55); }
+  #floating-dashboard-btn:active { transform: scale(0.95); }
+  #floating-dashboard-btn a {
+    color: white !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+  @media (max-width: 768px) {
+    #floating-dashboard-btn { display: flex !important; }
+  }
+</style>
+
+{% endblock %}

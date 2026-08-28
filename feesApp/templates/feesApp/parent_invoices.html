@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Fees & Invoices{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h2 class="mb-4"><i class="fas fa-file-invoice-dollar"></i> Fee Invoices</h2>
+    <div class="card shadow-sm">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Your Children's Invoices</h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr><th>Student</th><th>Fee Type</th><th>Amount Due</th><th>Paid</th><th>Balance</th><th>Status</th><th>Due Date</th></tr>
+                    </thead>
+                    <tbody>
+                        {% for inv in invoices %}
+                        <tr>
+                            <td>{{ inv.student.user.get_full_name|default:inv.student.user.username }}</td>
+                            <td>{{ inv.fee_structure.name }}</td>
+                            <td>{{ inv.amount_due }}</td>
+                            <td>{{ inv.amount_paid }}</td>
+                            <td>{{ inv.balance }}</td>
+                            <td><span class="badge bg-{% if inv.status == 'paid' %}success{% elif inv.status == 'overdue' %}danger{% else %}warning{% endif %}">{{ inv.get_status_display }}</span></td>
+                            <td>{{ inv.fee_structure.due_date|date:"d M Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <td><td colspan="7" class="text-center">No invoices found.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

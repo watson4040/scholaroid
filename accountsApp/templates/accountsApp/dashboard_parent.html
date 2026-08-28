@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}
+Change Password
+{% endblock %}
+
+
+{% block content %}
+
+<div class="container py-5">
+
+    <div class="row justify-content-center">
+
+        <div class="col-md-8 col-lg-6">
+
+            <div class="card border-0 shadow-sm rounded-4">
+
+                <div class="card-header bg-white border-0 p-4">
+
+                    <div class="d-flex align-items-center">
+
+                        <div
+                            class="rounded-circle bg-primary bg-opacity-10
+                                   text-primary d-flex align-items-center
+                                   justify-content-center me-3"
+                            style="width: 50px; height: 50px;"
+                        >
+
+                            <i class="fas fa-lock"></i>
+
+                        </div>
+
+
+                        <div>
+
+                            <h4 class="mb-1">
+                                Change Password
+                            </h4>
+
+                            <p class="text-muted mb-0">
+                                Update your account password securely.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="card-body p-4">
+
+                    {% if messages %}
+
+                        {% for message in messages %}
+
+                            <div
+                                class="alert alert-{{ message.tags|default:'info' }}"
+                                role="alert"
+                            >
+
+                                {{ message }}
+
+                            </div>
+
+                        {% endfor %}
+
+                    {% endif %}
+
+
+                    {% if form.non_field_errors %}
+
+                        <div class="alert alert-danger">
+
+                            {% for error in form.non_field_errors %}
+
+                                <div>
+                                    {{ error }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+
+                    <form
+                        method="post"
+                        action="{% url 'change_password' %}"
+                        novalidate
+                    >
+
+                        {% csrf_token %}
+
+
+                        {% for field in form %}
+
+                            <div class="mb-4">
+
+                                <label
+                                    for="{{ field.id_for_label }}"
+                                    class="form-label fw-semibold"
+                                >
+
+                                    {{ field.label }}
+
+                                </label>
+
+
+                                {{ field }}
+
+
+                                {% if field.help_text %}
+
+                                    <div class="form-text">
+
+                                        {{ field.help_text }}
+
+                                    </div>
+
+                                {% endif %}
+
+
+                                {% if field.errors %}
+
+                                    <div class="text-danger small mt-1">
+
+                                        {% for error in field.errors %}
+
+                                            <div>
+                                                {{ error }}
+                                            </div>
+
+                                        {% endfor %}
+
+                                    </div>
+
+                                {% endif %}
+
+                            </div>
+
+                        {% endfor %}
+
+
+                        <div
+                            class="d-flex justify-content-between
+                                   align-items-center flex-wrap gap-2"
+                        >
+
+                            <a
+                                href="{% url 'profile' %}"
+                                class="btn btn-outline-secondary"
+                            >
+
+                                <i class="fas fa-arrow-left me-1"></i>
+
+                                Back to Profile
+
+                            </a>
+
+
+                            <button
+                                type="submit"
+                                class="btn btn-primary"
+                            >
+
+                                <i class="fas fa-key me-1"></i>
+
+                                Change Password
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<style>
+
+    input[type="password"],
+    input[type="text"] {
+        display: block;
+        width: 100%;
+        padding: .65rem .8rem;
+        border: 1px solid #dee2e6;
+        border-radius: .5rem;
+        background: #fff;
+    }
+
+    input[type="password"]:focus,
+    input[type="text"]:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 .2rem rgba(13,110,253,.15);
+    }
+
+</style>
+
+{% endblock %}

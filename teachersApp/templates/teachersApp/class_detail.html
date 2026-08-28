@@ -1,0 +1,427 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+{{ classroom.name }} - Classroom
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="mb-1">
+                {{ classroom.name }}
+                {{ classroom.section }}
+            </h2>
+
+            <small class="text-muted">
+                Classroom Management
+            </small>
+        </div>
+
+        <div>
+
+            <a href="{% url 'dashboard_final' %}"
+               class="btn btn-outline-secondary">
+
+                <i class="bi bi-arrow-left"></i>
+
+                Dashboard
+
+            </a>
+
+            <button
+                class="btn btn-success"
+                type="submit"
+                form="attendanceForm">
+
+                <i class="bi bi-check-circle"></i>
+
+                Save Attendance
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Quick Statistics -->
+
+    <div class="row mb-4">
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body text-center">
+
+                    <h2>{{ student_data|length }}</h2>
+
+                    <small class="text-muted">
+                        Total Pupils
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body text-center">
+
+                    <h2>{{ today }}</h2>
+
+                    <small class="text-muted">
+                        Attendance Date
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body text-center">
+
+                    <h2>{{ classroom.name }}</h2>
+
+                    <small class="text-muted">
+                        Class
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-3">
+
+            <div class="card shadow-sm border-0">
+
+                <div class="card-body text-center">
+
+                    <h2>{{ classroom.section }}</h2>
+
+                    <small class="text-muted">
+                        Section
+                    </small>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <form
+        method="POST"
+        id="attendanceForm">
+
+        {% csrf_token %}
+
+        <div class="card shadow-sm">
+
+            <div class="card-header bg-primary text-white">
+
+                <strong>
+
+                    Daily Attendance Register
+
+                </strong>
+
+            </div>
+
+            <div class="card-body p-0">
+
+                <div class="table-responsive">
+
+                    <table
+                        class="table table-hover table-bordered align-middle mb-0">
+
+                        <thead class="table-light">
+
+                        <tr>
+
+                            <th width="60">
+                                #
+                            </th>
+
+                            <th>
+                                Pupil
+                            </th>
+
+                            <th width="160">
+                                Attendance
+                            </th>
+
+                            <th width="170">
+                                Parent
+                            </th>
+
+                            <th width="320">
+                                Teacher Tools
+                            </th>
+
+                        </tr>
+
+                        </thead>
+
+                        <tbody>
+{% for item in student_data %}
+
+<tr>
+
+    <td class="text-center">
+        {{ forloop.counter }}
+    </td>
+
+    <td>
+
+        <strong>
+
+            {{ item.student.user.get_full_name|default:item.student.user.username }}
+
+        </strong>
+
+        <br>
+
+        <small class="text-muted">
+
+            {{ item.student.user.username }}
+
+        </small>
+
+    </td>
+
+    <td>
+
+        <select
+            name="status_{{ item.student.id }}"
+            class="form-select">
+
+            <option value="">
+                Select
+            </option>
+
+            <option
+                value="present"
+                {% if item.today_status == "present" %}selected{% endif %}>
+                ✅ Present
+            </option>
+
+            <option
+                value="late"
+                {% if item.today_status == "late" %}selected{% endif %}>
+                🟡 Late
+            </option>
+
+            <option
+                value="absent"
+                {% if item.today_status == "absent" %}selected{% endif %}>
+                ❌ Absent
+            </option>
+
+        </select>
+
+    </td>
+
+    <td>
+
+        {% if item.parent_user %}
+
+            <a
+                href="{% url 'conversation' item.parent_user.id %}"
+                class="btn btn-outline-primary btn-sm">
+
+                <i class="bi bi-chat-dots"></i>
+
+                Message
+
+            </a>
+
+        {% else %}
+
+            <span class="text-muted">
+
+                No Parent
+
+            </span>
+
+        {% endif %}
+
+    </td>
+
+    <td>
+
+        <div class="d-flex flex-wrap gap-2">
+
+            <a
+                href="{% url 'pupil_report' item.student.id %}"
+                class="btn btn-outline-success btn-sm">
+
+                <i class="bi bi-file-earmark-text"></i>
+
+                Report
+
+            </a>
+
+            <a
+                href="{% url 'teacher_behavior_add' item.student.id %}"
+                class="btn btn-outline-warning btn-sm">
+
+                <i class="bi bi-clipboard2-pulse"></i>
+
+                Behaviour
+
+            </a>
+
+            <a
+                href="{% url 'teacher_academic' %}?class_id={{ classroom.id }}"
+                class="btn btn-outline-info btn-sm">
+
+                <i class="bi bi-pencil-square"></i>
+
+                Marks
+
+            </a>
+
+        </div>
+
+    </td>
+
+</tr>
+
+{% empty %}
+
+<tr>
+
+    <td
+        colspan="5"
+        class="text-center p-5">
+
+        <h5>
+
+            No pupils assigned to this class.
+
+        </h5>
+
+    </td>
+
+</tr>
+
+{% endfor %}
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="row mt-4">
+
+            <div class="col-md-12">
+
+                <div class="card shadow-sm">
+
+                    <div class="card-header bg-primary text-white">
+
+                        <strong>Class Actions</strong>
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <div class="d-flex flex-wrap gap-2">
+
+                            <button
+                                type="submit"
+                                class="btn btn-success">
+
+                                <i class="bi bi-check2-circle"></i>
+
+                                Save Attendance
+
+                            </button>
+
+                            <a
+                                href="{% url 'teacher_print_class_list' classroom.id %}"
+                                class="btn btn-outline-secondary">
+
+                                <i class="bi bi-printer"></i>
+
+                                Print Class List
+
+                            </a>
+
+                            <a
+                                href="{% url 'teacher_class_performance' classroom.id %}"
+                                class="btn btn-outline-info">
+
+                                <i class="bi bi-graph-up-arrow"></i>
+
+                                Class Performance
+
+                            </a>
+
+                            <a
+                                href="{% url 'teacher_academic' %}?class_id={{ classroom.id }}"
+                                class="btn btn-outline-warning">
+
+                                <i class="bi bi-pencil-square"></i>
+
+                                Enter Marks
+
+                            </a>
+
+                            <a
+                                href="{% url 'teacher_behavior' %}"
+                                class="btn btn-outline-danger">
+
+                                <i class="bi bi-clipboard2-pulse"></i>
+
+                                Behaviour Logs
+
+                            </a>
+
+                            <a
+                                href="{% url 'dashboard_final' %}"
+                                class="btn btn-dark ms-auto">
+
+                                <i class="bi bi-arrow-left"></i>
+
+                                Back to Dashboard
+
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

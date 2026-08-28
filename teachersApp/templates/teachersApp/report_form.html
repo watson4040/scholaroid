@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Report for {{ pupil.user.get_full_name }}{% endblock %}
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Report for {{ pupil.user.get_full_name }}</h4>
+                    <small>{{ pupil.class_room.name }} - {{ pupil.class_room.section }}</small>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <div class="d-flex gap-2 mt-3">
+                            <button type="submit" class="btn btn-success">
+                                <i class="bi bi-save"></i> Save Report
+                            </button>
+                            <a href="{% url 'teacher_class_detail' classroom.id %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Back to Class
+                            </a>
+                        </div>
+                    </form>
+                    <hr>
+                    <div class="mt-2">
+                        <p><strong>Status:</strong> 
+                            {% if report.is_submitted %}
+                                <span class="badge bg-success">Submitted to Parent</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Draft</span>
+                            {% endif %}
+                        </p>
+                        <p class="text-muted">
+                            <small>Created: {{ report.created_at|date:"d M Y H:i" }}<br>
+                            Last updated: {{ report.updated_at|date:"d M Y H:i" }}</small>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

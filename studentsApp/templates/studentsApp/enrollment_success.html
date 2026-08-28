@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Request Sent{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 text-center">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <i class="fa-solid fa-check-circle text-success fa-4x mb-3"></i>
+                    <h2 class="mb-3">Request Submitted!</h2>
+                    <p class="lead">Your child's enrollment request has been sent to the school admin.</p>
+                    <p>You will receive an email once your request is approved (usually within 2–3 business days).</p>
+                    <hr>
+                    <a href="{% url 'home' %}" class="btn btn-primary">Return to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
