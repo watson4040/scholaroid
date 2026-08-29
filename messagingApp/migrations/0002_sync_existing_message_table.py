@@ -8,123 +8,41 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-
         # --------------------------------------------------
-        # EXISTING DATABASE -> CURRENT DJANGO MODEL
+        # PRODUCTION DATABASE ALREADY SYNCHRONIZED
         #
-        # The existing PostgreSQL table uses:
-        #   receiver_id
-        #   content
-        #   timestamp
+        # The production Supabase database already contains
+        # the current Message model schema created by
+        # 0001_initial:
         #
-        # The current Django model uses:
         #   recipient_id
         #   body
         #   created_at
+        #   subject
+        #   message_type
+        #   parent_message_id_id
+        #   updated_at
+        #   sender_id
+        #   is_read
         #
-        # Rename the existing columns so existing messages
-        # are preserved.
+        # An older version of this migration attempted to
+        # rename legacy columns:
+        #
+        #   receiver_id -> recipient_id
+        #   content     -> body
+        #   timestamp   -> created_at
+        #
+        # Those legacy columns do not exist in the current
+        # production database.
+        #
+        # Therefore this migration intentionally does nothing.
+        # It exists only so Django can complete the migration
+        # history without attempting to modify the already
+        # correct production schema.
         # --------------------------------------------------
 
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE "messagingApp_message"
-                RENAME COLUMN "receiver_id" TO "recipient_id";
-            """,
-            reverse_sql="""
-                ALTER TABLE "messagingApp_message"
-                RENAME COLUMN "recipient_id" TO "receiver_id";
-            """,
-        ),
-
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE "messagingApp_message"
-                RENAME COLUMN "content" TO "body";
-            """,
-            reverse_sql="""
-                ALTER TABLE "messagingApp_message"
-                RENAME COLUMN "body" TO "content";
-            """,
-        ),
-
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE "messagingApp_message"
-                RENAME COLUMN "timestamp" TO "created_at";
-            """,
-            reverse_sql="""
-                ALTER TABLE "messagingApp_message"
-                RENAME COLUMN "created_at" TO "timestamp";
-            """,
-        ),
-
-        # --------------------------------------------------
-        # COLUMNS REQUIRED BY THE CURRENT MESSAGE MODEL
-        # --------------------------------------------------
-
-        migrations.RunSQL(
-            sql="""
-                ALTER TABLE "messagingApp_message"
-                ADD COLUMN IF NOT EXISTS "subject"
-                varchar(200) NOT NULL DEFAULT 'Message';
-
-                ALTER TABLE "messagingApp_message"
-                ADD COLUMN IF NOT EXISTS "message_type"
-                varchar(20) NOT NULL DEFAULT 'other';
-
-                ALTER TABLE "messagingApp_message"
-                ADD COLUMN IF NOT EXISTS "parent_message_id_id"
-                bigint NULL;
-
-                ALTER TABLE "messagingApp_message"
-                ADD COLUMN IF NOT EXISTS "updated_at"
-                timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP;
-            """,
-            reverse_sql="""
-                ALTER TABLE "messagingApp_message"
-                DROP COLUMN IF EXISTS "updated_at";
-
-                ALTER TABLE "messagingApp_message"
-                DROP COLUMN IF EXISTS "parent_message_id_id";
-
-                ALTER TABLE "messagingApp_message"
-                DROP COLUMN IF EXISTS "message_type";
-
-                ALTER TABLE "messagingApp_message"
-                DROP COLUMN IF EXISTS "subject";
-            """,
-        ),
-
-        # --------------------------------------------------
-        # FOREIGN KEY FOR REPLIES
-        # --------------------------------------------------
-
-        migrations.RunSQL(
-            sql="""
-                DO $$
-                BEGIN
-                    IF NOT EXISTS (
-                        SELECT 1
-                        FROM pg_constraint
-                        WHERE conname =
-                            'messagingApp_message_parent_message_id_id_fk'
-                    )
-                    THEN
-                        ALTER TABLE "messagingApp_message"
-                        ADD CONSTRAINT
-                            "messagingApp_message_parent_message_id_id_fk"
-                        FOREIGN KEY ("parent_message_id_id")
-                        REFERENCES "messagingApp_message" ("id")
-                        DEFERRABLE INITIALLY DEFERRED;
-                    END IF;
-                END
-                $$;
-            """,
-            reverse_sql="""
-                ALTER TABLE "messagingApp_message"
-                DROP CONSTRAINT IF EXISTS
-                    "messagingApp_message_parent_message_id_id_fk";
-            """,
+        migrations.RunPython(
+            code=migrations.RunPython.noop,
+            reverse_code=migrations.RunPython.noop,
         ),
     ]
