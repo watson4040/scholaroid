@@ -1,3 +1,4 @@
+
 import os
 from pathlib import Path
 
@@ -17,15 +18,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ENVIRONMENT
 # ==========================================================
 
-# IMPORTANT:
-# Production MUST use DEBUG=False.
-#
-# Render should have:
-#
-# DEBUG=False
-#
-# in its environment variables.
-#
 DEBUG = config(
     "DEBUG",
     default=False,
@@ -85,7 +77,6 @@ configured_csrf_origins = config(
 
 
 if configured_csrf_origins:
-
     CSRF_TRUSTED_ORIGINS.extend(
         origin.strip()
         for origin in configured_csrf_origins.split(",")
@@ -93,7 +84,6 @@ if configured_csrf_origins:
     )
 
 
-# Remove duplicate origins
 CSRF_TRUSTED_ORIGINS = list(
     dict.fromkeys(CSRF_TRUSTED_ORIGINS)
 )
@@ -169,7 +159,6 @@ MIDDLEWARE = [
 
     "django.middleware.security.SecurityMiddleware",
 
-    # WhiteNoise serves collected static files in production.
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -248,13 +237,14 @@ TEMPLATES = [
 # ==========================================================
 #
 # LOCAL:
-# If DATABASE_URL is not configured and DEBUG=True,
-# SQLite is used.
+# If DATABASE_URL is not configured, SQLite is used.
 #
 # PRODUCTION:
 # DATABASE_URL MUST be configured.
 #
-# We deliberately do NOT fall back to SQLite in production.
+# We intentionally do NOT silently fall back to SQLite when
+# DEBUG=False. A production database failure must be visible
+# instead of creating a second empty database.
 # ==========================================================
 
 DATABASE_URL = config(
@@ -272,13 +262,7 @@ if DATABASE_URL:
         )
     }
 
-    # ------------------------------------------------------
-    # Local PostgreSQL
-    # ------------------------------------------------------
-    #
-    # Local PostgreSQL installations may not use SSL.
-    # Render PostgreSQL should NOT have SSL disabled.
-    #
+    # Local PostgreSQL installations commonly do not use SSL.
     if DEBUG:
 
         DATABASES["default"].setdefault(
@@ -292,10 +276,6 @@ if DATABASE_URL:
         )
 
 else:
-
-    # ------------------------------------------------------
-    # Local development fallback
-    # ------------------------------------------------------
 
     if DEBUG:
 
@@ -332,7 +312,6 @@ if REDIS_URL:
             "BACKEND": (
                 "channels_redis.core.RedisChannelLayer"
             ),
-
             "CONFIG": {
                 "hosts": [
                     REDIS_URL
@@ -343,12 +322,8 @@ if REDIS_URL:
 
 else:
 
-    # ------------------------------------------------------
-    # Fallback channel layer
-    # ------------------------------------------------------
-    #
-    # This is acceptable when Redis is not configured.
-    #
+    # In-memory channels are suitable only for local
+    # development or when WebSockets are deliberately disabled.
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": (
@@ -473,19 +448,10 @@ USE_TZ = True
 # STATIC FILES
 # ==========================================================
 #
+# Static files are stored locally and served by WhiteNoise.
+#
 # IMPORTANT:
-#
-# Your project contains:
-#
-# static/
-#     css/
-#         accounts-login.css
-#
-# Therefore STATICFILES_DIRS points to BASE_DIR / "static".
-#
-# collectstatic MUST be run during the Render build.
-#
-# STATIC_ROOT is where Django collects all static files.
+# Cloudinary is used for MEDIA/uploads, NOT static files.
 # ==========================================================
 
 STATIC_URL = "/static/"
@@ -497,19 +463,37 @@ STATICFILES_DIRS = [
 ]
 
 
+# ----------------------------------------------------------
+# Legacy compatibility setting
+# ----------------------------------------------------------
+#
+# django-cloudinary-storage's collectstatic command checks
+# STATICFILES_STORAGE. Keeping this setting explicitly
+# defined prevents:
+#
+# AttributeError:
+# 'Settings' object has no attribute 'STATICFILES_STORAGE'
+#
+# WhiteNoise remains responsible for serving static files.
+# ----------------------------------------------------------
+
+STATICFILES_STORAGE = (
+    "whitenoise.storage."
+    "CompressedManifestStaticFilesStorage"
+)
+
+
 # ==========================================================
-# WHITENOISE
+# DJANGO 4.2+ STORAGE CONFIGURATION
 # ==========================================================
 #
-# WhiteNoise serves the files collected into STATIC_ROOT.
+# Static files:
+#     WhiteNoise
 #
-# CompressedManifestStaticFilesStorage creates a manifest
-# containing entries such as:
+# Uploaded media:
+#     Cloudinary when CLOUDINARY_URL is configured
 #
-# css/accounts-login.css
-#
-# This manifest MUST exist before the production server
-# starts.
+# This keeps static files and user-uploaded files separate.
 # ==========================================================
 
 STORAGES = {
@@ -528,6 +512,13 @@ STORAGES = {
         ),
     },
 }
+
+
+# ==========================================================
+# WHITENOISE
+# ==========================================================
+
+WHITENOISE_USE_FINDERS = True
 
 
 # ==========================================================
@@ -555,6 +546,13 @@ if CLOUDINARY_URL:
         "cloudinary_storage.storage."
         "MediaCloudinaryStorage"
     )
+
+    STORAGES["default"] = {
+        "BACKEND": (
+            "cloudinary_storage.storage."
+            "MediaCloudinaryStorage"
+        ),
+    }
 
 
 # ==========================================================
@@ -674,8 +672,8 @@ else:
     # PRODUCTION / RENDER HTTPS
     # ------------------------------------------------------
 
-    # Render terminates HTTPS at its proxy and forwards
-    # the original protocol using X-Forwarded-Proto.
+    # Render terminates HTTPS at its proxy and forwards the
+    # original protocol to the application.
 
     SECURE_PROXY_SSL_HEADER = (
         "HTTP_X_FORWARDED_PROTO",
