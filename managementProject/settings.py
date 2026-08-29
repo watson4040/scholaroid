@@ -1,4 +1,3 @@
-
 import os
 from pathlib import Path
 
@@ -17,22 +16,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==========================================================
 # ENVIRONMENT
 # ==========================================================
-#
-# Production is the default.
-#
+
 # IMPORTANT:
+# Production MUST use DEBUG=False.
+#
 # Render should have:
 #
-#     DEBUG=False
+# DEBUG=False
 #
-# in its Environment Variables.
+# in its environment variables.
 #
-# Local development can explicitly use:
-#
-#     DEBUG=True
-#
-# ==========================================================
-
 DEBUG = config(
     "DEBUG",
     default=False,
@@ -42,13 +35,6 @@ DEBUG = config(
 
 # ==========================================================
 # SECRET KEY
-# ==========================================================
-#
-# In production, SECRET_KEY should ALWAYS be configured
-# through the environment.
-#
-# The fallback exists only to prevent configuration errors
-# during local development.
 # ==========================================================
 
 SECRET_KEY = config(
@@ -85,16 +71,6 @@ ALLOWED_HOSTS = [
 # ==========================================================
 # CSRF TRUSTED ORIGINS
 # ==========================================================
-#
-# Render uses HTTPS.
-#
-# The production Render domain should be configured in the
-# Render environment variables as:
-#
-# CSRF_TRUSTED_ORIGINS=https://scholaroid.onrender.com
-#
-# Multiple origins can be separated by commas.
-# ==========================================================
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
@@ -117,10 +93,9 @@ if configured_csrf_origins:
     )
 
 
+# Remove duplicate origins
 CSRF_TRUSTED_ORIGINS = list(
-    dict.fromkeys(
-        CSRF_TRUSTED_ORIGINS
-    )
+    dict.fromkeys(CSRF_TRUSTED_ORIGINS)
 )
 
 
@@ -194,6 +169,7 @@ MIDDLEWARE = [
 
     "django.middleware.security.SecurityMiddleware",
 
+    # WhiteNoise serves collected static files in production.
     "whitenoise.middleware.WhiteNoiseMiddleware",
 
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -271,17 +247,14 @@ TEMPLATES = [
 # DATABASE
 # ==========================================================
 #
-# PRODUCTION:
-#
-# DATABASE_URL must point to your Supabase PostgreSQL
-# database.
-#
 # LOCAL:
+# If DATABASE_URL is not configured and DEBUG=True,
+# SQLite is used.
 #
-# When DEBUG=True and DATABASE_URL is absent, SQLite is used.
+# PRODUCTION:
+# DATABASE_URL MUST be configured.
 #
-# IMPORTANT:
-# We do NOT silently fall back to SQLite when DEBUG=False.
+# We deliberately do NOT fall back to SQLite in production.
 # ==========================================================
 
 DATABASE_URL = config(
@@ -300,18 +273,12 @@ if DATABASE_URL:
     }
 
     # ------------------------------------------------------
-    # PostgreSQL connection options
+    # Local PostgreSQL
     # ------------------------------------------------------
     #
-    # Supabase PostgreSQL normally requires SSL.
+    # Local PostgreSQL installations may not use SSL.
+    # Render PostgreSQL should NOT have SSL disabled.
     #
-    # Do not disable SSL in production.
-    #
-    # When DEBUG=True, local PostgreSQL installations may
-    # not support SSL, so SSL is disabled only for local
-    # development.
-    # ------------------------------------------------------
-
     if DEBUG:
 
         DATABASES["default"].setdefault(
@@ -324,19 +291,11 @@ if DATABASE_URL:
             "disable",
         )
 
-    else:
-
-        DATABASES["default"].setdefault(
-            "OPTIONS",
-            {},
-        )
-
-        DATABASES["default"]["OPTIONS"].setdefault(
-            "sslmode",
-            "require",
-        )
-
 else:
+
+    # ------------------------------------------------------
+    # Local development fallback
+    # ------------------------------------------------------
 
     if DEBUG:
 
@@ -351,8 +310,8 @@ else:
 
         raise RuntimeError(
             "DATABASE_URL is required when DEBUG=False. "
-            "Configure the Supabase PostgreSQL DATABASE_URL "
-            "in the Render environment variables."
+            "Configure the production PostgreSQL DATABASE_URL "
+            "before starting Scholaroid."
         )
 
 
@@ -385,12 +344,11 @@ if REDIS_URL:
 else:
 
     # ------------------------------------------------------
-    # Fallback channel layer.
-    #
-    # This is acceptable when Redis is not configured, but
-    # it does not provide multi-process/persistent messaging.
+    # Fallback channel layer
     # ------------------------------------------------------
-
+    #
+    # This is acceptable when Redis is not configured.
+    #
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": (
@@ -514,6 +472,21 @@ USE_TZ = True
 # ==========================================================
 # STATIC FILES
 # ==========================================================
+#
+# IMPORTANT:
+#
+# Your project contains:
+#
+# static/
+#     css/
+#         accounts-login.css
+#
+# Therefore STATICFILES_DIRS points to BASE_DIR / "static".
+#
+# collectstatic MUST be run during the Render build.
+#
+# STATIC_ROOT is where Django collects all static files.
+# ==========================================================
 
 STATIC_URL = "/static/"
 
@@ -526,6 +499,17 @@ STATICFILES_DIRS = [
 
 # ==========================================================
 # WHITENOISE
+# ==========================================================
+#
+# WhiteNoise serves the files collected into STATIC_ROOT.
+#
+# CompressedManifestStaticFilesStorage creates a manifest
+# containing entries such as:
+#
+# css/accounts-login.css
+#
+# This manifest MUST exist before the production server
+# starts.
 # ==========================================================
 
 STORAGES = {
@@ -690,8 +674,8 @@ else:
     # PRODUCTION / RENDER HTTPS
     # ------------------------------------------------------
 
-    # Render terminates HTTPS at its proxy and forwards the
-    # original protocol through X-Forwarded-Proto.
+    # Render terminates HTTPS at its proxy and forwards
+    # the original protocol using X-Forwarded-Proto.
 
     SECURE_PROXY_SSL_HEADER = (
         "HTTP_X_FORWARDED_PROTO",
@@ -719,77 +703,6 @@ else:
     X_FRAME_OPTIONS = "DENY"
 
     USE_X_FORWARDED_HOST = True
-
-
-# ==========================================================
-# DJANGO ERROR LOGGING
-# ==========================================================
-#
-# IMPORTANT:
-#
-# DEBUG remains FALSE in production.
-#
-# This logging configuration sends Django ERROR-level
-# exceptions to stdout/stderr so Render captures the actual
-# traceback in its Logs.
-#
-# We are NOT enabling DEBUG=True merely to see errors.
-# ==========================================================
-
-LOGGING = {
-
-    "version": 1,
-
-    "disable_existing_loggers": False,
-
-    "formatters": {
-
-        "django.server": {
-            "format": (
-                "{asctime} {levelname} "
-                "{name} {message}"
-            ),
-            "style": "{",
-        },
-
-    },
-
-    "handlers": {
-
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-
-    },
-
-    "loggers": {
-
-        "django": {
-            "handlers": [
-                "console"
-            ],
-            "level": "ERROR",
-            "propagate": False,
-        },
-
-        "django.request": {
-            "handlers": [
-                "console"
-            ],
-            "level": "ERROR",
-            "propagate": False,
-        },
-
-        "django.server": {
-            "handlers": [
-                "console"
-            ],
-            "level": "ERROR",
-            "propagate": False,
-        },
-
-    },
-}
 
 
 # ==========================================================
