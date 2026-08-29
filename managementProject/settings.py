@@ -17,16 +17,38 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ==========================================================
 # ENVIRONMENT
 # ==========================================================
+#
+# Production is the default.
+#
+# IMPORTANT:
+# Render should have:
+#
+#     DEBUG=False
+#
+# in its Environment Variables.
+#
+# Local development can explicitly use:
+#
+#     DEBUG=True
+#
+# ==========================================================
 
 DEBUG = config(
     "DEBUG",
-    default=True,
+    default=False,
     cast=bool,
 )
 
 
 # ==========================================================
 # SECRET KEY
+# ==========================================================
+#
+# In production, SECRET_KEY should ALWAYS be configured
+# through the environment.
+#
+# The fallback exists only to prevent configuration errors
+# during local development.
 # ==========================================================
 
 SECRET_KEY = config(
@@ -63,6 +85,16 @@ ALLOWED_HOSTS = [
 # ==========================================================
 # CSRF TRUSTED ORIGINS
 # ==========================================================
+#
+# Render uses HTTPS.
+#
+# The production Render domain should be configured in the
+# Render environment variables as:
+#
+# CSRF_TRUSTED_ORIGINS=https://scholaroid.onrender.com
+#
+# Multiple origins can be separated by commas.
+# ==========================================================
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:8000",
@@ -77,6 +109,7 @@ configured_csrf_origins = config(
 
 
 if configured_csrf_origins:
+
     CSRF_TRUSTED_ORIGINS.extend(
         origin.strip()
         for origin in configured_csrf_origins.split(",")
@@ -85,7 +118,9 @@ if configured_csrf_origins:
 
 
 CSRF_TRUSTED_ORIGINS = list(
-    dict.fromkeys(CSRF_TRUSTED_ORIGINS)
+    dict.fromkeys(
+        CSRF_TRUSTED_ORIGINS
+    )
 )
 
 
@@ -236,15 +271,17 @@ TEMPLATES = [
 # DATABASE
 # ==========================================================
 #
-# LOCAL:
-# If DATABASE_URL is not configured, SQLite is used.
-#
 # PRODUCTION:
-# DATABASE_URL MUST be configured.
 #
-# We intentionally do NOT silently fall back to SQLite when
-# DEBUG=False. A production database failure must be visible
-# instead of creating a second empty database.
+# DATABASE_URL must point to your Supabase PostgreSQL
+# database.
+#
+# LOCAL:
+#
+# When DEBUG=True and DATABASE_URL is absent, SQLite is used.
+#
+# IMPORTANT:
+# We do NOT silently fall back to SQLite when DEBUG=False.
 # ==========================================================
 
 DATABASE_URL = config(
@@ -262,8 +299,21 @@ if DATABASE_URL:
         )
     }
 
-    # Local PostgreSQL installations commonly do not use SSL.
+    # ------------------------------------------------------
+    # PostgreSQL connection options
+    # ------------------------------------------------------
+    #
+    # Supabase PostgreSQL normally requires SSL.
+    #
+    # Do not disable SSL in production.
+    #
+    # When DEBUG=True, local PostgreSQL installations may
+    # not support SSL, so SSL is disabled only for local
+    # development.
+    # ------------------------------------------------------
+
     if DEBUG:
+
         DATABASES["default"].setdefault(
             "OPTIONS",
             {},
@@ -272,6 +322,18 @@ if DATABASE_URL:
         DATABASES["default"]["OPTIONS"].setdefault(
             "sslmode",
             "disable",
+        )
+
+    else:
+
+        DATABASES["default"].setdefault(
+            "OPTIONS",
+            {},
+        )
+
+        DATABASES["default"]["OPTIONS"].setdefault(
+            "sslmode",
+            "require",
         )
 
 else:
@@ -289,8 +351,8 @@ else:
 
         raise RuntimeError(
             "DATABASE_URL is required when DEBUG=False. "
-            "Configure the Render PostgreSQL DATABASE_URL "
-            "before starting Scholaroid."
+            "Configure the Supabase PostgreSQL DATABASE_URL "
+            "in the Render environment variables."
         )
 
 
@@ -311,6 +373,7 @@ if REDIS_URL:
             "BACKEND": (
                 "channels_redis.core.RedisChannelLayer"
             ),
+
             "CONFIG": {
                 "hosts": [
                     REDIS_URL
@@ -321,8 +384,13 @@ if REDIS_URL:
 
 else:
 
-    # In-memory channels are suitable only for local
-    # development or when WebSockets are deliberately disabled.
+    # ------------------------------------------------------
+    # Fallback channel layer.
+    #
+    # This is acceptable when Redis is not configured, but
+    # it does not provide multi-process/persistent messaging.
+    # ------------------------------------------------------
+
     CHANNEL_LAYERS = {
         "default": {
             "BACKEND": (
@@ -623,7 +691,7 @@ else:
     # ------------------------------------------------------
 
     # Render terminates HTTPS at its proxy and forwards the
-    # original protocol to the application.
+    # original protocol through X-Forwarded-Proto.
 
     SECURE_PROXY_SSL_HEADER = (
         "HTTP_X_FORWARDED_PROTO",
@@ -651,6 +719,77 @@ else:
     X_FRAME_OPTIONS = "DENY"
 
     USE_X_FORWARDED_HOST = True
+
+
+# ==========================================================
+# DJANGO ERROR LOGGING
+# ==========================================================
+#
+# IMPORTANT:
+#
+# DEBUG remains FALSE in production.
+#
+# This logging configuration sends Django ERROR-level
+# exceptions to stdout/stderr so Render captures the actual
+# traceback in its Logs.
+#
+# We are NOT enabling DEBUG=True merely to see errors.
+# ==========================================================
+
+LOGGING = {
+
+    "version": 1,
+
+    "disable_existing_loggers": False,
+
+    "formatters": {
+
+        "django.server": {
+            "format": (
+                "{asctime} {levelname} "
+                "{name} {message}"
+            ),
+            "style": "{",
+        },
+
+    },
+
+    "handlers": {
+
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+
+    },
+
+    "loggers": {
+
+        "django": {
+            "handlers": [
+                "console"
+            ],
+            "level": "ERROR",
+            "propagate": False,
+        },
+
+        "django.request": {
+            "handlers": [
+                "console"
+            ],
+            "level": "ERROR",
+            "propagate": False,
+        },
+
+        "django.server": {
+            "handlers": [
+                "console"
+            ],
+            "level": "ERROR",
+            "propagate": False,
+        },
+
+    },
+}
 
 
 # ==========================================================
